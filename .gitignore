@@ -1,0 +1,194 @@
+# ============================================
+# BACKEND (Python/FastAPI)
+# ============================================
+
+# Python
+backend/__pycache__/
+backend/**/__pycache__/
+backend/**/*.py[cod]
+backend/**/*$py.class
+backend/**/*.so
+
+# Virtual environments
+backend/.venv/
+backend/venv/
+backend/env/
+backend/ENV/
+
+# Python distribution
+backend/build/
+backend/dist/
+backend/*.egg-info/
+backend/.eggs/
+
+# Testing
+backend/.pytest_cache/
+backend/.coverage
+backend/htmlcov/
+backend/.tox/
+
+# UV (Package Manager)
+backend/.uv/
+backend/uv.lock
+
+# Environment variables
+backend/.env
+backend/.env.local
+backend/.env.*.local
+
+# Logs
+backend/logs/
+backend/**/*.log
+
+# Database files
+backend/**/*.sqlite
+backend/**/*.sqlite3
+backend/**/*.db
+
+# Uploads
+backend/uploads/
+backend/media/
+
+# Temporary files
+backend/tmp/
+backend/temp/
+backend/**/*.tmp
+
+# Backup files
+backend/**/*.bak
+backend/**/*.backup
+backend/**/*.old
+
+# Secrets
+backend/secrets/
+backend/.secrets/
+backend/**/*.secret
+backend/**/*.pem
+backend/**/*.key
+backend/**/*.crt
+
+# ============================================
+# FRONTEND (Next.js/React)
+# ============================================
+
+# Dependencies
+frontend/node_modules/
+frontend/.pnp
+frontend/.pnp.js
+
+# Testing
+frontend/coverage/
+
+# Next.js
+frontend/.next/
+frontend/out/
+
+# Production
+frontend/build/
+frontend/dist/
+
+# Environment variables
+frontend/.env
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+
+# Vercel
+frontend/.vercel
+
+# TypeScript
+frontend/*.tsbuildinfo
+frontend/next-env.d.ts
+
+# Logs
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/pnpm-debug.log*
+frontend/lerna-debug.log*
+
+# ============================================
+# IDEs and Editors
+# ============================================
+
+# VSCode
+.vscode/
+*.code-workspace
+
+# PyCharm / WebStorm / IntelliJ
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+
+# ============================================
+# OS Files
+# ============================================
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# Linux
+*~
+.directory
+.Trash-*
+
+# ============================================
+# Docker (racine ou sous-dossiers)
+# ============================================
+
+# Docker volumes persistants (optionnel)
+# postgres_data/
+# redis_data/
+
+# ============================================
+# Misc
+# ============================================
+
+# Editor backup files
+*~
+*.swp
+*.swo
+.#*
+
+# Debug files
+debug.log
+error.log
+
+# Profile data
+*.prof
+
+# System files
+.fuse_hidden*
+
+frontend/pnpm-lock.yaml     # Décommenter si tu utilises npm ou yarn
