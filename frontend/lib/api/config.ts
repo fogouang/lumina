@@ -21,12 +21,22 @@ const processQueue = (error: Error | null, token: string | null = null) => {
 // Configuration de l'API client
 export const configureAPI = () => {
   // URL de base (backend FastAPI)
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+
+  if (!apiUrl && process.env.NODE_ENV === "production") {
+    console.error(
+      "ERREUR: NEXT_PUBLIC_API_URL n'est pas définie en production !"
+    );
+  }
+
   OpenAPI.BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001";
+
+  console.log("yo la config:", OpenAPI.BASE);
   
   // CRUCIAL : Envoyer les cookies automatiquement
   OpenAPI.WITH_CREDENTIALS = true;
   OpenAPI.CREDENTIALS = "include";
-  
+
   // Headers
   OpenAPI.HEADERS = async () => {
     const headers: Record<string, string> = {
@@ -46,7 +56,7 @@ export const refreshToken = async (): Promise<void> => {
         "Content-Type": "application/json",
       },
     });
-    
+
     if (!response.ok) {
       throw new Error("Failed to refresh token");
     }
@@ -62,26 +72,26 @@ export const refreshToken = async (): Promise<void> => {
 // Intercepteur pour gérer les erreurs 401
 export const handleApiError = async (error: unknown): Promise<never> => {
   const apiError = error as ApiError;
-  
+
   if (apiError.status === 401 && !isRefreshing) {
     isRefreshing = true;
-    
+
     try {
       await refreshToken();
       isRefreshing = false;
       processQueue(null, null);
-      
+
       throw new Error("Token refreshed, please retry");
     } catch (refreshError) {
       isRefreshing = false;
       processQueue(refreshError as Error, null);
-      
+
       if (typeof window !== "undefined") {
         window.location.href = "/login";
       }
       throw refreshError;
     }
   }
-  
+
   throw error;
 };
