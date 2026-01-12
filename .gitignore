@@ -196,3 +196,4 @@ error.log
 .fuse_hidden*
 
 frontend/pnpm-lock.yaml     # Décommenter si tu utilises npm ou yarn
+back.sh
