@@ -88,27 +88,38 @@ invoices_path.mkdir(parents=True, exist_ok=True)
 app.mount("/invoices", StaticFiles(directory=str(invoices_path)), name="invoices")
 
 # ✅ CORS Configuration
-if settings.DEBUG:
-    # Development: Allow localhost
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=settings.BACKEND_CORS_ORIGINS,
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-        expose_headers=["Set-Cookie"],
-    )
-    logger.info(f"🌐 CORS enabled for: {settings.BACKEND_CORS_ORIGINS}")
-else:
-    # Production: Strict origins
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=settings.BACKEND_CORS_ORIGINS,
-        allow_credentials=True,
-        allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH"],
-        allow_headers=["*"],
-        expose_headers=["Set-Cookie"],
-    )
+# if settings.DEBUG:
+#     # Development: Allow localhost
+#     app.add_middleware(
+#         CORSMiddleware,
+#         allow_origins=settings.BACKEND_CORS_ORIGINS,
+#         allow_credentials=True,
+#         allow_methods=["*"],
+#         allow_headers=["*"],
+#         expose_headers=["Set-Cookie"],
+#     )
+#     logger.info(f"🌐 CORS enabled for: {settings.BACKEND_CORS_ORIGINS}")
+# else:
+#     # Production: Strict origins
+#     app.add_middleware(
+#         CORSMiddleware,
+#         allow_origins=settings.BACKEND_CORS_ORIGINS,
+#         allow_credentials=True,
+#         allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH"],
+#         allow_headers=["*"],
+#         expose_headers=["Set-Cookie"],
+#     )
+
+# ✅ CORS Configuration
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.BACKEND_CORS_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+    expose_headers=["Set-Cookie"],
+)
+logger.info(f"🌐 CORS enabled for: {settings.BACKEND_CORS_ORIGINS}")
 
 
 # ✅ Exception Handlers
