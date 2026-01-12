@@ -5,7 +5,7 @@ Modèle Plan - Plans d'abonnement configurables.
 import enum
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, Enum, Integer, Numeric, String
+from sqlalchemy import JSON, Boolean, Enum, Integer, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.shared.database.base import BaseModel
@@ -37,6 +37,9 @@ class Plan(BaseModel):
     price: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False, doc="Prix par défaut en FCFA")
     ai_credits: Mapped[int] = mapped_column(Integer, nullable=False, default=0, doc="Crédits IA inclus (B2C)")
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, index=True)
+
+    description: Mapped[str] = mapped_column(Text, nullable=True, doc="Description du plan")
+    features: Mapped[dict] = mapped_column(JSON, nullable=True, doc="Features JSON: {series_100: true, whatsapp: true, ...}")
     
     # Relationships
     subscriptions: Mapped[list["Subscription"]] = relationship("Subscription", back_populates="plan")

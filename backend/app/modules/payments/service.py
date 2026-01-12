@@ -16,6 +16,7 @@ from app.modules.subscriptions.models import OrganizationSubscription, Subscript
 from app.modules.users.models import User
 from app.shared.enums import PaymentMethod, PaymentStatus
 from app.shared.exceptions.http import BadRequestException, NotFoundException
+from app.modules.plans.models import Plan
 
 
 class PaymentService:
@@ -66,7 +67,7 @@ class PaymentService:
             if not subscription.plan_id:
                 raise BadRequestException(detail="Cette souscription n'a pas de plan associé")
             
-            plan = await self.db.get("Plan", subscription.plan_id)
+            plan = await self.db.get(Plan, subscription.plan_id)
             
             user_id = current_user.id
             subscription_id = subscription.id
@@ -207,9 +208,28 @@ class PaymentService:
         if new_status == PaymentStatus.COMPLETED:
             await self._activate_subscription(payment)
             
-            # TODO: Générer la facture PDF
-            # await self._generate_invoice_pdf(payment)
-        
+            # Générer la facture PDF
+            await self._generate_invoice_pdf(payment)
+            
+            # Notifier l'utilisateur
+            from app.modules.notifications.service import NotificationService
+            
+            notif_service = NotificationService(self.db)
+            
+            # Déterminer le user_id
+            user_id = payment.user_id if payment.user_id else None
+            if not user_id and payment.organization_id:
+                # Pour org, notifier les admins
+                # TODO: Récupérer les admins de l'org
+                pass
+            
+            if user_id:
+                await notif_service.notify_payment_success(
+                    user_id=user_id,
+                    amount=float(payment.amount),
+                    payment_id=payment.id
+                )
+            
         return True
     
     async def _activate_subscription(self, payment: Payment):
@@ -260,3 +280,22 @@ class PaymentService:
             Liste de paiements
         """
         return await self.repo.get_by_user(current_user.id)
+    
+    async def _generate_invoice(self, payment: Payment):
+        """
+        Générer la facture PDF après paiement réussi.
+        
+        Args:
+            payment: Paiement complété
+        """
+        try:
+            from app.modules.invoices.service import InvoiceService
+            
+            invoice_service = InvoiceService(self.db)
+            await invoice_service.generate_invoice_for_payment(payment.id)
+        
+        except Exception as e:
+            # Log l'erreur mais ne pas bloquer le webhook
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Erreur génération facture pour payment {payment.id}: {e}")

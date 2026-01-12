@@ -145,3 +145,47 @@ class OrganizationRepository(BaseRepository[Organization]):
             await self.db.refresh(org)
         
         return org
+    
+    
+    async def get_by_admin_or_teacher(self, user_id: UUID) -> Organization | None:
+        """
+        Récupérer l'organisation d'un admin ou teacher.
+        
+        Args:
+            user_id: UUID de l'utilisateur
+            
+        Returns:
+            Organisation ou None
+        """
+        from app.modules.organizations.models import organization_admins, organization_teachers
+        
+        # Chercher d'abord comme admin
+        stmt = (
+            select(Organization)
+            .join(organization_admins, Organization.id == organization_admins.c.organization_id)
+            .where(organization_admins.c.user_id == user_id)
+            .options(
+                selectinload(Organization.admins),
+                selectinload(Organization.teachers)
+            )
+        )
+        
+        result = await self.db.execute(stmt)
+        org = result.scalar_one_or_none()
+        
+        if org:
+            return org
+        
+        # Sinon chercher comme teacher
+        stmt = (
+            select(Organization)
+            .join(organization_teachers, Organization.id == organization_teachers.c.organization_id)
+            .where(organization_teachers.c.user_id == user_id)
+            .options(
+                selectinload(Organization.admins),
+                selectinload(Organization.teachers)
+            )
+        )
+        
+        result = await self.db.execute(stmt)
+        return result.scalar_one_or_none()

@@ -11,6 +11,8 @@ from app.shared.enums.correction_status import (
 )
 from app.shared.enums.roles import UserRole
 from app.shared.enums.subscription_types import OrganizationType, PlanType, SlotsType
+from app.shared.enums.questions import CorrectAnswer, QuestionType, SelectedAnswer
+from app.shared.enums.expressions import ExpressionType
 
 __all__ = [
     # Roles
@@ -27,4 +29,10 @@ __all__ = [
     "PaymentMethod",
     # Notifications
     "NotificationType",
+    
+     # Questions
+    "QuestionType",
+    "CorrectAnswer",
+    "SelectedAnswer",
+    "ExpressionType"
 ]

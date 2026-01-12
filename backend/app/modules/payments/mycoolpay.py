@@ -151,9 +151,22 @@ class MyCoolPayClient:
                 
                 return data
         
+        except httpx.HTTPStatusError as e:
+            # e.response est disponible pour les erreurs 4xx/5xx
+            error_detail = ""
+            try:
+                error_detail = e.response.json()
+            except Exception:
+                error_detail = e.response.text
+
+            logger.error(f"My-CoolPay Payin error {e.response.status_code}: {error_detail}")
+            logger.error(f"Request payload was: {e.request.json() if hasattr(e.request, 'json') else 'N/A'}")
+
+            raise Exception(f"Erreur My-CoolPay ({e.response.status_code}): {error_detail}")
         except httpx.HTTPError as e:
-            logger.error(f"My-CoolPay Payin error: {e}")
-            raise Exception(f"Erreur paiement: {str(e)}")
+            logger.error(f"My-CoolPay connection error: {str(e)}")
+            raise Exception(f"Erreur connexion My-CoolPay: {str(e)}")
+        
     
     async def check_status(self, transaction_ref: str) -> dict[str, Any]:
         """

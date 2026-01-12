@@ -1,0 +1,61 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { Search, X } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+
+interface SearchBarProps {
+  placeholder?: string;
+  onSearch: (query: string) => void;
+  debounceMs?: number;
+  className?: string;
+  defaultValue?: string;
+}
+
+export default function SearchBar({
+  placeholder = "Rechercher...",
+  onSearch,
+  debounceMs = 300,
+  className,
+  defaultValue = "",
+}: SearchBarProps) {
+  const [query, setQuery] = useState(defaultValue);
+
+  // Debounce search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      onSearch(query);
+    }, debounceMs);
+
+    return () => clearTimeout(timer);
+  }, [query, debounceMs, onSearch]);
+
+  const handleClear = () => {
+    setQuery("");
+  };
+
+  return (
+    <div className={cn("relative", className)}>
+      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+      <Input
+        type="text"
+        placeholder={placeholder}
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        className="pl-9 pr-9"
+      />
+      {query && (
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={handleClear}
+          className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2"
+        >
+          <X className="h-4 w-4" />
+        </Button>
+      )}
+    </div>
+  );
+}

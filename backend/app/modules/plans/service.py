@@ -94,7 +94,9 @@ class PlanService:
             duration_days=data.duration_days,
             price=data.price,
             ai_credits=data.ai_credits,
-            is_active=data.is_active
+            is_active=data.is_active,
+            description=data.description,
+            features=data.features 
         )
         
         return plan

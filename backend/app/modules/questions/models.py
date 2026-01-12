@@ -2,7 +2,6 @@
 Modèle ComprehensionQuestion - Questions QCM (oral + écrit).
 """
 
-import enum
 from typing import TYPE_CHECKING
 
 from sqlalchemy import Enum, ForeignKey, Integer, String, Text
@@ -10,23 +9,10 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.shared.database.base import BaseModel
+from app.shared.enums import CorrectAnswer, QuestionType  # 
 
 if TYPE_CHECKING:
     from app.modules.series.models import Series
-
-
-class QuestionType(str, enum.Enum):
-    """Type de compréhension."""
-    ORAL = "oral"
-    WRITTEN = "written"
-
-
-class CorrectAnswer(str, enum.Enum):
-    """Réponse correcte."""
-    A = "a"
-    B = "b"
-    C = "c"
-    D = "d"
 
 
 class ComprehensionQuestion(BaseModel):
@@ -45,7 +31,7 @@ class ComprehensionQuestion(BaseModel):
     
     # Contenu
     question_text: Mapped[str | None] = mapped_column(Text, nullable=True, doc="Texte de la question")
-    image_url: Mapped[str | None] = mapped_column(String(500), nullable=True, doc="Image (écrit obligatoire, oral optionnel)")
+    image_url: Mapped[str | None] = mapped_column(String(500), nullable=True, doc="Image (optionnelle)")
     audio_url: Mapped[str | None] = mapped_column(String(500), nullable=True, doc="Audio (oral uniquement)")
     
     # Options

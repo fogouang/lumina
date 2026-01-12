@@ -51,9 +51,29 @@ class Settings(BaseSettings):
     ANTHROPIC_API_KEY: str
     ANTHROPIC_MODEL: str = "claude-sonnet-4-20250514"
     
+    
+    # AI Correction Configuration
+    AI_PROVIDER: str = "gemini"  # Options: "grok", "gemini", "claude"
+
+    # Grok (xAI)
+    GROK_API_KEY: str = ""
+    GROK_BASE_URL: str = "https://api.x.ai/v1"
+
+    # Gemini (Google)
+    GEMINI_API_KEY: str = "AIzaSyD9Vafn0UFgPUyYrVs-HrJmL9y56xH2D4U"
+
+    # Claude (Anthropic)
+    ANTHROPIC_API_KEY: str = ""
+    
     # Payment Gateway (Stripe ou autre)
     STRIPE_SECRET_KEY: Optional[str] = None
     STRIPE_WEBHOOK_SECRET: Optional[str] = None
+    
+    # MycoolPay
+    MYCOOLPAY_PUBLIC_KEY: str
+    MYCOOLPAY_PRIVATE_KEY:str
+    MYCOOLPAY_BASE_URL:str
+    MYCOOLPAY_CALLBACK_URL:str
     
     # === CELERY & REDIS ===
     REDIS_URL: str = "redis://localhost:6379/0"
@@ -69,11 +89,13 @@ class Settings(BaseSettings):
     AUDIO_RETENTION_B2C: int = 7
     AUDIO_RETENTION_RESELLER: int = 3
     AUDIO_RETENTION_CENTER: int = 30
+    STORAGE_PATH: str = "./storage"
     
     # === CORS ===
     BACKEND_CORS_ORIGINS: list[str] = [
         "http://localhost:3000",
         "http://localhost:5173",
+        "https://my-coolpay.com/api"
     ]
     
     # === PAGINATION ===

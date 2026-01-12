@@ -101,6 +101,7 @@ class PaymentRepository(BaseRepository[Payment]):
             select(Payment.invoice_number)
             .where(Payment.invoice_number.like(f"{prefix}%"))
             .order_by(Payment.invoice_number.desc())
+            .limit(1)
         )
         
         last_invoice = result.scalar_one_or_none()

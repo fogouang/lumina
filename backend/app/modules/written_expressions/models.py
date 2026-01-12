@@ -52,41 +52,51 @@ class WrittenExpression(BaseModel):
 
 
 class WrittenExpressionAICorrection(BaseModel):
-    """
-    Correction IA d'une expression écrite (Claude API).
-    """
+    """Correction IA selon critères officiels TCF Canada."""
     
     __tablename__ = "written_expression_ai_corrections"
     
-    expression_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("written_expressions.id", ondelete="CASCADE"), nullable=False, unique=True, index=True)
+    expression_id: Mapped[UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("written_expressions.id", ondelete="CASCADE"),
+        nullable=False,
+        unique=True,
+        index=True
+    )
     
-    corrected_text: Mapped[str] = mapped_column(Text, nullable=False, doc="Texte parfait réécrit par IA")
+    corrected_text: Mapped[str] = mapped_column(Text, nullable=False)
     
-    # Scores (sur 20 chacun)
-    linguistic_score: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    linguistic_feedback: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Scores officiels TCF Canada (sur 20 total)
+    structure_score: Mapped[int | None] = mapped_column(Integer, nullable=True, doc="Structure /5")
+    structure_feedback: Mapped[str | None] = mapped_column(Text, nullable=True)
     
-    pragmatic_score: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    pragmatic_feedback: Mapped[str | None] = mapped_column(Text, nullable=True)
+    cohesion_score: Mapped[int | None] = mapped_column(Integer, nullable=True, doc="Cohésion /4")
+    cohesion_feedback: Mapped[str | None] = mapped_column(Text, nullable=True)
     
-    sociolinguistic_score: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    sociolinguistic_feedback: Mapped[str | None] = mapped_column(Text, nullable=True)
+    vocabulary_score: Mapped[int | None] = mapped_column(Integer, nullable=True, doc="Vocabulaire /4")
+    vocabulary_feedback: Mapped[str | None] = mapped_column(Text, nullable=True)
     
-    overall_score: Mapped[int | None] = mapped_column(Integer, nullable=True, doc="Score total")
-    cecrl_level: Mapped[str | None] = mapped_column(String(10), nullable=True, doc="A1, A2, B1, B2, C1, C2")
+    grammar_score: Mapped[int | None] = mapped_column(Integer, nullable=True, doc="Grammaire /3")
+    grammar_feedback: Mapped[str | None] = mapped_column(Text, nullable=True)
+    
+    task_score: Mapped[int | None] = mapped_column(Integer, nullable=True, doc="Tâche /4")
+    task_feedback: Mapped[str | None] = mapped_column(Text, nullable=True)
+    
+    overall_score: Mapped[int | None] = mapped_column(Integer, nullable=True, doc="Score total /20")
+    cecrl_level: Mapped[str | None] = mapped_column(String(10), nullable=True, doc="A2, B1, B2, C1, C2")
     appreciation: Mapped[str | None] = mapped_column(Text, nullable=True)
     
-    # JSON pour stockage flexible
-    corrections_json: Mapped[dict | None] = mapped_column(JSONB, nullable=True, doc="Liste détaillée corrections")
-    suggestions_json: Mapped[dict | None] = mapped_column(JSONB, nullable=True, doc="Suggestions amélioration")
+    # JSON pour corrections détaillées
+    corrections_json: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    suggestions_json: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
     
-    ai_cost_tokens: Mapped[int | None] = mapped_column(Integer, nullable=True, doc="Tokens utilisés (tracking coût)")
+    ai_cost_tokens: Mapped[int | None] = mapped_column(Integer, nullable=True)
     
     # Relationships
     expression: Mapped["WrittenExpression"] = relationship("WrittenExpression", back_populates="ai_correction")
     
     def __repr__(self) -> str:
-        return f"AICorrection(id={self.id}, expression={self.expression_id}, score={self.overall_score})"
+        return f"AICorrection(id={self.id}, score={self.overall_score}/20)"
 
 
 class WrittenExpressionManualCorrection(BaseModel):

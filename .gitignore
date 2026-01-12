@@ -44,6 +44,7 @@ backend/**/*.log
 backend/**/*.sqlite
 backend/**/*.sqlite3
 backend/**/*.db
+backend/alembic/versions/
 
 # Uploads
 backend/uploads/
@@ -66,6 +67,9 @@ backend/**/*.secret
 backend/**/*.pem
 backend/**/*.key
 backend/**/*.crt
+
+backend/storage/uploads/images
+backend/storage/uploads/audio
 
 # ============================================
 # FRONTEND (Next.js/React)

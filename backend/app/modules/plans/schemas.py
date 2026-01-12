@@ -1,14 +1,10 @@
 """
 Schemas Pydantic pour les plans.
 """
-
 from uuid import UUID
-
 from pydantic import Field
-
 from app.shared.enums import PlanType
 from app.shared.schemas.base import BaseSchema
-
 
 class PlanBase(BaseSchema):
     """Schema de base pour un plan."""
@@ -17,12 +13,12 @@ class PlanBase(BaseSchema):
     duration_days: int = Field(..., gt=0, description="Durée en jours")
     price: float = Field(..., ge=0, description="Prix en FCFA")
     ai_credits: int = Field(default=0, ge=0, description="Crédits IA inclus")
-
+    description: str = Field(..., min_length=10, max_length=500, description="Description du plan")
+    features: dict = Field(default_factory=dict, description="Caractéristiques JSON du plan")
 
 class PlanCreate(PlanBase):
     """Schema pour créer un plan."""
     is_active: bool = Field(default=True)
-
 
 class PlanUpdate(BaseSchema):
     """Schema pour mettre à jour un plan."""
@@ -31,7 +27,8 @@ class PlanUpdate(BaseSchema):
     price: float | None = Field(None, ge=0)
     ai_credits: int | None = Field(None, ge=0)
     is_active: bool | None = None
-
+    description: str | None = None
+    features: dict | None = None
 
 class PlanResponse(BaseSchema):
     """Response plan."""
@@ -42,7 +39,8 @@ class PlanResponse(BaseSchema):
     price: float
     ai_credits: int
     is_active: bool
-
+    description: str | None = None
+    features: dict | None = None
 
 class PlanListResponse(BaseSchema):
     """Response liste de plans."""
@@ -52,3 +50,6 @@ class PlanListResponse(BaseSchema):
     duration_days: int
     price: float
     is_active: bool
+    description: str | None = None
+    features: dict | None = None
+    ai_credits: int

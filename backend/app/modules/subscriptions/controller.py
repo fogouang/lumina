@@ -5,7 +5,7 @@ Controller (routes) pour les souscriptions.
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, status
 
 from app.modules.subscriptions.schemas import (
     AddStudentToOrgRequest,
@@ -214,4 +214,24 @@ async def get_org_students(
     return SuccessResponse(
         data=response_data,
         message=f"{len(subscriptions)} étudiant(s) trouvé(s)"
+    )
+    
+@router.get(
+    "/me/ai-credits",
+    response_model=SuccessResponse[dict],
+    summary="Mon solde de crédits IA"
+)
+async def get_my_ai_credits(
+    service: Annotated[SubscriptionService, Depends(get_subscription_service)],
+    current_user: CurrentUser
+):
+    """Récupérer mon solde de crédits IA."""
+    from app.shared.utils.ai_credits import AICreditManager
+    
+    credit_manager = AICreditManager(service.db)
+    balance = await credit_manager.get_credits_balance(current_user.id)
+    
+    return SuccessResponse(
+        data=balance,
+        message="Solde de crédits"
     )

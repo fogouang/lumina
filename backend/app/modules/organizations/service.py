@@ -262,3 +262,30 @@ class OrganizationService:
         org = await self.repo.remove_teacher(org_id, user_id)
         
         return org
+    
+    
+    async def get_my_organization(self, current_user: User) -> Organization:
+        """
+        Récupérer l'organisation de l'utilisateur connecté.
+        
+        Args:
+            current_user: Utilisateur authentifié
+            
+        Returns:
+            Organisation
+            
+        Raises:
+            ForbiddenException: Si pas ORG_ADMIN ou TEACHER
+            NotFoundException: Si aucune organisation trouvée
+        """
+        # Vérifier que l'utilisateur a le bon rôle
+        if current_user.role not in [UserRole.ORG_ADMIN, UserRole.TEACHER]:
+            raise ForbiddenException(detail="Seuls les admins d'organisation et enseignants peuvent accéder à cette ressource")
+        
+        # Récupérer l'organisation
+        org = await self.repo.get_by_admin_or_teacher(current_user.id)
+        
+        if not org:
+            raise NotFoundException(resource="Organization", identifier="current user")
+        
+        return org

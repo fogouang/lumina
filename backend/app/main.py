@@ -15,6 +15,7 @@ from app.shared.database.session import check_db_connection, close_db
 from app.shared.exceptions.base import AppException
 from app.shared.logging import logger, setup_logging
 from app.shared.schemas.responses import ErrorResponse
+from fastapi.staticfiles import StaticFiles 
 
 settings = get_settings()
 
@@ -73,6 +74,18 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# Servir les fichiers uploadés
+from pathlib import Path
+storage_path = Path(settings.STORAGE_PATH) / "uploads"
+storage_path.mkdir(parents=True, exist_ok=True)
+
+app.mount("/uploads", StaticFiles(directory=str(storage_path)), name="uploads")
+
+# Servir les factures PDF
+invoices_path = Path(settings.STORAGE_PATH) / "invoices"
+invoices_path.mkdir(parents=True, exist_ok=True)
+
+app.mount("/invoices", StaticFiles(directory=str(invoices_path)), name="invoices")
 
 # ✅ CORS Configuration
 if settings.DEBUG:
@@ -210,6 +223,8 @@ if __name__ == "__main__":
     uvicorn.run(
         "app.main:app",
         host="0.0.0.0",
-        port=8000,
+        port=8001,
         reload=True
     )
+    
+    # uv run uvicorn app.main:app --reload

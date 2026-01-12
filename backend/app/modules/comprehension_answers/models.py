@@ -2,7 +2,6 @@
 Modèles ComprehensionAnswer et ComprehensionResult - Réponses QCM.
 """
 
-import enum
 from datetime import datetime
 from typing import TYPE_CHECKING
 
@@ -11,21 +10,12 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.shared.database.base import BaseModel
-
-# IMPORTANT: Import direct de QuestionType (pas dans TYPE_CHECKING)
-from app.modules.questions.models import QuestionType
+from app.shared.enums import QuestionType, SelectedAnswer
+from sqlalchemy import UniqueConstraint
 
 if TYPE_CHECKING:
     from app.modules.exam_attempts.models import ExamAttempt
     from app.modules.questions.models import ComprehensionQuestion
-
-
-class SelectedAnswer(str, enum.Enum):
-    """Réponse sélectionnée par l'étudiant."""
-    A = "a"
-    B = "b"
-    C = "c"
-    D = "d"
 
 
 class ComprehensionAnswer(BaseModel):
@@ -34,6 +24,7 @@ class ComprehensionAnswer(BaseModel):
     """
     
     __tablename__ = "comprehension_answers"
+    
     
     attempt_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("exam_attempts.id", ondelete="CASCADE"), nullable=False, index=True)
     question_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("comprehension_questions.id", ondelete="CASCADE"), nullable=False, index=True)
@@ -61,8 +52,13 @@ class ComprehensionResult(BaseModel):
     
     __tablename__ = "comprehension_results"
     
+    # ✅ Ajouter une contrainte unique sur (attempt_id, type)
+    __table_args__ = (
+        UniqueConstraint('attempt_id', 'type', name='uq_comprehension_result_attempt_type'),
+    )
+    
     attempt_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("exam_attempts.id", ondelete="CASCADE"), nullable=False, index=True)
-    type: Mapped[QuestionType] = mapped_column(Enum(QuestionType, native_enum=False, length=50), nullable=False)  # CORRIGÉ
+    type: Mapped[QuestionType] = mapped_column(Enum(QuestionType, native_enum=False, length=50), nullable=False)
     
     score: Mapped[int] = mapped_column(Integer, nullable=False, doc="Score sur 699")
     correct_count: Mapped[int] = mapped_column(Integer, nullable=False)

@@ -54,7 +54,30 @@ async def get_organizations(
         message=f"{len(orgs)} organisation(s) trouvée(s)"
     )
 
-
+@router.get(
+    "/me",
+    response_model=SuccessResponse[OrganizationResponse],
+    summary="Mon organisation"
+)
+async def get_my_organization(
+    service: Annotated[OrganizationService, Depends(get_org_service)] = None,
+    current_user: CurrentUser = None
+):
+    """
+    Récupérer l'organisation de l'utilisateur connecté (ORG_ADMIN ou TEACHER).
+    """
+    org = await service.get_my_organization(current_user)
+    
+    # Calculer stats
+    response_data = OrganizationResponse.model_validate(org)
+    response_data.admin_count = len(org.admins)
+    response_data.teacher_count = len(org.teachers)
+    
+    return SuccessResponse(
+        data=response_data,
+        message="Organisation trouvée"
+    )
+    
 @router.get(
     "/{org_id}",
     response_model=SuccessResponse[OrganizationResponse],
@@ -240,3 +263,4 @@ async def remove_teacher(
         data=OrganizationResponse.model_validate(org),
         message="Enseignant retiré de l'organisation"
     )
+    

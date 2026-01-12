@@ -210,37 +210,48 @@ class SubscriptionService:
         return org_sub
     
     # === B2B STUDENT SUBSCRIPTIONS ===
-    
     async def add_student_to_org(
-        self,
-        org_id: UUID,
-        data: AddStudentToOrgRequest,
-        current_user: User
-    ) -> Subscription:
+    self,
+    org_id: UUID,
+    data: AddStudentToOrgRequest,
+    current_user: User
+) -> Subscription:
         """
-        Ajouter un étudiant à une organisation.
-        
-        Vérifie les slots disponibles et crée une souscription pour l'étudiant.
-        
-        Args:
-            org_id: UUID de l'organisation
-            data: Données étudiant
-            current_user: Utilisateur authentifié
+            Ajouter un étudiant à une organisation.
             
-        Returns:
-            Souscription créée pour l'étudiant
+            Vérifie les slots disponibles et crée une souscription pour l'étudiant.
             
-        Raises:
-            ForbiddenException: Si pas autorisé
-            BadRequestException: Si slots insuffisants ou utilisateur invalide
+            Args:
+                org_id: UUID de l'organisation
+                data: Données étudiant
+                current_user: Utilisateur authentifié
+                
+            Returns:
+                Souscription créée pour l'étudiant
+                
+            Raises:
+                ForbiddenException: Si pas autorisé
+                BadRequestException: Si slots insuffisants ou utilisateur invalide
+        
         """
-        # Vérifier permissions (admin platform ou admin de cette org)
-        if current_user.role != UserRole.PLATFORM_ADMIN:
-            # Vérifier si admin de cette org
-            org = await self.db.get(Organization, org_id)
-            # TODO: Charger avec relationships pour vérifier
-            # Pour l'instant, on laisse passer seulement admin platform
-            raise ForbiddenException(detail="Vous n'êtes pas admin de cette organisation")
+        from sqlalchemy import select
+        from app.modules.organizations.repository import OrganizationRepository
+
+        # Vérifier permissions
+        if current_user.role == UserRole.PLATFORM_ADMIN:
+            pass
+        elif current_user.role == UserRole.ORG_ADMIN:
+            org_repo = OrganizationRepository(self.db)
+            user_org = await org_repo.get_by_admin_or_teacher(current_user.id)
+            
+            if not user_org or user_org.id != org_id:
+                raise ForbiddenException(
+                    detail="Vous n'êtes pas admin de cette organisation"
+                )
+        else:
+            raise ForbiddenException(
+                detail="Seuls les admins peuvent ajouter des étudiants"
+            )
         
         # Récupérer la souscription active de l'org
         org_sub = await self.get_org_subscription(org_id)
@@ -253,16 +264,21 @@ class SubscriptionService:
         if user.role != UserRole.STUDENT:
             raise BadRequestException(detail="L'utilisateur doit avoir le rôle STUDENT")
         
-        # Vérifier qu'il n'a pas déjà une souscription active dans cette org
-        existing = await self.db.execute(
-            self.db.query(Subscription)
+        # ✅ CORRECTION: Vérifier qu'il n'a pas déjà une souscription active
+        stmt = (
+            select(Subscription)
             .where(Subscription.user_id == data.user_id)
             .where(Subscription.organization_id == org_id)
             .where(Subscription.is_active == True)
             .where(Subscription.end_date >= date.today())
         )
-        if existing.scalar_one_or_none():
-            raise BadRequestException(detail="Cet étudiant a déjà une souscription active dans cette organisation")
+        result = await self.db.execute(stmt)
+        existing = result.scalar_one_or_none()
+        
+        if existing:
+            raise BadRequestException(
+                detail="Cet étudiant a déjà une souscription active dans cette organisation"
+            )
         
         # Vérifier les slots disponibles
         active_students = await self.repo.count_active_students_in_org(org_id)
@@ -272,28 +288,146 @@ class SubscriptionService:
                 detail=f"Slots insuffisants ({active_students}/{org_sub.max_students} utilisés)"
             )
         
-        # Calculer dates (utilise la durée fournie, mais max = fin de souscription org)
+        # Calculer dates
         start_date = date.today()
         end_date = min(
             start_date + timedelta(days=data.duration_days),
             org_sub.end_date
         )
         
-        # ✅ CRÉER LA SOUSCRIPTION SANS PLAN (plan_id = NULL)
+        # Créer la souscription
         subscription = await self.repo.create(
             user_id=data.user_id,
             organization_id=org_id,
-            plan_id=None,  # ✅ Pas de plan pour B2B
-            custom_duration_days=data.duration_days,  # ✅ Durée custom
-            custom_ai_credits=org_sub.ai_credits_total // org_sub.max_students if org_sub.ai_credits_total > 0 else 0,  # ✅ Répartir les crédits
+            plan_id=None,
+            custom_duration_days=data.duration_days,
+            custom_ai_credits=org_sub.ai_credits_total // org_sub.max_students if org_sub.ai_credits_total > 0 else 0,
             start_date=start_date,
             end_date=end_date,
             is_active=True,
             ai_credits_remaining=org_sub.ai_credits_total // org_sub.max_students if org_sub.ai_credits_total > 0 else 0,
             created_by_id=current_user.id
         )
-            
+        
         return subscription
+    
+    # async def add_student_to_org(
+    #     self,
+    #     org_id: UUID,
+    #     data: AddStudentToOrgRequest,
+    #     current_user: User
+    # ) -> Subscription:
+    #     """
+    #     Ajouter un étudiant à une organisation.
+        
+    #     Vérifie les slots disponibles et crée une souscription pour l'étudiant.
+        
+    #     Args:
+    #         org_id: UUID de l'organisation
+    #         data: Données étudiant
+    #         current_user: Utilisateur authentifié
+            
+    #     Returns:
+    #         Souscription créée pour l'étudiant
+            
+    #     Raises:
+    #         ForbiddenException: Si pas autorisé
+    #         BadRequestException: Si slots insuffisants ou utilisateur invalide
+    #     """
+    #     # Vérifier permissions (admin platform ou admin de cette org)
+    #     from app.modules.organizations.repository import OrganizationRepository
+
+    #     if current_user.role == UserRole.PLATFORM_ADMIN:
+    #         # Admin platform peut tout faire
+    #         pass
+    #     elif current_user.role == UserRole.ORG_ADMIN:
+    #         # Vérifier que c'est bien son organisation
+    #         org_repo = OrganizationRepository(self.db)
+    #         user_org = await org_repo.get_by_admin_or_teacher(current_user.id)
+            
+    #         if not user_org or user_org.id != org_id:
+    #             raise ForbiddenException(
+    #                 detail="Vous n'êtes pas admin de cette organisation"
+    #             )
+    #     else:
+    #         raise ForbiddenException(
+    #             detail="Seuls les admins peuvent ajouter des étudiants"
+    #         )
+        
+    #     # Récupérer la souscription active de l'org
+    #     org_sub = await self.get_org_subscription(org_id)
+        
+    #     # Vérifier que l'utilisateur existe et est étudiant
+    #     user = await self.db.get(User, data.user_id)
+    #     if not user or not user.is_active:
+    #         raise NotFoundException(resource="User", identifier=str(data.user_id))
+        
+    #     if user.role != UserRole.STUDENT:
+    #         raise BadRequestException(detail="L'utilisateur doit avoir le rôle STUDENT")
+        
+    #     # Vérifier qu'il n'a pas déjà une souscription active dans cette org
+    #     existing = await self.db.execute(
+    #         self.db.query(Subscription)
+    #         .where(Subscription.user_id == data.user_id)
+    #         .where(Subscription.organization_id == org_id)
+    #         .where(Subscription.is_active == True)
+    #         .where(Subscription.end_date >= date.today())
+    #     )
+    #     if existing.scalar_one_or_none():
+    #         raise BadRequestException(detail="Cet étudiant a déjà une souscription active dans cette organisation")
+        
+    #     # Vérifier les slots disponibles
+    #     active_students = await self.repo.count_active_students_in_org(org_id)
+        
+    #     if active_students >= org_sub.max_students:
+    #         raise BadRequestException(
+    #             detail=f"Slots insuffisants ({active_students}/{org_sub.max_students} utilisés)"
+    #         )
+        
+    #     # Calculer dates (utilise la durée fournie, mais max = fin de souscription org)
+    #     start_date = date.today()
+    #     end_date = min(
+    #         start_date + timedelta(days=data.duration_days),
+    #         org_sub.end_date
+    #     )
+        
+    #     #  CRÉER LA SOUSCRIPTION SANS PLAN (plan_id = NULL)
+    #     subscription = await self.repo.create(
+    #         user_id=data.user_id,
+    #         organization_id=org_id,
+    #         plan_id=None,  # ✅ Pas de plan pour B2B
+    #         custom_duration_days=data.duration_days,  # ✅ Durée custom
+    #         custom_ai_credits=org_sub.ai_credits_total // org_sub.max_students if org_sub.ai_credits_total > 0 else 0,  # ✅ Répartir les crédits
+    #         start_date=start_date,
+    #         end_date=end_date,
+    #         is_active=True,
+    #         ai_credits_remaining=org_sub.ai_credits_total // org_sub.max_students if org_sub.ai_credits_total > 0 else 0,
+    #         created_by_id=current_user.id
+    #     )
+        
+    #     # ✅ AJOUTER: Notifier les teachers de l'org
+    #     from app.modules.notifications.service import NotificationService
+    #     from app.modules.organizations.repository import OrganizationRepository
+        
+    #     org_repo = OrganizationRepository(self.db)
+    #     org = await org_repo.get_by_id_or_404(org_sub.organization_id)
+        
+    #     # Récupérer le nom de l'étudiant
+    #     from app.modules.users.repository import UserRepository
+    #     user_repo = UserRepository(self.db)
+    #     student = await user_repo.get_by_id_or_404(data.student_id)
+        
+    #     # Notifier les teachers
+    #     notif_service = NotificationService(self.db) 
+        
+    #     # TODO: Récupérer les teachers de l'org
+    #     # for teacher in org.teachers:
+    #     #     await notif_service.notify_new_student(
+    #     #         teacher_id=teacher.id,
+    #     #         student_name=student.full_name,
+    #     #         organization_name=org.name
+    #     #     )
+    #     return subscription
         
     
     async def get_org_students(self, org_id: UUID, current_user: User) -> list[Subscription]:
@@ -306,10 +440,33 @@ class SubscriptionService:
             
         Returns:
             Liste de souscriptions
+            
+        Raises:
+            ForbiddenException: Si pas autorisé
         """
+        from app.modules.organizations.repository import OrganizationRepository
+        
         # Vérifier permissions
-        if current_user.role != UserRole.PLATFORM_ADMIN:
-            # TODO: Vérifier si admin/teacher de cette org
-            raise ForbiddenException(detail="Vous n'avez pas accès à cette organisation")
+        if current_user.role == UserRole.PLATFORM_ADMIN:
+            # Admin platform peut voir toutes les organisations
+            pass
+        elif current_user.role in [UserRole.ORG_ADMIN, UserRole.TEACHER]:
+            # Vérifier que c'est bien leur organisation
+            org_repo = OrganizationRepository(self.db)
+            user_org = await org_repo.get_by_admin_or_teacher(current_user.id)
+            
+            if not user_org:
+                raise ForbiddenException(
+                    detail="Vous n'êtes associé à aucune organisation"
+                )
+            
+            if user_org.id != org_id:
+                raise ForbiddenException(
+                    detail="Vous n'avez pas accès à cette organisation"
+                )
+        else:
+            raise ForbiddenException(
+                detail="Seuls les admins et enseignants peuvent consulter cette liste"
+            )
         
         return await self.repo.get_by_organization(org_id)
