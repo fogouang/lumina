@@ -15,7 +15,7 @@ RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 ENV PATH="/root/.local/bin:$PATH"
 
 # Copier les fichiers de dépendances
-COPY pyproject.toml uv.lock* ./
+COPY pyproject.toml uv.lock ./
 
 # Installer les dépendances avec uv
 RUN uv sync --frozen
@@ -25,5 +25,4 @@ COPY . .
 
 EXPOSE 8003
 
-# Production: sans --reload, avec --workers
 CMD ["uv", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8003", "--workers", "3"]
