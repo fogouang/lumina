@@ -29,7 +29,6 @@ backend/.tox/
 
 # UV (Package Manager)
 backend/.uv/
-backend/uv.lock
 
 # Environment variables
 backend/.env
