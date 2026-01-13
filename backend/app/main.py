@@ -9,6 +9,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+import app
 from app.api.v1.router import api_router
 from app.config import get_settings
 from app.shared.database.session import check_db_connection, close_db
