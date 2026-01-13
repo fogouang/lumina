@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING
 from sqlalchemy import Boolean, Enum, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.shared.database.base import BaseModel
-from app.modules.organizations.associations import organization_admins, organization_teachers
 
 if TYPE_CHECKING:
     from app.modules.organizations.models import Organization
@@ -39,16 +38,16 @@ class User(BaseModel):
     )
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, index=True)
     
-    # Relationships
+    # Relationships - utiliser les strings pour éviter l'import
     managed_organizations: Mapped[list["Organization"]] = relationship(
         "Organization", 
-        secondary=organization_admins, 
+        secondary="organization_admins",  # STRING au lieu d'objet
         back_populates="admins", 
         lazy="selectin"
     )
     teaching_at_organizations: Mapped[list["Organization"]] = relationship(
         "Organization", 
-        secondary=organization_teachers, 
+        secondary="organization_teachers",  # STRING au lieu d'objet
         back_populates="teachers", 
         lazy="selectin"
     )
