@@ -1,64 +1,43 @@
 """
 Import centralisé de tous les modèles dans le bon ordre.
-Ceci garantit que SQLAlchemy connaît tous les modèles et leurs relations.
 """
-
-# 1. Importer Base en premier
+# 1. Base
 from app.shared.database.base import Base
 
-# 2. Importer les tables d'association (many-to-many)
+# 2. Tables d'association EN PREMIER (avant User/Organization)
 from app.modules.organizations.associations import (
     organization_admins,
     organization_teachers,
 )
 
-# 3. Importer les modèles dans l'ordre le plus proche possible des dépendances
+# 3. Users et Organizations (après les tables d'association)
+from app.modules.users.models import User, UserRole
+from app.modules.organizations.models import Organization, OrganizationType
 
-# Utilisateurs & Organisations (base de la hiérarchie)
-from app.modules.users.models import User
-from app.modules.organizations.models import Organization
-
-# Plans & Souscriptions
+# 4. Plans & Subscriptions
 from app.modules.plans.models import Plan
-from app.modules.subscriptions.models import (
-    Subscription,
-    OrganizationSubscription,
-)
+from app.modules.subscriptions.models import Subscription, OrganizationSubscription
 
-# Séries d'examen & tâches
+# 5. Series & Tasks
 from app.modules.series.models import Series
 from app.modules.expression_tasks.models import ExpressionTask
-
-# Questions de compréhension (QCM)
 from app.modules.questions.models import ComprehensionQuestion
 
-# Tentatives d'examen & réponses
+# 6. Attempts & Answers
 from app.modules.exam_attempts.models import ExamAttempt
-from app.modules.comprehension_answers.models import (
-    ComprehensionAnswer,
-    ComprehensionResult,
-)
+from app.modules.comprehension_answers.models import ComprehensionAnswer, ComprehensionResult
 
-# Productions écrites + corrections
+# 7. Expressions
 from app.modules.written_expressions.models import (
     WrittenExpression,
     WrittenExpressionAICorrection,
     WrittenExpressionManualCorrection,
 )
+from app.modules.oral_expressions.models import OralExpression, OralExpressionCorrection
 
-# Productions orales + corrections
-from app.modules.oral_expressions.models import (
-    OralExpression,
-    OralExpressionCorrection,
-)
-
-# Paiements & factures
+# 8. Payments & Stats
 from app.modules.payments.models import Payment
-
-# Statistiques agrégées étudiants (post-expiration)
 from app.modules.analytics.models import StudentAggregatedStats
-
-# Notifications
 from app.modules.notifications.models import Notification
 
 # 4. Export explicite (utile pour `from .models import *` ou introspection)
