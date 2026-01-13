@@ -1,14 +1,12 @@
 """
 Modèle User - Gestion des utilisateurs.
 """
-
 import enum
 from typing import TYPE_CHECKING
-
 from sqlalchemy import Boolean, Enum, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-
 from app.shared.database.base import BaseModel
+from app.modules.organizations.associations import organization_admins, organization_teachers
 
 if TYPE_CHECKING:
     from app.modules.organizations.models import Organization
@@ -33,13 +31,33 @@ class User(BaseModel):
     first_name: Mapped[str] = mapped_column(String(100), nullable=False)
     last_name: Mapped[str] = mapped_column(String(100), nullable=False)
     phone: Mapped[str | None] = mapped_column(String(20), nullable=True)
-    role: Mapped[UserRole] = mapped_column(Enum(UserRole, native_enum=False, length=50), nullable=False, default=UserRole.STUDENT, index=True)
+    role: Mapped[UserRole] = mapped_column(
+        Enum(UserRole, native_enum=False, length=50), 
+        nullable=False, 
+        default=UserRole.STUDENT, 
+        index=True
+    )
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, index=True)
     
     # Relationships
-    managed_organizations: Mapped[list["Organization"]] = relationship("Organization", secondary="organization_admins", back_populates="admins", lazy="selectin")
-    teaching_at_organizations: Mapped[list["Organization"]] = relationship("Organization", secondary="organization_teachers", back_populates="teachers", lazy="selectin")
-    subscriptions: Mapped[list["Subscription"]] = relationship("Subscription", foreign_keys="Subscription.user_id", back_populates="user",    lazy="selectin")
+    managed_organizations: Mapped[list["Organization"]] = relationship(
+        "Organization", 
+        secondary=organization_admins, 
+        back_populates="admins", 
+        lazy="selectin"
+    )
+    teaching_at_organizations: Mapped[list["Organization"]] = relationship(
+        "Organization", 
+        secondary=organization_teachers, 
+        back_populates="teachers", 
+        lazy="selectin"
+    )
+    subscriptions: Mapped[list["Subscription"]] = relationship(
+        "Subscription", 
+        foreign_keys="Subscription.user_id", 
+        back_populates="user",
+        lazy="selectin"
+    )
     
     def __repr__(self) -> str:
         return f"User(id={self.id}, email={self.email!r}, role={self.role.value})"
