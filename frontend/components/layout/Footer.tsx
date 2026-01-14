@@ -81,12 +81,12 @@ export default function Footer() {
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li>
                 <a href="mailto:contact@tcf-canada.com" className="hover:text-foreground transition-colors">
-                  contact@tcf-canada.com
+                  contact@lumina-tcf.com
                 </a>
               </li>
               <li>
-                <a href="tel:+237123456789" className="hover:text-foreground transition-colors">
-                  +237 6XX XX XX XX
+                <a href="tel:++237691850913" className="hover:text-foreground transition-colors">
+                  +237 691 85 09 13
                 </a>
               </li>
               <li className="pt-2">

@@ -13,6 +13,7 @@ import {
   Bell,
   Settings,
   Receipt,
+  Workflow,
 } from "lucide-react";
 
 const studentNavItems = [
@@ -20,6 +21,11 @@ const studentNavItems = [
     title: "Tableau de bord",
     href: ROUTES.STUDENT_DASHBOARD,
     icon: Home,
+  },
+  {
+    title: "Methodologie",
+    href: ROUTES.STUDENT_WORKFLOW,
+    icon: Workflow,
   },
   {
     title: "Séries d'examens",

@@ -50,7 +50,7 @@ export function Navbar({ organization, branding }: NavbarProps) {
               href="/plans"
               className="text-sm font-medium hover:text-emerald-600 transition-colors"
             >
-              Formules
+              Abonnements
             </Link>
             <Link
               href="/contact"

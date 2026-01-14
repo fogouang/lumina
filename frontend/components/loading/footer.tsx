@@ -81,9 +81,8 @@ export default function Footer() {
           </div>
 
           {/* Plateforme IA */}
-          <div className="md:col-span-3">
+          <div className="md:col-span-2">
             <h3 className="text-sm font-semibold text-white uppercase tracking-wider mb-5 flex items-center gap-2">
-              <Brain className="h-4 w-4 text-emerald-400" />
               Plateforme
             </h3>
             <ul className="space-y-3 text-sm">
@@ -105,9 +104,8 @@ export default function Footer() {
           </div>
 
           {/* Apprentissage */}
-          <div className="md:col-span-2">
+          <div className="md:col-span-3">
             <h3 className="text-sm font-semibold text-white uppercase tracking-wider mb-5 flex items-center gap-2">
-              <Zap className="h-4 w-4 text-teal-400" />
               Apprentissage
             </h3>
             <ul className="space-y-3 text-sm">
@@ -130,7 +128,7 @@ export default function Footer() {
           </div>
 
           {/* Support & Contact */}
-          <div className="md:col-span-2">
+          <div className="md:col-span-3">
             <h3 className="text-sm font-semibold text-white uppercase tracking-wider mb-5">
               Support
             </h3>
@@ -139,8 +137,14 @@ export default function Footer() {
                 { href: "/help", label: "Centre d'aide" },
                 { href: "/contact", label: "Nous contacter" },
                 { href: "/faq", label: "FAQ" },
-                { href: "/user", label: "Conditions d'utilisation" },
-                { href: "/conf", label: "Confidentialité" },
+                {
+                  href: "/condition-remboursement",
+                  label: "Conditions de remboursement",
+                },
+                {
+                  href: "/politique-confidentialite",
+                  label: "Politique de Confidentialité",
+                },
               ].map((item) => (
                 <li key={item.href}>
                   <Link
@@ -156,11 +160,11 @@ export default function Footer() {
             <div className="space-y-3 text-sm">
               <div className="flex items-center gap-2">
                 <Phone className="h-4 w-4 text-emerald-400" />
-                <span>+237 699 123 456</span>
+                <span>+237 691 85 09 13</span>
               </div>
               <div className="flex items-center gap-2">
                 <Mail className="h-4 w-4 text-teal-400" />
-                <span>contact@luminatcf.com</span>
+                <span>contact@lumina-tcf.com</span>
               </div>
             </div>
           </div>
