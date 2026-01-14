@@ -7,6 +7,33 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { motion, type Variants } from "motion/react";
+
+const containerVariants: Variants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.2,
+    },
+  },
+};
+
+const itemVariants: Variants = {
+  hidden: {
+    opacity: 0,
+    y: 20,
+  },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.5,
+      ease: [0.25, 0.46, 0.45, 0.94],
+    },
+  },
+};
 
 const FAQ = () => {
   const faqs = [
@@ -56,40 +83,67 @@ const FAQ = () => {
     <section className="lg:py-16  from-emerald-50 to-white dark:bg-slate-900">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 text-sm font-semibold mb-4">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.3 }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-12"
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.2, duration: 0.5 }}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 text-sm font-semibold mb-4"
+          >
             FAQ
-          </div>
+          </motion.div>
           <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white mb-4">
             Questions fréquentes
           </h2>
           <p className="text-lg text-slate-600 dark:text-slate-400">
             Tout ce que vous devez savoir sur Lumina TCF
           </p>
-        </div>
+        </motion.div>
 
         {/* Accordion */}
-        <Accordion type="single" collapsible className="space-y-4">
-          {faqs.map((faq, index) => (
-            <AccordionItem
-              key={index}
-              value={`item-${index}`}
-              className="border border-slate-200 dark:border-slate-800 rounded-lg px-6 bg-white dark:bg-slate-800/50"
-            >
-              <AccordionTrigger className="text-left hover:no-underline py-6">
-                <span className="text-base font-semibold text-slate-900 dark:text-white pr-4">
-                  {faq.question}
-                </span>
-              </AccordionTrigger>
-              <AccordionContent className="pb-6  text-slate-600 dark:text-slate-400 leading-relaxed">
-                {faq.answer}
-              </AccordionContent>
-            </AccordionItem>
-          ))}
-        </Accordion>
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.2 }}
+        >
+          <Accordion type="single" collapsible className="space-y-4">
+            {faqs.map((faq, index) => (
+              <motion.div key={index} variants={itemVariants}>
+                <AccordionItem
+                  value={`item-${index}`}
+                  className="border border-slate-200 dark:border-slate-800 rounded-lg px-6 bg-white dark:bg-slate-800/50 hover:shadow-md transition-shadow"
+                >
+                  <AccordionTrigger className="text-left hover:no-underline py-6">
+                    <span className="text-base font-semibold text-slate-900 dark:text-white pr-4">
+                      {faq.question}
+                    </span>
+                  </AccordionTrigger>
+                  <AccordionContent className="pb-6  text-slate-600 dark:text-slate-400 leading-relaxed">
+                    {faq.answer}
+                  </AccordionContent>
+                </AccordionItem>
+              </motion.div>
+            ))}
+          </Accordion>
+        </motion.div>
 
         {/* CTA Footer */}
-        <div className="mt-12 mb-8 text-center p-8 bg-linear-to-r from-emerald-50 to-blue-50 dark:from-emerald-900/20 dark:to-blue-900/20 rounded-2xl border border-emerald-200 dark:border-emerald-800">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.5 }}
+          transition={{ delay: 0.3, duration: 0.6 }}
+          whileHover={{ scale: 1.02 }}
+          className="mt-12 mb-8 text-center p-8 bg-linear-to-r from-emerald-50 to-blue-50 dark:from-emerald-900/20 dark:to-blue-900/20 rounded-2xl border border-emerald-200 dark:border-emerald-800"
+        >
           <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
             Vous avez d'autres questions?
           </h3>
@@ -97,8 +151,10 @@ const FAQ = () => {
             Notre équipe est là pour vous aider
           </p>
 
-          <a
+          <motion.a
             href="mailto:support@luminatcf.com"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
             className="inline-flex items-center justify-center px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg transition-colors"
           >
             Contactez-nous
@@ -115,8 +171,8 @@ const FAQ = () => {
                 d="M14 5l7 7m0 0l-7 7m7-7H3"
               />
             </svg>
-          </a>
-        </div>
+          </motion.a>
+        </motion.div>
       </div>
     </section>
   );

@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import { motion } from "motion/react";
 
 const Hero = () => {
   return (
@@ -12,30 +13,55 @@ const Hero = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* Colonne gauche - Contenu */}
-          <div className="text-center lg:text-left">
+          <motion.div
+            initial={{ opacity: 0, x: -30 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] }}
+            className="text-center lg:text-left"
+          >
             {/* Badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 text-sm font-semibold mb-6">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.2, duration: 0.5 }}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 text-sm font-semibold mb-6"
+            >
               <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
               Sujet constament Mise à jour
-            </div>
+            </motion.div>
 
             {/* Titre */}
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-slate-900 dark:text-white mb-6 leading-tight">
+            <motion.h1
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3, duration: 0.6 }}
+              className="text-4xl sm:text-5xl lg:text-6xl font-bold text-slate-900 dark:text-white mb-6 leading-tight"
+            >
               Obtenez votre{" "}
               <span className="text-emerald-600 dark:text-emerald-400">
                 C1/C2
               </span>{" "}
               au TCF Canada
-            </h1>
+            </motion.h1>
 
             {/* Sous-titre */}
-            <p className="text-lg sm:text-xl text-slate-600 dark:text-slate-300 mb-8 max-w-2xl mx-auto lg:mx-0">
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4, duration: 0.6 }}
+              className="text-lg sm:text-xl text-slate-600 dark:text-slate-300 mb-8 max-w-2xl mx-auto lg:mx-0"
+            >
               Correction IA instantanée pour vos écrits. Simulateur en
               conditions réelles pour l'oral. Progression garantie.
-            </p>
+            </motion.p>
 
             {/* Boutons */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-12">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5, duration: 0.6 }}
+              className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-12"
+            >
               <Link
                 href="/register"
                 className="inline-flex items-center justify-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-200"
@@ -61,41 +87,66 @@ const Hero = () => {
               >
                 Voir les tarifs
               </Link>
-            </div>
+            </motion.div>
 
             {/* Stats */}
-            <div className="grid grid-cols-3 gap-6 pt-8 border-t border-slate-200 dark:border-slate-700">
-              <div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6, duration: 0.6 }}
+              className="grid grid-cols-3 gap-6 pt-8 border-t border-slate-200 dark:border-slate-700"
+            >
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                transition={{ type: "spring", stiffness: 300 }}
+              >
                 <div className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">
                   200+
                 </div>
                 <div className="text-sm text-slate-600 dark:text-slate-400 mt-1">
                   Candidats préparés
                 </div>
-              </div>
-              <div>
+              </motion.div>
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                transition={{ type: "spring", stiffness: 300 }}
+              >
                 <div className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">
                   40+
                 </div>
                 <div className="text-sm text-slate-600 dark:text-slate-400 mt-1">
                   Séries complet
                 </div>
-              </div>
-              <div>
+              </motion.div>
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                transition={{ type: "spring", stiffness: 300 }}
+              >
                 <div className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">
                   24h
                 </div>
                 <div className="text-sm text-slate-600 dark:text-slate-400 mt-1">
                   Correction maximale pour correction manuelle
                 </div>
-              </div>
-            </div>
-          </div>
+              </motion.div>
+            </motion.div>
+          </motion.div>
 
           {/* Colonne droite - Visuel */}
-          <div className="relative hidden lg:block">
+          <motion.div
+            initial={{ opacity: 0, x: 30 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.7, delay: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
+            className="relative hidden lg:block"
+          >
             {/* Carte de simulation d'examen */}
-            <div className="relative bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-8 border border-slate-200 dark:border-slate-700">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.5, duration: 0.6 }}
+              whileHover={{ y: -5 }}
+              className="relative bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-8 border border-slate-200 dark:border-slate-700"
+            >
               {/* Header */}
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
@@ -123,92 +174,60 @@ const Hero = () => {
                     </div>
                   </div>
                 </div>
-                <span className="px-3 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 text-sm font-semibold rounded-full">
+                <motion.span
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.8, type: "spring", stiffness: 200 }}
+                  className="px-3 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 text-sm font-semibold rounded-full"
+                >
                   IA
-                </span>
+                </motion.span>
               </div>
 
               {/* Critères de correction */}
-              <div className="space-y-3 mb-6 grid grid-cols-2 gap-3">
-                <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900/50 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-green-100 dark:bg-green-900/30 rounded flex items-center justify-center">
-                      <span className="text-sm font-bold text-green-600 dark:text-green-400">
-                        A
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.7, duration: 0.5 }}
+                className="space-y-3 mb-6 grid grid-cols-2 gap-3"
+              >
+                {[
+                  { letter: "A", label: "Structure et organisation globale", score: "3/5" },
+                  { letter: "B", label: "Cohésion et Cohérence", score: "3/4" },
+                  { letter: "C", label: "Richesse lexicale", score: "3/4" },
+                  { letter: "D", label: "Grammaire et Orthographe", score: "3/3" },
+                  { letter: "E", label: "Pertinence et realisation des tâches", score: "4/4" },
+                ].map((item, index) => (
+                  <motion.div
+                    key={item.letter}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.8 + index * 0.1 }}
+                    whileHover={{ scale: 1.02 }}
+                    className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900/50 rounded-lg"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-green-100 dark:bg-green-900/30 rounded flex items-center justify-center">
+                        <span className="text-sm font-bold text-green-600 dark:text-green-400">
+                          {item.letter}
+                        </span>
+                      </div>
+                      <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                        {item.label}
                       </span>
                     </div>
-                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                      Structure et organisation globale
+                    <span className="text-sm font-bold text-green-600 dark:text-green-400">
+                      {item.score}
                     </span>
-                  </div>
-                  <span className="text-sm font-bold text-green-600 dark:text-green-400">
-                    3/5
-                  </span>
-                </div>
+                  </motion.div>
+                ))}
 
-                <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900/50 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-green-100 dark:bg-blue-900/30 rounded flex items-center justify-center">
-                      <span className="text-sm font-bold text-green-600 dark:text-green-400">
-                        B
-                      </span>
-                    </div>
-                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                      Cohésion et Cohérence
-                    </span>
-                  </div>
-                  <span className="text-sm font-bold text-green-600 dark:text-green-400">
-                    3/4
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900/50 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-green-100 dark:bg-green-900/30 rounded flex items-center justify-center">
-                      <span className="text-sm font-bold text-green-600 dark:text-green-400">
-                        C
-                      </span>
-                    </div>
-                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                      Richesse lexicale
-                    </span>
-                  </div>
-                  <span className="text-sm font-bold text-green-600 dark:text-green-400">
-                    3/4
-                  </span>
-                </div>
-                <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900/50 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-green-100 dark:bg-green-900/30 rounded flex items-center justify-center">
-                      <span className="text-sm font-bold text-green-600 dark:text-green-400">
-                        D
-                      </span>
-                    </div>
-                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                      Grammaire et Orthographe
-                    </span>
-                  </div>
-                  <span className="text-sm font-bold text-green-600 dark:text-green-400">
-                    3/3
-                  </span>
-                </div>
-                <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900/50 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-green-100 dark:bg-green-900/30 rounded flex items-center justify-center">
-                      <span className="text-sm font-bold text-green-600 dark:text-green-400">
-                        E
-                      </span>
-                    </div>
-                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                      Pertinence et realisation des tâches
-                    </span>
-                  </div>
-                  <span className="text-sm font-bold text-green-600 dark:text-green-400">
-                    4/4
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg border border-emerald-200 dark:border-emerald-800">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 1.3 }}
+                  className="flex items-center justify-between p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg border border-emerald-200 dark:border-emerald-800"
+                >
                   <div className="flex items-center gap-3">
                     <svg
                       className="w-5 h-5 text-emerald-600 dark:text-emerald-400"
@@ -230,27 +249,45 @@ const Hero = () => {
                   <span className="text-xs px-2 py-1 bg-emerald-600 text-white rounded-full font-semibold">
                     INSTANTANÉ
                   </span>
-                </div>
-              </div>
+                </motion.div>
+              </motion.div>
 
               {/* Score estimé */}
-              <div className="bg-linear-to-r from-emerald-50 to-blue-50 dark:from-emerald-900/20 dark:to-blue-900/20 p-4 rounded-lg mb-4">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 1.4 }}
+                className="bg-linear-to-r from-emerald-50 to-blue-50 dark:from-emerald-900/20 dark:to-blue-900/20 p-4 rounded-lg mb-4"
+              >
                 <div className="text-sm text-slate-600 dark:text-slate-400 mb-1">
                   Estimation niveau CECRL
                 </div>
                 <div className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">
                   C1
                 </div>
-              </div>
+              </motion.div>
 
               {/* CTA */}
-              <button className="w-full py-3 bg-emerald-600 dark:bg-white text-white dark:text-slate-900 font-semibold rounded-lg hover:bg-emerald-700 cursor-pointer dark:hover:bg-slate-100 transition-colors">
+              <motion.button
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 1.5 }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="w-full py-3 bg-emerald-600 dark:bg-white text-white dark:text-slate-900 font-semibold rounded-lg hover:bg-emerald-700 cursor-pointer dark:hover:bg-slate-100 transition-colors"
+              >
                 Essayer maintenant
-              </button>
-            </div>
+              </motion.button>
+            </motion.div>
 
             {/* Badge flottant */}
-            <div className="absolute -top-4 -right-4 bg-white dark:bg-slate-800 px-4 py-2 rounded-full shadow-lg border border-slate-200 dark:border-slate-700 flex items-center gap-2">
+            <motion.div
+              initial={{ opacity: 0, scale: 0, rotate: -15 }}
+              animate={{ opacity: 1, scale: 1, rotate: 0 }}
+              transition={{ delay: 1.6, type: "spring", stiffness: 200 }}
+              whileHover={{ scale: 1.1, rotate: 5 }}
+              className="absolute -top-4 -right-4 bg-white dark:bg-slate-800 px-4 py-2 rounded-full shadow-lg border border-slate-200 dark:border-slate-700 flex items-center gap-2"
+            >
               <svg
                 className="w-4 h-4 text-emerald-600 dark:text-emerald-400"
                 fill="currentColor"
@@ -265,8 +302,8 @@ const Hero = () => {
               <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
                 Sans carte bancaire
               </span>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         </div>
       </div>
     </section>
