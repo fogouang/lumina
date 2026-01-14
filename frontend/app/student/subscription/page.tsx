@@ -1,10 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { CreditCard, Zap, Plus, History } from "lucide-react";
 import { useMySubscriptions } from "@/hooks/queries/useSubscriptionsQueries";
-import { useMyAICredits } from "@/hooks/queries/useSubscriptionsQueries";
 import { usePlansList } from "@/hooks/queries/usePlansQueries";
 import PageHeader from "@/components/shared/PageHeader";
 import SubscriptionCard from "@/components/student/SubscriptionCard";
@@ -12,23 +10,16 @@ import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import EmptyState from "@/components/shared/EmptyState";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import { PlanType } from "@/lib/api";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+
 import PricingCard from "@/components/subcriptions/PrincingCard";
+import { ROUTES } from "@/lib/constants";
+import router from "next/router";
 
 export default function SubscriptionPage() {
-  const router = useRouter();
   const [showPlansDialog, setShowPlansDialog] = useState(false);
 
   const { data: subscriptions, isLoading: subsLoading } = useMySubscriptions();
-  const { data: aiCredits, isLoading: creditsLoading } = useMyAICredits();
   const { data: plans, isLoading: plansLoading } = usePlansList(
     undefined,
     100,
@@ -36,16 +27,8 @@ export default function SubscriptionPage() {
     true
   );
 
-  if (subsLoading || creditsLoading) {
-    return <LoadingSpinner className="py-8" text="Chargement..." />;
-  }
-
   const activeSubscription = subscriptions?.find((s) => s.is_active);
-  const creditsRemaining = aiCredits?.ai_credits_remaining || 0;
-  const creditsTotal = aiCredits?.ai_credits_total || 0;
-  const creditsPercentage = creditsTotal > 0 
-    ? Math.round((creditsRemaining / creditsTotal) * 100) 
-    : 0;
+  const activePlan = plans?.find((p) => p.id === activeSubscription?.plan_id);
 
   return (
     <>
@@ -55,55 +38,34 @@ export default function SubscriptionPage() {
           description="Gérer votre souscription et vos crédits IA"
         />
 
-        {/* Crédits IA */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Zap className="h-5 w-5 text-yellow-500" />
-              Crédits IA
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Crédits restants</span>
-              <span className="text-2xl font-bold">
-                {creditsRemaining} / {creditsTotal}
-              </span>
-            </div>
-            <Progress value={creditsPercentage} />
-            <p className="text-sm text-muted-foreground">
-              Les crédits IA sont utilisés pour les corrections automatiques de vos
-              expressions écrites et orales.
-            </p>
-            {creditsRemaining < 10 && (
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-                <p className="text-sm text-yellow-800">
-                  ⚠️ Attention: Il vous reste peu de crédits IA. Pensez à renouveler
-                  votre abonnement.
-                </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
         {/* Abonnement actif */}
         {activeSubscription ? (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold">Abonnement actif</h2>
-              <Button variant="outline" size="sm">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => router.push(ROUTES.STUDENT_INVOICES)} 
+              >
                 <History className="mr-2 h-4 w-4" />
-                Historique
+                Historique & Factures
               </Button>
             </div>
             <SubscriptionCard
               subscription={{
-                plan_name: "Plan Mensuel", // TODO: Get from API
                 start_date: activeSubscription.start_date,
                 end_date: activeSubscription.end_date,
                 is_active: activeSubscription.is_active,
-                ai_credits_remaining: activeSubscription.ai_credits_remaining,
-                ai_credits_total: creditsTotal,
+                ai_credits_remaining:
+                  activeSubscription.ai_credits_remaining ?? 0,
+                plan: activePlan
+                  ? {
+                      name: activePlan.name,
+                      type: activePlan.type,
+                      ai_credits: activePlan.ai_credits,
+                    }
+                  : null,
               }}
             />
           </div>
@@ -165,12 +127,12 @@ export default function SubscriptionPage() {
               automatiquement à la fin de la période.
             </div>
             <div>
-              <strong>Crédits IA:</strong> Les crédits non utilisés sont perdus à
-              l'expiration de l'abonnement.
+              <strong>Crédits IA:</strong> Les crédits non utilisés sont perdus
+              à l'expiration de l'abonnement.
             </div>
             <div>
-              <strong>Annulation:</strong> Vous pouvez annuler votre abonnement à
-              tout moment depuis votre espace.
+              <strong>Annulation:</strong> Vous pouvez annuler votre abonnement
+              à tout moment depuis votre espace.
             </div>
           </CardContent>
         </Card>

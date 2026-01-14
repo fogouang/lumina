@@ -119,7 +119,7 @@ export default function CheckoutContent() {
                 if (paymentData.redirect_url) {
                   window.location.href = paymentData.redirect_url;
                 } else {
-                  router.push("/dashboard?payment=success");
+                  router.push("/payment/callback?status=pending");
                 }
               },
             }

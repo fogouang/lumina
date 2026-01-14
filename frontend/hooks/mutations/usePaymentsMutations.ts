@@ -28,17 +28,10 @@ export const useInitiatePayment = () => {
     onSuccess: (data) => {
       if (!data) return;
 
-      queryClient.invalidateQueries({ queryKey: PAYMENTS_KEYS.me() });
-      queryClient.invalidateQueries({ queryKey: SUBSCRIPTIONS_KEYS.me() });
-
-      toast({
-        title: "Paiement initié",
-        description: `Paiement ID: ${data.payment_id}`,
-      });
     },
     onError: (error: any) => {
       toast({
-        title: "Erreur",
+        title: "Erreur d'initiation",
         description: error.body?.detail || "Impossible d'initier le paiement",
         variant: "destructive",
       });

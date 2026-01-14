@@ -12,6 +12,7 @@ import {
   CreditCard,
   Bell,
   Settings,
+  Receipt,
 } from "lucide-react";
 
 const studentNavItems = [
@@ -39,6 +40,11 @@ const studentNavItems = [
     title: "Abonnement",
     href: ROUTES.STUDENT_SUBSCRIPTION,
     icon: CreditCard,
+  },
+  {
+    title: "Mes factures",
+    href: ROUTES.STUDENT_INVOICES,
+    icon: Receipt,
   },
   {
     title: "Notifications",

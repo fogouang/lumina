@@ -1,13 +1,19 @@
 import { Zap, Clock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 import DateDisplay from "@/components/shared/DateDisplay";
 import { SubscriptionResponse } from "@/lib/api/models/SubscriptionResponse";
+import { PlanType } from "@/lib/api";
+
+type SubscriptionDisplay = Pick<
+  SubscriptionResponse,
+  "start_date" | "end_date" | "is_active" | "ai_credits_remaining"
+> & { plan?: { name: string; type?: PlanType; ai_credits?: number } | null };
 
 interface SubscriptionCardProps {
-  subscription: SubscriptionResponse;
+  subscription: SubscriptionDisplay;
   onRenew?: () => void;
 }
 
@@ -20,18 +26,20 @@ export default function SubscriptionCard({
       (1000 * 60 * 60 * 24)
   );
 
-  // ✅ On ne peut plus calculer le pourcentage car on n'a pas le total
-  // On affiche juste le nombre restant
+  const creditsRemaining = subscription.ai_credits_remaining ?? 0;
+  const creditsTotal = subscription.plan?.ai_credits ?? creditsRemaining;
+  const creditsPercentage =
+    creditsTotal > 0 ? Math.round((creditsRemaining / creditsTotal) * 100) : 0;
 
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-start justify-between">
-          <CardTitle>Mon abonnement</CardTitle>
+        <CardTitle className="flex items-center justify-between">
+          <span>{subscription.plan?.name || "Mon abonnement"}</span>
           <Badge variant={subscription.is_active ? "default" : "secondary"}>
             {subscription.is_active ? "Actif" : "Expiré"}
           </Badge>
-        </div>
+        </CardTitle>
       </CardHeader>
 
       <CardContent className="space-y-4">
@@ -59,19 +67,29 @@ export default function SubscriptionCard({
         )}
 
         {/* Crédits IA */}
-        <div className="space-y-2">
+        <div className="space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Zap className="h-4 w-4 text-yellow-500" />
               <span className="text-sm font-medium">Crédits IA</span>
             </div>
-            <span className="text-sm font-bold">
-              {subscription.ai_credits_remaining}
+            <span className="text-lg font-bold">
+              {creditsRemaining} / {creditsTotal}
             </span>
           </div>
+          <Progress value={creditsPercentage} className="h-2" />
           <p className="text-xs text-muted-foreground">
             Crédits de correction restants
           </p>
+
+          {/* Alerte crédits faibles */}
+          {creditsRemaining < 10 && subscription.is_active && (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-2">
+              <p className="text-xs text-yellow-800">
+                ⚠️ Il vous reste peu de crédits IA
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Renouveler */}

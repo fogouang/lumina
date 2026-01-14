@@ -37,12 +37,7 @@ export const useSubscribeB2C = () => {
       return response.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: SUBSCRIPTIONS_KEYS.me() });
 
-      toast({
-        title: "Souscription créée",
-        description: "Votre souscription a été créée avec succès",
-      });
     },
     onError: (error: any) => {
       toast({

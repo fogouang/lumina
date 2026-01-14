@@ -47,6 +47,7 @@ export const ROUTES = {
 
   // Subscription
   STUDENT_SUBSCRIPTION: "/student/subscription",
+   STUDENT_INVOICES: "/student/invoices",
 
   // Notifications
   STUDENT_NOTIFICATIONS: "/student/notifications",

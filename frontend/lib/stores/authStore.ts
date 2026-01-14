@@ -4,7 +4,6 @@ import { app__modules__auth__schemas__UserResponse as UserResponse } from "@/lib
 
 interface AuthState {
   user: UserResponse | null;
-  isAuthenticated: boolean;
   setAuth: (user: UserResponse) => void;  
   setUser: (user: UserResponse) => void;
   logout: () => void;
@@ -14,13 +13,9 @@ export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
       user: null,
-      isAuthenticated: false,
       
-      setAuth: (user) => {  //cookies gérés automatiquement
-        set({
-          user,
-          isAuthenticated: true,
-        });
+      setAuth: (user) => {
+        set({ user });
       },
       
       setUser: (user) => {
@@ -28,11 +23,7 @@ export const useAuthStore = create<AuthState>()(
       },
       
       logout: () => {
-        // Cookies supprimés par le backend via /logout
-        set({
-          user: null,
-          isAuthenticated: false,
-        });
+        set({ user: null });
       },
     }),
     {

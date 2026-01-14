@@ -19,7 +19,7 @@ import { LogOut, Settings, User } from "lucide-react";
 import { useLogout } from "@/hooks/mutations/useAuthMutations";
 
 export default function Header() {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isHydrated } = useAuth();
   const { mutate: logout } = useLogout();
 
   const getInitials = (firstName?: string, lastName?: string) => {
@@ -29,7 +29,7 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
-      <div className="container flex h-16 items-center justify-between px-4">
+      <div className=" flex h-16 items-center justify-between px-4">
         {/* Logo */}
         <div className="flex items-center gap-6">
           {/* Mobile Menu */}
@@ -39,19 +39,25 @@ export default function Header() {
             </div>
           )}
 
-          <Link href={isAuthenticated ? ROUTES.STUDENT_DASHBOARD : ROUTES.HOME} className="flex items-center space-x-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground font-bold">
-              TCF
-            </div>
-            <span className="hidden font-bold sm:inline-block">
-              TCF Canada
-            </span>
+          {/* Logo */}
+          <Link
+            href={isAuthenticated ? ROUTES.STUDENT_DASHBOARD : ROUTES.HOME}
+            className=" flex items-center"
+          >
+            <img
+              src="/icon.png"
+              alt="logo image"
+              className="hidden md:block h-9 md:h-12 object-contain"
+            />
           </Link>
         </div>
 
         {/* Right side */}
         <div className="flex items-center gap-4">
-          {isAuthenticated ? (
+          {!isHydrated ? (
+            // Pendant l'hydratation, afficher un espace vide pour éviter le flash
+            <div className="w-24 h-10" />
+          ) : isAuthenticated ? (
             <>
               {/* Notifications */}
               <NotificationBell />
@@ -59,7 +65,10 @@ export default function Header() {
               {/* User Menu */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                  <Button
+                    variant="ghost"
+                    className="relative h-10 w-10 rounded-full"
+                  >
                     <Avatar className="h-10 w-10">
                       <AvatarFallback className="bg-primary text-primary-foreground">
                         {getInitials(user?.first_name, user?.last_name)}
@@ -80,19 +89,28 @@ export default function Header() {
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
-                    <Link href={ROUTES.STUDENT_SETTINGS} className="cursor-pointer">
+                    <Link
+                      href={ROUTES.STUDENT_SETTINGS}
+                      className="cursor-pointer"
+                    >
                       <User className="mr-2 h-4 w-4" />
                       <span>Mon profil</span>
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href={ROUTES.STUDENT_SETTINGS} className="cursor-pointer">
+                    <Link
+                      href={ROUTES.STUDENT_SETTINGS}
+                      className="cursor-pointer"
+                    >
                       <Settings className="mr-2 h-4 w-4" />
                       <span>Paramètres</span>
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => logout()} className="cursor-pointer text-red-600">
+                  <DropdownMenuItem
+                    onClick={() => logout()}
+                    className="cursor-pointer text-red-600"
+                  >
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>Déconnexion</span>
                   </DropdownMenuItem>
