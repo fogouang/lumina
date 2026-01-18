@@ -37,6 +37,7 @@ from app.modules.oral_expressions.models import OralExpression, OralExpressionCo
 
 # 8. Payments & Stats
 from app.modules.payments.models import Payment
+from app.modules.ai_credit_purchases.models import  AICreditPurchase
 from app.modules.analytics.models import StudentAggregatedStats
 from app.modules.notifications.models import Notification
 
@@ -77,6 +78,7 @@ __all__ = [
     
     # Paiement
     "Payment",
+    "AICreditPurchase",
     
     # Stats & Notifications
     "StudentAggregatedStats",

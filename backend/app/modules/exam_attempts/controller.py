@@ -126,17 +126,22 @@ async def get_attempt_details(
 ):
     """
     Récupérer les détails d'une tentative avec statistiques.
+    
+    Retourne les résultats de TOUS les modules (compréhension, expression écrite, expression orale)
+    même si certains ne sont pas encore complétés.
     """
     attempt = await service.get_attempt_by_id(attempt_id, current_user)
     
-    # Charger les résultats de compréhension
+    # ========================================================================
+    # 1. COMPRÉHENSION
+    # ========================================================================
     from app.modules.comprehension_answers.repository import ComprehensionResultRepository
     from app.shared.enums import QuestionType
     
     result_repo = ComprehensionResultRepository(service.db)
     results = await result_repo.get_by_attempt(attempt_id)
     
-    # Extraire les scores
+    # Extraire les scores (peuvent être None si pas encore fait)
     oral_result = next((r for r in results if r.type == QuestionType.ORAL), None)
     written_result = next((r for r in results if r.type == QuestionType.WRITTEN), None)
     
@@ -144,7 +149,27 @@ async def get_attempt_details(
     oral_level = service._get_cecrl_level(oral_result.score) if oral_result else None
     written_level = service._get_cecrl_level(written_result.score) if written_result else None
     
-    # Construire la réponse
+    # ========================================================================
+    # 2. EXPRESSIONS ÉCRITES
+    # ========================================================================
+    from app.modules.written_expressions.repository import WrittenExpressionRepository
+    
+    written_expr_repo = WrittenExpressionRepository(service.db)
+    written_expressions = await written_expr_repo.get_by_attempt(attempt_id)
+    written_expressions_count = len(written_expressions)
+    
+    # ========================================================================
+    # 3. EXPRESSIONS ORALES
+    # ========================================================================
+    from app.modules.oral_expressions.repository import OralExpressionRepository
+    
+    oral_expr_repo = OralExpressionRepository(service.db)
+    oral_expressions = await oral_expr_repo.get_by_attempt(attempt_id)
+    oral_expressions_count = len(oral_expressions)
+    
+    # ========================================================================
+    # 4. CONSTRUIRE LA RÉPONSE
+    # ========================================================================
     response_data = ExamAttemptDetailResponse(
         id=attempt.id,
         user_id=attempt.user_id,
@@ -152,16 +177,22 @@ async def get_attempt_details(
         started_at=attempt.started_at,
         completed_at=attempt.completed_at,
         status=attempt.status,
+        
+        # Compréhension Orale
         oral_score=oral_result.score if oral_result else None,
-        written_score=written_result.score if written_result else None,
-        oral_level=oral_level, 
-        written_level=written_level,  
+        oral_level=oral_level,
         oral_questions_answered=oral_result.correct_count if oral_result else 0,
-        written_questions_answered=written_result.correct_count if written_result else 0,
         total_oral_questions=oral_result.total_questions if oral_result else 39,
+        
+        # Compréhension Écrite
+        written_score=written_result.score if written_result else None,
+        written_level=written_level,
+        written_questions_answered=written_result.correct_count if written_result else 0,
         total_written_questions=written_result.total_questions if written_result else 39,
-        written_expressions_submitted=0,  # TODO
-        oral_expressions_submitted=0,  # TODO
+        
+        # Expressions
+        written_expressions_submitted=written_expressions_count,
+        oral_expressions_submitted=oral_expressions_count,
         total_written_tasks=3,
         total_oral_tasks=3,
     )
@@ -170,7 +201,7 @@ async def get_attempt_details(
         data=response_data,
         message="Tentative trouvée"
     )
-
+    
 
 @router.post(
     "/{attempt_id}/complete",

@@ -15,6 +15,7 @@ import { Separator } from "@/components/ui/separator";
 import { Check, Loader2 } from "lucide-react";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import ErrorState from "@/components/shared/ErrorState";
+import { ROUTES } from "@/lib/constants/routes";
 
 export default function CheckoutContent() {
   const searchParams = useSearchParams();
@@ -22,7 +23,7 @@ export default function CheckoutContent() {
   const planId = searchParams.get("plan");
 
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(
-    PaymentMethod.MOBILE_MONEY
+    PaymentMethod.MOBILE_MONEY,
   );
 
   // Mobile Money
@@ -119,13 +120,13 @@ export default function CheckoutContent() {
                 if (paymentData.redirect_url) {
                   window.location.href = paymentData.redirect_url;
                 } else {
-                  router.push("/payment/callback?status=pending");
+                  window.location.href = `${ROUTES.PAYMENT_CALLBACK}?status=pending&payment_id=${paymentData.payment_id}`;
                 }
               },
-            }
+            },
           );
         },
-      }
+      },
     );
   };
 
@@ -215,7 +216,7 @@ export default function CheckoutContent() {
                   value={phoneNumber}
                   onChange={(e) =>
                     setPhoneNumber(
-                      e.target.value.replace(/\D/g, "").slice(0, 12)
+                      e.target.value.replace(/\D/g, "").slice(0, 12),
                     )
                   }
                   maxLength={12}
@@ -259,7 +260,7 @@ export default function CheckoutContent() {
                       value={cardCvc}
                       onChange={(e) =>
                         setCardCvc(
-                          e.target.value.replace(/\D/g, "").slice(0, 4)
+                          e.target.value.replace(/\D/g, "").slice(0, 4),
                         )
                       }
                       maxLength={4}

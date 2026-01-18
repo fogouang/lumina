@@ -194,14 +194,17 @@ class WrittenExpressionService:
             if existing:
                 raise BadRequestException(detail="Les tâches ont déjà une correction IA")
         
-        # Vérifier et consommer crédits IA (1 crédit pour les 3 tâches)
+        # ✅ VÉRIFIER les crédits AVANT (sans consommer)
         from app.shared.utils.ai_credits import AICreditManager
         
         credit_manager = AICreditManager(self.db)
-        credit_result = await credit_manager.check_and_consume_credit(
-            user_id=current_user.id,
-            cost=1
-        )
+        
+        # Vérifier qu'on a assez de crédits
+        balance = await credit_manager.get_credits_balance(current_user.id)
+        if balance["ai_correction_credits"] < 1:
+            raise BadRequestException(
+                detail="Crédits IA insuffisants. Vous avez besoin de 1 crédit pour corriger les 3 tâches."
+            )
 
         # Générer le prompt combiné
         from app.modules.corrections.prompts import get_combined_correction_prompt
@@ -215,16 +218,87 @@ class WrittenExpressionService:
             task3_instruction=expressions[2].task.instruction_text,
         )
         
-        # Appeler l'IA
+        # ✅ Appeler l'IA (peut échouer)
         from app.modules.corrections.ai_corrector import AICorrectorFactory
         
-        corrector = AICorrectorFactory.create()
-        result = await corrector.correct_combined(prompt)
+        try:
+            corrector = AICorrectorFactory.create()
+            result = await corrector.correct_combined(prompt)
+            
+            # ✅ DEBUG: Afficher la réponse brute
+            print("=" * 80)
+            print("RÉPONSE BRUTE DE GEMINI:")
+            print(result)
+            print("=" * 80)
+            
+        except Exception as e:
+            raise BadRequestException(
+                detail=f"Erreur lors de la correction IA: {str(e)}"
+            )
         
         # Parser le résultat JSON
         import json
-        if isinstance(result, str):
-            result = json.loads(result)
+        try:
+            if isinstance(result, str):
+                result = json.loads(result)
+        except json.JSONDecodeError as e:
+            # ❌ Échec du parsing → ne pas consommer de crédit
+            raise BadRequestException(
+                detail=f"Erreur de parsing de la réponse IA: {str(e)}"
+            )
+
+        # ✅ NOUVEAU: Valider la structure du JSON
+        required_keys = ["global_assessment", "criteria_scores", "task_feedbacks", "corrections", "suggestions"]
+        missing_keys = [key for key in required_keys if key not in result]
+
+        if missing_keys:
+            # ❌ Structure invalide → ne pas consommer de crédit
+            raise BadRequestException(
+                detail=f"Réponse IA invalide. Clés manquantes: {', '.join(missing_keys)}. "
+                    f"Réponse reçue: {str(result)[:500]}"
+            )
+
+        # Valider task_feedbacks
+        for i in range(1, 4):
+            task_key = f"task{i}"
+            if task_key not in result["task_feedbacks"]:
+                raise BadRequestException(
+                    detail=f"task_feedbacks.{task_key} manquant dans la réponse IA"
+                )
+            
+            if "corrected_text" not in result["task_feedbacks"][task_key]:
+                raise BadRequestException(
+                    detail=f"corrected_text manquant pour {task_key}"
+                )
+
+        # Valider criteria_scores
+        required_criteria = [
+            "structure_score", "structure_feedback",
+            "cohesion_score", "cohesion_feedback",
+            "vocabulary_score", "vocabulary_feedback",
+            "grammar_score", "grammar_feedback",
+            "task_score", "task_feedback"
+        ]
+
+        missing_criteria = [key for key in required_criteria if key not in result["criteria_scores"]]
+        if missing_criteria:
+            raise BadRequestException(
+                detail=f"Critères manquants: {', '.join(missing_criteria)}"
+            )
+
+        # Valider global_assessment
+        if "overall_score" not in result["global_assessment"]:
+            raise BadRequestException(detail="overall_score manquant")
+        if "cecrl_level" not in result["global_assessment"]:
+            raise BadRequestException(detail="cecrl_level manquant")
+        if "appreciation" not in result["global_assessment"]:
+            raise BadRequestException(detail="appreciation manquant")
+
+        # ✅ SUCCÈS → Consommer le crédit MAINTENANT
+        credit_result = await credit_manager.check_and_consume_credit(
+            user_id=current_user.id,
+            cost=1
+        )
         
         # Sauvegarder la correction pour chaque tâche
         first_correction = None
@@ -279,7 +353,7 @@ class WrittenExpressionService:
                 credits_remaining=credit_result["credits_remaining"]
             )
             
-        return first_correction 
+        return first_correction
     
     # async def request_ai_correction(
     #     self,

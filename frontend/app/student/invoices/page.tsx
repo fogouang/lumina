@@ -4,7 +4,7 @@ import { useMyPayments } from "@/hooks/queries/usePaymentsQueries";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Download, FileText } from "lucide-react";
-import { PaymentStatus, PaymentResponse } from "@/lib/api"; 
+import { PaymentStatus, PaymentResponse } from "@/lib/api";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import PageHeader from "@/components/shared/PageHeader";
 
@@ -18,7 +18,7 @@ export default function InvoicesPage() {
   }
 
   const completedPayments = payments.filter(
-    (p) => p.payment_status === PaymentStatus.COMPLETED
+    (p) => p.payment_status === PaymentStatus.COMPLETED,
   );
 
   return (
@@ -57,14 +57,13 @@ interface InvoiceCardProps {
   payment: PaymentResponse;
 }
 
+// components/student/InvoicesPage.tsx
 function InvoiceCard({ payment }: { payment: PaymentResponse }) {
-  
   const displayDate = new Date().toLocaleDateString("fr-FR", {
     day: "2-digit",
     month: "long",
     year: "numeric",
   });
-
 
   const formattedAmount = new Intl.NumberFormat("fr-FR", {
     style: "currency",
@@ -78,10 +77,15 @@ function InvoiceCard({ payment }: { payment: PaymentResponse }) {
     .toLowerCase()
     .replace(/^\w/, (c) => c.toUpperCase());
 
-  // 2. Gestion sécurisée de invoice_url (string | null)
+  // ✅ Construire l'URL complète du PDF
   const handleDownload = () => {
     if (payment.invoice_url) {
-      window.open(payment.invoice_url, "_blank", "noopener,noreferrer");
+      // Si invoice_url commence par "/invoices/", construire l'URL complète
+      const fullUrl = payment.invoice_url.startsWith("http")
+        ? payment.invoice_url
+        : `${process.env.NEXT_PUBLIC_API_URL}${payment.invoice_url}`;
+
+      window.open(fullUrl, "_blank", "noopener,noreferrer");
     }
   };
 
@@ -102,14 +106,12 @@ function InvoiceCard({ payment }: { payment: PaymentResponse }) {
               </p>
             </div>
           </div>
-
           <div className="text-right space-y-1">
             <p className="text-xl font-semibold">{formattedAmount}</p>
             <p className="text-xs text-muted-foreground">{methodLabel}</p>
           </div>
         </div>
       </CardHeader>
-
       <CardContent className="pt-0">
         {payment.invoice_url ? (
           <Button

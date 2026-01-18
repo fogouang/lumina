@@ -32,28 +32,29 @@ class ExamAttemptResponse(BaseSchema):
     oral_score: int | None = Field(None, description="Score compréhension orale /699")
     written_score: int | None = Field(None, description="Score compréhension écrite /699")
     
+    # Niveaux CECRL 
     oral_level: str | None = Field(None, description="Niveau CECRL oral (A1-C2)")
     written_level: str | None = Field(None, description="Niveau CECRL écrit (A1-C2)")
-
-
-class ExamAttemptDetailResponse(ExamAttemptResponse):
-    """Response détaillée avec statistiques."""
+    
+     # Stats expression
+    written_expressions_submitted: int = Field(default=0)
+    oral_expressions_submitted: int = Field(default=0)
+    total_written_tasks: int = Field(default=3)
+    total_oral_tasks: int = Field(default=3)
     
     # Stats compréhension
     oral_questions_answered: int = Field(default=0)
     written_questions_answered: int = Field(default=0)
     total_oral_questions: int = Field(default=39)
     total_written_questions: int = Field(default=39)
+
+
+class ExamAttemptDetailResponse(ExamAttemptResponse):
+    """Response détaillée avec statistiques."""
     
-     # AJOUTEZ CES CHAMPS
-    oral_level: str | None = Field(None, description="Niveau CECRL oral (A1-C2)")
-    written_level: str | None = Field(None, description="Niveau CECRL écrit (A1-C2)")
     
-    # Stats expression
-    written_expressions_submitted: int = Field(default=0)
-    oral_expressions_submitted: int = Field(default=0)
-    total_written_tasks: int = Field(default=3)
-    total_oral_tasks: int = Field(default=3)
+    
+   
 
 
 class SubmitAnswerRequest(BaseSchema):

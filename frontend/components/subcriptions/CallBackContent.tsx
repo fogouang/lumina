@@ -15,31 +15,55 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ROUTES } from "@/lib/constants/routes";
 import { SUBSCRIPTIONS_KEYS } from "@/hooks/queries/useSubscriptionsQueries";
-import { PAYMENTS_KEYS } from "@/hooks/queries/usePaymentsQueries";
+import {
+  PAYMENTS_KEYS,
+  usePaymentDetail,
+} from "@/hooks/queries/usePaymentsQueries";
 import { useInvoiceByPayment } from "@/hooks/queries/useInvoicesQueries";
 import { Separator } from "@/components/ui/separator";
+import { PaymentStatus } from "@/lib/api";
 
 export default function CallBackContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const [pollingCount, setPollingCount] = useState(0);
 
-  const status = searchParams.get("status"); // "success" | "failed" | "pending"
+  const status = searchParams.get("status");
   const paymentId = searchParams.get("payment_id");
 
-  // Récupérer la facture si le paiement est réussi
+  const { data: payment } = usePaymentDetail(paymentId || "", {
+    enabled: !!paymentId && status === "pending",
+    refetchInterval: status === "pending" && pollingCount < 60 ? 3000 : false,
+  });
+
   const { data: invoice, isLoading: isLoadingInvoice } = useInvoiceByPayment(
-    paymentId || ""
+    paymentId || "",
   );
+
+  // ✅ Mettre à jour le statut quand le paiement change
+  useEffect(() => {
+    if (payment && status === "pending") {
+      setPollingCount((prev) => prev + 1);
+
+      if (payment.payment_status === PaymentStatus.COMPLETED) {
+        router.replace(
+          `${ROUTES.PAYMENT_CALLBACK}?status=success&payment_id=${paymentId}`,
+        );
+      } else if (payment.payment_status === PaymentStatus.FAILED) {
+        router.replace(
+          `${ROUTES.PAYMENT_CALLBACK}?status=failed&payment_id=${paymentId}`,
+        );
+      }
+    }
+  }, [payment, status, router, paymentId]);
 
   useEffect(() => {
     if (status === "success") {
-      // ✅ Invalider les queries pour rafraîchir les données
       queryClient.invalidateQueries({ queryKey: SUBSCRIPTIONS_KEYS.me() });
       queryClient.invalidateQueries({ queryKey: PAYMENTS_KEYS.me() });
 
-      // ✅ Afficher la notification de succès
       toast({
         title: "Paiement réussi !",
         description: "Votre souscription est maintenant active.",
@@ -73,7 +97,6 @@ export default function CallBackContent() {
                 </p>
               </div>
 
-              {/* Informations de facture */}
               {isLoadingInvoice ? (
                 <div className="flex items-center justify-center gap-2 text-muted-foreground">
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -104,7 +127,7 @@ export default function CallBackContent() {
                             day: "2-digit",
                             month: "long",
                             year: "numeric",
-                          }
+                          },
                         )}
                       </p>
                     </div>
@@ -164,6 +187,11 @@ export default function CallBackContent() {
                   instants.
                 </p>
               </div>
+              {pollingCount > 30 && (
+                <p className="text-xs text-yellow-600">
+                  La vérification prend plus de temps que prévu...
+                </p>
+              )}
             </>
           )}
 

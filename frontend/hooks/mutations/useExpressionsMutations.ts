@@ -44,6 +44,9 @@ export const useSubmitWrittenExpression = () => {
       queryClient.invalidateQueries({
         queryKey: EXAM_ATTEMPTS_KEYS.detail(variables.attemptId),
       });
+      queryClient.invalidateQueries({
+        queryKey: EXAM_ATTEMPTS_KEYS.lists(),
+      });
       toast({
         title: "Expression soumise",
         description: "Votre expression écrite a été enregistrée",
@@ -52,7 +55,8 @@ export const useSubmitWrittenExpression = () => {
     onError: (error: any) => {
       toast({
         title: "Erreur",
-        description: error.body?.detail || "Impossible de soumettre l'expression",
+        description:
+          error.body?.detail || "Impossible de soumettre l'expression",
         variant: "destructive",
       });
     },
@@ -89,7 +93,8 @@ export const useRequestAICorrection = () => {
     onError: (error: any) => {
       toast({
         title: "Erreur",
-        description: error.body?.detail || "Impossible de corriger l'expression",
+        description:
+          error.body?.detail || "Impossible de corriger l'expression",
         variant: "destructive",
       });
     },
@@ -120,7 +125,9 @@ export const useCreateWrittenManualCorrection = () => {
       if (!data) return;
 
       queryClient.invalidateQueries({
-        queryKey: EXPRESSIONS_KEYS.writtenManualCorrection(variables.expressionId),
+        queryKey: EXPRESSIONS_KEYS.writtenManualCorrection(
+          variables.expressionId
+        ),
       });
       queryClient.invalidateQueries({
         queryKey: EXPRESSIONS_KEYS.writtenDetail(variables.expressionId),
@@ -164,7 +171,9 @@ export const useUpdateWrittenManualCorrection = () => {
       if (!data) return;
 
       queryClient.invalidateQueries({
-        queryKey: EXPRESSIONS_KEYS.writtenManualCorrection(variables.expressionId),
+        queryKey: EXPRESSIONS_KEYS.writtenManualCorrection(
+          variables.expressionId
+        ),
       });
       queryClient.invalidateQueries({
         queryKey: EXPRESSIONS_KEYS.writtenDetail(variables.expressionId),
@@ -216,6 +225,9 @@ export const useSubmitOralExpression = () => {
       queryClient.invalidateQueries({
         queryKey: EXAM_ATTEMPTS_KEYS.detail(variables.attemptId),
       });
+      queryClient.invalidateQueries({
+        queryKey: EXAM_ATTEMPTS_KEYS.lists(),
+      });
       toast({
         title: "Expression soumise",
         description: "Votre expression orale a été enregistrée",
@@ -224,7 +236,8 @@ export const useSubmitOralExpression = () => {
     onError: (error: any) => {
       toast({
         title: "Erreur",
-        description: error.body?.detail || "Impossible de soumettre l'expression",
+        description:
+          error.body?.detail || "Impossible de soumettre l'expression",
         variant: "destructive",
       });
     },

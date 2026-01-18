@@ -24,14 +24,15 @@ export const useMyPayments = () => {
 };
 
 // Détails d'un paiement
-export const usePaymentDetail = (paymentId: string) => {
-  return useQuery({
+export const usePaymentDetail = (paymentId: string, options?: any) => {
+  return useQuery<PaymentResponse>({
     queryKey: PAYMENTS_KEYS.detail(paymentId),
     queryFn: async () => {
       const response =
         await PaymentsService.getPaymentApiV1PaymentsPaymentIdGet(paymentId);
-      return response.data as PaymentResponse;
+      return response.data!;
     },
     enabled: !!paymentId,
+    ...options,
   });
 };

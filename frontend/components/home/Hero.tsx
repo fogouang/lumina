@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import Link from "next/link";
 import { motion } from "motion/react";
 
@@ -82,7 +81,7 @@ const Hero = () => {
                 </svg>
               </Link>
               <Link
-                href="/pricing"
+                href="/plan"
                 className="inline-flex items-center justify-center px-4 py-1 bg-white dark:bg-slate-800 text-slate-700 dark:text-white font-semibold rounded-lg border-2 border-slate-200 dark:border-slate-700 hover:border-emerald-600 dark:hover:border-emerald-500 transition-all duration-200"
               >
                 Voir les tarifs

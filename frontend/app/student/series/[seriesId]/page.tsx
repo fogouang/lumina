@@ -3,7 +3,10 @@
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, FileText, Mic, Edit } from "lucide-react";
 import { useSeriesDetail } from "@/hooks/queries/useSeriesQueries";
-import { useMyAttempts } from "@/hooks/queries/useExamAttemptsQueries";
+import {
+  useAttemptDetail,
+  useMyAttempts,
+} from "@/hooks/queries/useExamAttemptsQueries";
 import { useStartExam } from "@/hooks/mutations/useExamAttemptsMutations";
 import PageHeader from "@/components/shared/PageHeader";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
@@ -22,19 +25,45 @@ export default function SeriesDetailPage() {
   const { data: attempts } = useMyAttempts();
   const { mutate: startExam, isPending } = useStartExam();
 
-  // Trouver l'attempt en cours pour cette série
-  const ongoingAttempt = attempts?.find(
-    (attempt) => attempt.series_id === seriesId && attempt.status === "in_progress"
-  );
+  const ongoingAttempt = attempts?.find((attempt) => {
+    return attempt.series_id === seriesId && attempt.status !== "completed";
+  });
+  const { data: fullAttemptData } = useAttemptDetail(ongoingAttempt?.id ?? "");
+
+ 
+  const attemptData = fullAttemptData ?? ongoingAttempt;
+
+  // Déterminer quels modules sont terminés
+  const completedModules = {
+    comprehension: attemptData
+      ? (attemptData.oral_questions_answered ?? 0) >=
+          (attemptData.total_oral_questions ?? 0) &&
+        (attemptData.written_questions_answered ?? 0) >=
+          (attemptData.total_written_questions ?? 0)
+      : false,
+    written: attemptData
+      ? (attemptData.written_expressions_submitted ?? 0) >=
+        (attemptData.total_written_tasks ?? 0)
+      : false,
+    oral: attemptData
+      ? (attemptData.oral_expressions_submitted ?? 0) >=
+        (attemptData.total_oral_tasks ?? 0)
+      : false,
+  };
 
   const handleModuleClick = (route: string) => {
-    // Si attempt existe déjà, continuer
+    // ✅ Empêcher l'accès si le module est terminé
+    if (completedModules[route as keyof typeof completedModules]) {
+      // Optionnel: afficher un toast
+      // toast.info("Ce module est déjà terminé");
+      return;
+    }
+
     if (ongoingAttempt?.id) {
       router.push(`/student/exam/${ongoingAttempt.id}/${route}`);
       return;
     }
 
-    // Sinon créer un nouvel attempt
     startExam(
       { series_id: seriesId },
       {
@@ -120,79 +149,123 @@ export default function SeriesDetailPage() {
       {/* Modules cliquables */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Compréhension */}
-        <Card
-          className="cursor-pointer hover:border-primary transition-colors"
-          onClick={() => handleModuleClick("comprehension")}
-        >
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-                <FileText className="h-6 w-6 text-primary" />
-              </div>
-              <div className="flex-1">
-                <CardTitle>Compréhension</CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  Écrite & Orale • 100 minutes
-                </p>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="flex items-center justify-between">
-            <Badge variant="outline">{questionCount} questions</Badge>
-            <span className="text-sm font-medium text-primary">
-              {buttonText}
-            </span>
-          </CardContent>
-        </Card>
+        <ModuleCard
+          title="Compréhension"
+          description="Écrite & Orale • 100 minutes"
+          icon={FileText}
+          count={questionCount}
+          countLabel="questions"
+          route="comprehension"
+          isCompleted={completedModules.comprehension}
+          buttonText={buttonText}
+          onClick={handleModuleClick}
+        />
 
         {/* Expression Écrite */}
-        <Card
-          className="cursor-pointer hover:border-primary transition-colors"
-          onClick={() => handleModuleClick("written")}
-        >
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-                <Edit className="h-6 w-6 text-primary" />
-              </div>
-              <div className="flex-1">
-                <CardTitle>Expression Écrite</CardTitle>
-                <p className="text-sm text-muted-foreground">60 minutes</p>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="flex items-center justify-between">
-            <Badge variant="outline">{writtenTaskCount} tâches</Badge>
-            <span className="text-sm font-medium text-primary">
-              {buttonText}
-            </span>
-          </CardContent>
-        </Card>
+        <ModuleCard
+          title="Expression Écrite"
+          description="60 minutes"
+          icon={Edit}
+          count={writtenTaskCount}
+          countLabel="tâches"
+          route="written"
+          isCompleted={completedModules.written}
+          buttonText={buttonText}
+          onClick={handleModuleClick}
+        />
 
         {/* Expression Orale */}
-        <Card
-          className="cursor-pointer hover:border-primary transition-colors"
-          onClick={() => handleModuleClick("oral")}
-        >
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-                <Mic className="h-6 w-6 text-primary" />
-              </div>
-              <div className="flex-1">
-                <CardTitle>Expression Orale</CardTitle>
-                <p className="text-sm text-muted-foreground">12 minutes</p>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="flex items-center justify-between">
-            <Badge variant="outline">{oralTaskCount} tâches</Badge>
-            <span className="text-sm font-medium text-primary">
-              {buttonText}
-            </span>
-          </CardContent>
-        </Card>
+        <ModuleCard
+          title="Expression Orale"
+          description="12 minutes"
+          icon={Mic}
+          count={oralTaskCount}
+          countLabel="tâches"
+          route="oral"
+          isCompleted={completedModules.oral}
+          buttonText={buttonText}
+          onClick={handleModuleClick}
+        />
       </div>
     </div>
+  );
+}
+
+// ✅ Composant réutilisable pour les modules
+function ModuleCard({
+  title,
+  description,
+  icon: Icon,
+  count,
+  countLabel,
+  route,
+  isCompleted,
+  buttonText,
+  onClick,
+}: {
+  title: string;
+  description: string;
+  icon: any;
+  count: number;
+  countLabel: string;
+  route: string;
+  isCompleted: boolean;
+  buttonText: string;
+  onClick: (route: string) => void;
+}) {
+  return (
+    <Card
+      className={`
+        ${
+          isCompleted
+            ? "opacity-60 cursor-not-allowed border-green-500"
+            : "cursor-pointer hover:border-primary"
+        } 
+        transition-colors
+      `}
+      onClick={() => !isCompleted && onClick(route)}
+    >
+      <CardHeader>
+        <div className="flex items-center gap-3">
+          <div
+            className={`flex h-12 w-12 items-center justify-center rounded-lg ${
+              isCompleted ? "bg-green-100 dark:bg-green-900" : "bg-primary/10"
+            }`}
+          >
+            <Icon
+              className={`h-6 w-6 ${
+                isCompleted ? "text-green-600" : "text-primary"
+              }`}
+            />
+          </div>
+          <div className="flex-1">
+            <CardTitle className="flex items-center gap-2">
+              {title}
+              {isCompleted && (
+                <Badge
+                  variant="secondary"
+                  className="text-xs bg-green-100 text-green-700"
+                >
+                  Terminé ✓
+                </Badge>
+              )}
+            </CardTitle>
+            <p className="text-sm text-muted-foreground">{description}</p>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="flex items-center justify-between">
+        <Badge variant="outline">
+          {count} {countLabel}
+        </Badge>
+        <span
+          className={`text-sm font-medium ${
+            isCompleted ? "text-green-600" : "text-primary"
+          }`}
+        >
+          {isCompleted ? "Terminé ✓" : buttonText}
+        </span>
+      </CardContent>
+    </Card>
   );
 }

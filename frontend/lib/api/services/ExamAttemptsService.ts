@@ -67,6 +67,9 @@ export class ExamAttemptsService {
     /**
      * Détails d'une tentative
      * Récupérer les détails d'une tentative avec statistiques.
+     *
+     * Retourne les résultats de TOUS les modules (compréhension, expression écrite, expression orale)
+     * même si certains ne sont pas encore complétés.
      * @param attemptId
      * @param accessToken
      * @returns SuccessResponse_ExamAttemptDetailResponse_ Successful Response

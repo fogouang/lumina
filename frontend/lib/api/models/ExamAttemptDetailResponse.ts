@@ -31,13 +31,13 @@ export type ExamAttemptDetailResponse = {
      * Niveau CECRL écrit (A1-C2)
      */
     written_level?: (string | null);
-    oral_questions_answered?: number;
-    written_questions_answered?: number;
-    total_oral_questions?: number;
-    total_written_questions?: number;
     written_expressions_submitted?: number;
     oral_expressions_submitted?: number;
     total_written_tasks?: number;
     total_oral_tasks?: number;
+    oral_questions_answered?: number;
+    written_questions_answered?: number;
+    total_oral_questions?: number;
+    total_written_questions?: number;
 };
 

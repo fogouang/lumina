@@ -60,7 +60,7 @@ class Settings(BaseSettings):
     GROK_BASE_URL: str = "https://api.x.ai/v1"
 
     # Gemini (Google)
-    GEMINI_API_KEY: str = "AIzaSyD9Vafn0UFgPUyYrVs-HrJmL9y56xH2D4U"
+    GEMINI_API_KEY: str = "AIzaSyDyKck2azekj7dheha84Zx8QTAua5-cmcc"
 
     # Claude (Anthropic)
     ANTHROPIC_API_KEY: str = ""
@@ -103,6 +103,11 @@ class Settings(BaseSettings):
     # === PAGINATION ===
     DEFAULT_PAGE_SIZE: int = 20
     MAX_PAGE_SIZE: int = 100
+    
+    # Pricing des crédits IA
+    AI_CREDIT_PRICE_PER_UNIT: int = 50  # 50 FCFA par crédit
+    AI_CREDIT_MIN_PURCHASE: int = 10  # Minimum 10 crédits (500 FCFA)
+    AI_CREDIT_MAX_PURCHASE: int = 100  # Maximum 1000 crédits (50,000 FCFA)
     
     @field_validator("DATABASE_URL", "DATABASE_URL_SYNC")
     def validate_database_urls(cls, v):

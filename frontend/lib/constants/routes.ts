@@ -20,7 +20,7 @@ export const ROUTES = {
   // Series
   STUDENT_SERIES: "/student/series",
   STUDENT_SERIES_DETAIL: (seriesId: string) => `/student/series/${seriesId}`,
-  STUDENT_WORKFLOW:"/student/methologie",
+  STUDENT_WORKFLOW: "/student/methologie",
 
   // Exam
   STUDENT_EXAM: (attemptId: string) => `/student/exam/${attemptId}`,
@@ -48,8 +48,9 @@ export const ROUTES = {
 
   // Subscription
   STUDENT_SUBSCRIPTION: "/student/subscription",
-   STUDENT_INVOICES: "/student/invoices",
-
+  STUDENT_INVOICES: "/student/invoices",
+  PAYMENT_CALLBACK: "/payment/callback",
+  
   // Notifications
   STUDENT_NOTIFICATIONS: "/student/notifications",
 

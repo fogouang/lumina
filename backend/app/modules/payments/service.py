@@ -234,13 +234,23 @@ class PaymentService:
     
     async def _activate_subscription(self, payment: Payment):
         """
-        Activer la souscription après paiement réussi.
+        Activer souscription OU créditer les crédits IA.
         
         Args:
             payment: Paiement complété
         """
-        if payment.subscription_id:
-            # Activer souscription B2C
+        # Vérifier si c'est un achat de crédits IA
+        from app.modules.ai_credit_purchases.service import AICreditPurchaseService
+        
+        ai_service = AICreditPurchaseService(self.db)
+        is_credit_purchase = await ai_service.credit_subscription_after_payment(payment.id)
+        
+        if is_credit_purchase:
+            # C'était un achat de crédits, on a déjà crédité
+            pass  # Continue quand même pour générer la facture
+        
+        # Sinon: Flow classique (activation souscription B2C/B2B)
+        elif payment.subscription_id:
             subscription = await self.db.get(Subscription, payment.subscription_id)
             if subscription:
                 await self.db.execute(
@@ -249,13 +259,22 @@ class PaymentService:
                 await self.db.commit()
         
         elif payment.org_subscription_id:
-            # Activer souscription organisation
             org_sub = await self.db.get(OrganizationSubscription, payment.org_subscription_id)
             if org_sub:
                 await self.db.execute(
                     f"UPDATE organization_subscriptions SET is_active = true WHERE id = '{org_sub.id}'"
                 )
                 await self.db.commit()
+        
+        # Générer automatiquement la facture PDF (pour tous les types de paiement)
+        from app.modules.invoices.service import InvoiceService
+        invoice_service = InvoiceService(self.db)
+        try:
+            await invoice_service.generate_invoice_for_payment(payment.id)
+        except Exception as e:
+            # Log l'erreur mais ne bloque pas le reste du processus
+            print(f"Erreur génération facture: {e}")
+                  
     
     async def get_payment_by_id(self, payment_id: UUID) -> Payment:
         """
