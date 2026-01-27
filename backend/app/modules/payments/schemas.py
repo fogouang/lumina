@@ -59,13 +59,19 @@ class PaymentResponse(BaseSchema):
 
 
 class WebhookData(BaseSchema):
-    """Data reçue du webhook My-CoolPay."""
+    """Données reçues du webhook My-CoolPay."""
     
-    transaction_reference: str = Field(..., description="Référence unique transaction")
-    status: str = Field(..., description="success, failed, pending")
-    amount: float = Field(..., description="Montant payé")
-    signature: str = Field(..., description="Signature HMAC pour validation")
-    
-    # Optionnel
-    phone_number: str | None = None
-    payment_method: str | None = None
+    application: str = Field(..., description="Public key")
+    app_transaction_ref: str = Field(..., description="Notre référence (invoice_number)")
+    operator_transaction_ref: str | None = Field(None, description="Référence opérateur")
+    transaction_ref: str = Field(..., description="Référence My-CoolPay")
+    transaction_type: str = Field(..., description="PAYIN ou PAYOUT")
+    transaction_amount: float = Field(..., description="Montant")
+    transaction_fees: float = Field(..., description="Frais")
+    transaction_currency: str = Field(..., description="XAF")
+    transaction_operator: str = Field(..., description="CM_MOMO, CM_OM, CARD, MCP")
+    transaction_status: str = Field(..., description="SUCCESS, CANCELED, FAILED")
+    transaction_reason: str = Field(..., description="Raison")
+    transaction_message: str | None = Field(None, description="Message")
+    customer_phone_number: str | None = Field(None, description="Téléphone")
+    signature: str = Field(..., description="Signature MD5")

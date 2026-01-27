@@ -1,6 +1,6 @@
 export const AVAILABLE_FEATURES = [
   // Accès de base
-  { key: "serie_100", label: "Série 100 complet", category: "base" },
+  { key: "serie_100", label: "41 séries  complet", category: "base" },
   { key: "sujets_actualite", label: "Sujets d'actualité", category: "base" },
 
   // Suivi et corrections
@@ -12,7 +12,7 @@ export const AVAILABLE_FEATURES = [
   { key: "niveau_garanti", label: "C1/C2 garanti", category: "suivi" },
   {
     key: "sujets_recents",
-    label: "Sujets récents TCF / TEF",
+    label: "Sujets récents TCF",
     category: "contenu",
   },
   {

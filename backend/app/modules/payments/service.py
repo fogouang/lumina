@@ -171,11 +171,11 @@ class PaymentService:
         """
         # 1. Vérifier la signature
         is_valid = self.mycoolpay.verify_webhook_signature(
-            transaction_ref=webhook_data.transaction_reference,
-            transaction_type="PAYIN",  # Toujours PAYIN pour nous
-            transaction_amount=webhook_data.amount,
-            transaction_currency="XAF",
-            transaction_operator=webhook_data.payment_method or "MCP",
+            transaction_ref=webhook_data.transaction_ref,
+            transaction_type=webhook_data.transaction_type,
+            transaction_amount=webhook_data.transaction_amount,
+            transaction_currency=webhook_data.transaction_currency,
+            transaction_operator=webhook_data.transaction_operator,
             signature=webhook_data.signature
         )
         
@@ -183,22 +183,22 @@ class PaymentService:
             raise BadRequestException(detail="Signature invalide")
         
         # 2. Récupérer le paiement
-        payment = await self.repo.find_by_transaction_ref(webhook_data.transaction_reference)
+        payment = await self.repo.find_by_transaction_ref(webhook_data.transaction_ref)
         
         if not payment:
             raise NotFoundException(
                 resource="Payment",
-                identifier=f"transaction_ref={webhook_data.transaction_reference}"
+                identifier=f"transaction_ref={webhook_data.transaction_ref}"
             )
         
         # 3. Mettre à jour le statut
         new_status = None
         
-        if webhook_data.status == "SUCCESS":
+        if webhook_data.transaction_status == "SUCCESS":
             new_status = PaymentStatus.COMPLETED
-        elif webhook_data.status == "FAILED":
+        elif webhook_data.transaction_status == "FAILED":
             new_status = PaymentStatus.FAILED
-        elif webhook_data.status == "CANCELED":
+        elif webhook_data.transaction_status == "CANCELED":
             new_status = PaymentStatus.FAILED
         
         if new_status:
