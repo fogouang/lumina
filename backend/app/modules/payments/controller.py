@@ -55,7 +55,7 @@ async def initiate_payment(
 
 
 @router.post(
-    "/webhook",
+    "/webhook/jkdKo0Lp8lsdfjk4j0HJhskfak93d",
     status_code=status.HTTP_200_OK,
     summary="Webhook My-CoolPay"
 )
