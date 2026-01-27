@@ -208,9 +208,6 @@ class PaymentService:
         if new_status == PaymentStatus.COMPLETED:
             await self._activate_subscription(payment)
             
-            # Générer la facture PDF
-            await self._generate_invoice_pdf(payment)
-            
             # Notifier l'utilisateur
             from app.modules.notifications.service import NotificationService
             
