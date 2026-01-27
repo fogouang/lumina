@@ -246,16 +246,49 @@ class PaymentService:
             # C'était un achat de crédits, on a déjà crédité
             return  # Continue quand même pour générer la facture
         
-        # Sinon: Flow classique (activation souscription B2C/B2B)
+        # ✅ FLOW B2C : Créer une nouvelle souscription
         if payment.subscription_id:
-            from app.modules.subscriptions.repository import SubscriptionRepository
+            from sqlalchemy import update
+            from datetime import date, timedelta
             
-            sub_repo = SubscriptionRepository(self.db)
-            await sub_repo.update(
-                payment.subscription_id,
-                is_active=True 
-            )
+            # 1. Récupérer la souscription temporaire
+            temp_subscription = await self.db.get(Subscription, payment.subscription_id)
+            
+            if temp_subscription and temp_subscription.plan_id:
+                # 2. Désactiver toutes les anciennes souscriptions du user
+                await self.db.execute(
+                    update(Subscription)
+                    .where(
+                        Subscription.user_id == temp_subscription.user_id,
+                        Subscription.is_active == True
+                    )
+                    .values(is_active=False)
+                )
+                
+                # 3. Récupérer le plan pour les dates
+                plan = await self.db.get(Plan, temp_subscription.plan_id)
+                
+                # 4. Créer une NOUVELLE souscription avec les bonnes dates
+                new_subscription = Subscription(
+                    user_id=temp_subscription.user_id,
+                    organization_id=None,
+                    plan_id=plan.id,
+                    start_date=date.today(),
+                    end_date=date.today() + timedelta(days=plan.duration_days),
+                    is_active=True,
+                    custom_duration_days=None,
+                    custom_ai_credits=None,
+                    ai_credits_remaining=plan.ai_credits
+                )
+                
+                self.db.add(new_subscription)
+                
+                # 5. Supprimer la souscription temporaire
+                await self.db.delete(temp_subscription)
+                
+                await self.db.commit()
         
+        # ✅ FLOW B2B
         elif payment.org_subscription_id:
             from app.modules.subscriptions.repository import OrganizationSubscriptionRepository
         

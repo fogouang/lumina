@@ -152,7 +152,7 @@ class InvoiceService:
         story = []
         
         # En-tête
-        story.append(Paragraph("TCF CANADA", title_style))
+        story.append(Paragraph("LUMINA TCF CANADA", title_style))
         story.append(Paragraph("Plateforme de préparation TCF Canada", normal_style))
         story.append(Paragraph("Dschang, Cameroun", normal_style))
         story.append(Spacer(1, 1*cm))
@@ -205,8 +205,8 @@ class InvoiceService:
             ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
             ('FONTNAME', (0, 0), (-1, -1), 'Helvetica-Bold'),
             ('FONTSIZE', (0, 0), (-1, -1), 14),
-            ('TEXTCOLOR', (0, 0), (-1, -1), colors.HexColor('#2563eb')),
-            ('LINEABOVE', (0, 0), (-1, 0), 2, colors.HexColor('#2563eb')),
+            ('TEXTCOLOR', (0, 0), (-1, -1), colors.HexColor('#50C878')),
+            ('LINEABOVE', (0, 0), (-1, 0), 2, colors.HexColor('#50C878')),
             ('TOPPADDING', (0, 0), (-1, -1), 12),
         ]))
         
