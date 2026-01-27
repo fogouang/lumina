@@ -134,7 +134,7 @@ class InvoiceService:
             'CustomTitle',
             parent=styles['Heading1'],
             fontSize=24,
-            textColor=colors.HexColor('#2563eb'),
+            textColor=colors.HexColor('#50C878'),
             spaceAfter=30,
         )
         
