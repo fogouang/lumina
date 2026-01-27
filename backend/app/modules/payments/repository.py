@@ -82,16 +82,18 @@ class PaymentRepository(BaseRepository[Payment]):
         )
         return list(result.scalars().all())
     
+
     async def generate_invoice_number(self) -> str:
         """
-        Générer un numéro de facture unique.
+        Générer un numéro de facture unique avec timestamp.
         
-        Format: INV-YYYY-XXXXX (ex: INV-2025-00001)
+        Format: INV-YYYY-XXXXX-TIMESTAMP (ex: INV-2025-00001-1738012345)
         
         Returns:
             Numéro de facture
         """
         from datetime import datetime
+        import time
         
         # Récupérer le dernier numéro de facture de l'année
         year = datetime.now().year
@@ -100,18 +102,25 @@ class PaymentRepository(BaseRepository[Payment]):
         result = await self.db.execute(
             select(Payment.invoice_number)
             .where(Payment.invoice_number.like(f"{prefix}%"))
-            .order_by(Payment.invoice_number.desc())
+            .order_by(Payment.created_at.desc()) 
             .limit(1)
         )
         
         last_invoice = result.scalar_one_or_none()
         
         if last_invoice:
-            # Extraire le numéro et incrémenter
-            last_number = int(last_invoice.split("-")[-1])
-            next_number = last_number + 1
+            # Extraire le numéro (ignore le timestamp)
+            parts = last_invoice.split("-")
+            if len(parts) >= 3:
+                last_number = int(parts[2])
+                next_number = last_number + 1
+            else:
+                next_number = 1
         else:
             next_number = 1
         
-        # Formater avec padding (5 chiffres)
-        return f"{prefix}{next_number:05d}"
+        #Ajouter un timestamp pour éviter les doublons
+        timestamp = int(time.time())
+        
+        # Formater: INV-2025-00001-1738012345
+        return f"{prefix}{next_number:05d}-{timestamp}"

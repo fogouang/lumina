@@ -138,7 +138,7 @@ export default function ComprehensionExamPage() {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => router.push(ROUTES.STUDENT_EXAM(attemptId))}
+              onClick={() => router.push(ROUTES.STUDENT_SERIES)}
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>

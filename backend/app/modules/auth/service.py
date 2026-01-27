@@ -15,6 +15,8 @@ from app.shared.enums import UserRole
 from app.shared.exceptions.http import BadRequestException, UnauthorizedException
 from app.shared.security.jwt import create_access_token, decode_access_token
 from app.shared.security.password import hash_password, verify_password
+from datetime import date, timedelta
+from app.modules.subscriptions.models import Subscription
 
 
 class AuthService:
@@ -73,6 +75,21 @@ class AuthService:
         )
         
         self.db.add(user)
+        await self.db.commit()
+        await self.db.refresh(user)
+        
+        trial_subscription = Subscription(
+        user_id=user.id,
+        organization_id=None,
+        plan_id=None,
+        start_date=date.today(),
+        end_date=date.today() + timedelta(days=7),
+        is_active=True,
+        custom_duration_days=7,
+        custom_ai_credits=2,
+        ai_credits_remaining=2
+        )
+        self.db.add(trial_subscription)
         await self.db.commit()
         await self.db.refresh(user)
         

@@ -8,6 +8,8 @@ from pydantic import Field
 
 from app.shared.enums import QuestionType
 from app.shared.schemas.base import BaseSchema
+from pydantic import field_validator
+
 
 
 class QuestionBase(BaseSchema):
@@ -15,6 +17,7 @@ class QuestionBase(BaseSchema):
     question_number: int = Field(..., ge=1, le=78, description="Numéro 1-78 (1-39 oral, 40-78 écrit)")
     type: QuestionType = Field(..., description="oral ou written")
     question_text: str | None = Field(None, description="Texte question (optionnel pour oral)")
+    asked_question: str | None = Field(None, description="Question posée (askedQuestion)")
     image_url: str | None = Field(None, max_length=500, description="URL image (optionnelle)")
     audio_url: str | None = Field(None, max_length=500, description="URL audio (obligatoire pour oral)")
 
@@ -34,6 +37,7 @@ class QuestionCreate(QuestionBase):
 class QuestionUpdate(BaseSchema):
     """Schema pour mettre à jour une question."""
     question_text: str | None = None
+    asked_question: str | None = None
     image_url: str | None = None
     audio_url: str | None = None
     option_a: str | None = None
@@ -52,6 +56,7 @@ class QuestionResponse(BaseSchema):
     question_number: int
     type: QuestionType
     question_text: str | None
+    asked_question: str | None = None
     image_url: str | None
     audio_url: str | None
     option_a: str
@@ -82,3 +87,13 @@ class QuestionImportItem(BaseSchema):
 class QuestionImportRequest(BaseSchema):
     """Schema pour l'import JSON."""
     questions: list[QuestionImportItem]
+    
+    
+
+class QuestionBatchImageUpdate(BaseSchema):
+    """Schema pour mise à jour batch des images."""
+    series_id: UUID = Field(..., description="ID de la série")
+    question_type: QuestionType = Field(..., description="Type de questions (oral/written)")
+    images: dict[str, str] = Field(..., description="Mapping {question_number: image_url}")
+    
+   

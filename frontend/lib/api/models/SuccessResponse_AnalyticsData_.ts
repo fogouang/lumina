@@ -2,8 +2,8 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { app__modules__users__schemas__UserResponse } from './app__modules__users__schemas__UserResponse';
-export type app__shared__schemas__responses__SuccessResponse = {
+import type { AnalyticsData } from './AnalyticsData';
+export type SuccessResponse_AnalyticsData_ = {
     /**
      * Indicateur de succès
      */
@@ -15,6 +15,6 @@ export type app__shared__schemas__responses__SuccessResponse = {
     /**
      * Données de la réponse
      */
-    data?: (app__modules__users__schemas__UserResponse | null);
+    data?: (AnalyticsData | null);
 };
 

@@ -6,6 +6,7 @@ import {
   QuestionCreate,
   QuestionUpdate,
   QuestionImportRequest,
+  QuestionBatchImageUpdate,
 } from "@/lib/api";
 import { useToast } from "@/hooks/useToats";
 import { QUESTIONS_KEYS } from "../queries/useQuestionsQueries";
@@ -27,7 +28,7 @@ export const useCreateQuestion = () => {
       const response =
         await SeriesQuestionsService.createQuestionApiV1SeriesSeriesIdQuestionsPost(
           seriesId,
-          data
+          data,
         );
       return response.data;
     },
@@ -67,7 +68,7 @@ export const useUpdateQuestion = () => {
       const response =
         await SeriesQuestionsService.updateQuestionApiV1SeriesQuestionsQuestionIdPatch(
           questionId,
-          data
+          data,
         );
       return response.data;
     },
@@ -98,7 +99,7 @@ export const useDeleteQuestion = () => {
     mutationFn: async (questionId: string) => {
       const response =
         await SeriesQuestionsService.deleteQuestionApiV1SeriesQuestionsQuestionIdDelete(
-          questionId
+          questionId,
         );
       return response.data;
     },
@@ -136,7 +137,7 @@ export const useImportOralQuestions = () => {
       const response =
         await SeriesQuestionsService.importOralQuestionsApiV1SeriesSeriesIdImportComprehensionOralPost(
           seriesId,
-          data
+          data,
         );
       return { response: response.data, seriesId };
     },
@@ -182,7 +183,7 @@ export const useImportWrittenQuestions = () => {
       const response =
         await SeriesQuestionsService.importWrittenQuestionsApiV1SeriesSeriesIdImportComprehensionWrittenPost(
           seriesId,
-          data
+          data,
         );
       return { response: response.data, seriesId };
     },
@@ -206,6 +207,41 @@ export const useImportWrittenQuestions = () => {
         title: "Erreur d'import",
         description:
           error.body?.detail || "Impossible d'importer les questions",
+        variant: "destructive",
+      });
+    },
+  });
+};
+
+// Batch update images
+export const useBatchUpdateQuestionImages = () => {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  return useMutation({
+    mutationFn: async (data: QuestionBatchImageUpdate) => {
+      const response =
+        await SeriesQuestionsService.batchUpdateQuestionImagesApiV1SeriesQuestionsBatchImagesPatch(
+          data,
+        );
+      return response.data;
+    },
+    onSuccess: (response, variables) => {
+      if (!response) return;
+      queryClient.invalidateQueries({ queryKey: QUESTIONS_KEYS.lists() });
+      queryClient.invalidateQueries({
+        queryKey: SERIES_KEYS.detail(variables.series_id),
+      });
+      const count = (response as any).updated || 0;
+      toast({
+        title: "Images mises à jour",
+        description: `${count} image(s) mise(s) à jour avec succès`,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erreur",
+        description:
+          error.body?.detail || "Impossible de mettre à jour les images",
         variant: "destructive",
       });
     },

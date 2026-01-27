@@ -26,11 +26,12 @@ class ComprehensionQuestion(BaseModel):
     __tablename__ = "comprehension_questions"
     
     series_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("series.id", ondelete="CASCADE"), nullable=False, index=True)
-    question_number: Mapped[int] = mapped_column(Integer, nullable=False, doc="1-78 (1-39 oral, 40-78 écrit)")
+    question_number: Mapped[int] = mapped_column(Integer, nullable=False, doc="1-39")
     type: Mapped[QuestionType] = mapped_column(Enum(QuestionType, native_enum=False, length=50), nullable=False, index=True)
     
     # Contenu
     question_text: Mapped[str | None] = mapped_column(Text, nullable=True, doc="Texte de la question")
+    asked_question: Mapped[str | None] = mapped_column(Text, nullable=True, doc="Question posée (askedQuestion)")
     image_url: Mapped[str | None] = mapped_column(String(500), nullable=True, doc="Image (optionnelle)")
     audio_url: Mapped[str | None] = mapped_column(String(500), nullable=True, doc="Audio (oral uniquement)")
     

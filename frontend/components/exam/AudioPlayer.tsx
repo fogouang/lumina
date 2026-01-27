@@ -155,7 +155,7 @@ export default function AudioPlayer({
               max={1}
               step={0.1}
               onValueChange={handleVolumeChange}
-              className="cursor-pointer"
+              className="cursor-pointer w-8 lg:w-34"
             />
           </div>
         </div>

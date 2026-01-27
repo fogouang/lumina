@@ -20,6 +20,10 @@ export type QuestionCreate = {
      */
     question_text?: (string | null);
     /**
+     * Question posée (askedQuestion)
+     */
+    asked_question?: (string | null);
+    /**
      * URL image (optionnelle)
      */
     image_url?: (string | null);

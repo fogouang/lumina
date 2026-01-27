@@ -59,7 +59,7 @@ class Subscription(BaseModel):
     
     start_date: Mapped[date] = mapped_column(Date, nullable=False, index=True)
     end_date: Mapped[date] = mapped_column(Date, nullable=False, index=True)
-    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, index=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, index=True)
     
     # ✅ Champs CUSTOM pour B2B (NULL pour B2C)
     custom_duration_days: Mapped[int | None] = mapped_column(

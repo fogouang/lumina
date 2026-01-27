@@ -79,7 +79,7 @@ class SubscriptionService:
             custom_ai_credits=None,  # ✅ NULL pour B2C
             start_date=start_date,
             end_date=end_date,
-            is_active=True,
+            is_active=False,
             ai_credits_remaining=plan.ai_credits,
             created_by_id=current_user.id
         )

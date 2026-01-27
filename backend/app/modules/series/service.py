@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.questions.models import ComprehensionQuestion
 from app.modules.questions.repository import QuestionRepository
-from app.modules.questions.schemas import QuestionCreate, QuestionImportRequest, QuestionUpdate
+from app.modules.questions.schemas import QuestionCreate, QuestionImportRequest, QuestionUpdate,QuestionBatchImageUpdate
 from app.modules.series.models import Series
 from app.modules.series.repository import SeriesRepository
 from app.modules.series.schemas import SeriesCreate, SeriesUpdate
@@ -156,6 +156,7 @@ class SeriesService:
             question_number=data.question_number,
             type=data.type,
             question_text=data.question_text,
+            asked_question=data.asked_question,
             image_url=data.image_url,
             audio_url=data.audio_url,
             option_a=data.option_a,
@@ -227,9 +228,9 @@ class SeriesService:
             raise ForbiddenException(detail="Seuls les admins peuvent supprimer des questions")
         
         return await self.question_repo.delete(question_id)
-    
-    # === IMPORT JSON ===
-    
+      
+      
+    # === IMPORT JSON ===    
     async def import_comprehension_questions(
         self,
         series_id: UUID,
@@ -284,19 +285,26 @@ class SeriesService:
                 # Déterminer les points selon le numéro de question
                 points = self._calculate_points(item.QuestionNumber)
                 
-                # Construire le texte de la question
-                question_text = None
-                if question_type == QuestionType.WRITTEN:
-                    # Pour écrit: bodyText + askedQuestion
-                    parts = []
-                    if item.bodyText:
-                        parts.append(item.bodyText)
-                    if item.askedQuestion:
-                        parts.append(item.askedQuestion)
-                    question_text = "\n\n".join(parts) if parts else None
+                # ✅ TRAITEMENT DIFFÉRENCIÉ ORAL vs ÉCRIT
+                if question_type == QuestionType.ORAL:
+                    # CO: Pas de bodyText/askedQuestion (tout est dans l'audio)
+                    question_text = None
+                    asked_question = None
                 else:
-                    # Pour oral: seulement askedQuestion (audio séparé)
-                    question_text = item.askedQuestion
+                    # CE: Nettoyer bodyText et askedQuestion
+                    body_text_raw = item.bodyText.strip() if item.bodyText else None
+                    asked_question_raw = item.askedQuestion.strip() if item.askedQuestion else None
+                    
+                    # ✅ NETTOYER: Retirer asked_question du bodyText s'il est présent
+                    if body_text_raw and asked_question_raw:
+                        if asked_question_raw in body_text_raw:
+                            # Retirer la question de la fin du bodyText
+                            body_text_raw = body_text_raw.replace(asked_question_raw, "").strip()
+                            # Nettoyer les doubles sauts de ligne et espaces
+                            body_text_raw = body_text_raw.rstrip("\n").strip()
+                    
+                    question_text = body_text_raw
+                    asked_question = asked_question_raw
                 
                 # Créer la question
                 await self.question_repo.create(
@@ -304,6 +312,7 @@ class SeriesService:
                     question_number=item.QuestionNumber,
                     type=question_type,
                     question_text=question_text,
+                    asked_question=asked_question,
                     image_url=item.image if item.image else None,
                     audio_url=item.audio if item.audio else None,
                     option_a=options["a"][0],
@@ -326,6 +335,7 @@ class SeriesService:
             "skipped": skipped_count,
             "errors": errors
         }
+    
     
     def _parse_option(self, proposition: str) -> tuple[str, bool]:
         """
@@ -382,3 +392,64 @@ class SeriesService:
             return 26
         else:
             return 33
+        
+    
+    async def batch_update_question_images(
+        self,
+        data: QuestionBatchImageUpdate,
+        current_user: User
+    ) -> dict:
+        """Mettre à jour les images des questions en batch."""
+        
+        # Vérifier permissions
+        if current_user.role != UserRole.PLATFORM_ADMIN:
+            raise ForbiddenException(detail="Seuls les admins peuvent mettre à jour les images")
+        
+        # Vérifier que la série existe
+        await self.get_series_by_id(data.series_id)
+        
+        # Récupérer toutes les questions
+        questions = await self.question_repo.get_by_series_and_type(
+            data.series_id, 
+            data.question_type
+        )
+        
+        # Créer un mapping question_number → question_id
+        question_map = {q.question_number: q.id for q in questions}
+        
+        updated_count = 0
+        skipped_count = 0
+        errors = []
+        
+        # ✅ Convertir les clés string en int
+        for question_number_str, image_url in data.images.items():
+            try:
+                question_number = int(question_number_str)  # Conversion explicite
+                
+                if question_number not in question_map:
+                    errors.append(f"Q{question_number}: Question non trouvée dans la série")
+                    skipped_count += 1
+                    continue
+                
+                question_id = question_map[question_number]
+                
+                # Mettre à jour l'image
+                await self.question_repo.update(
+                    question_id,
+                    image_url=image_url
+                )
+                
+                updated_count += 1
+                
+            except ValueError:
+                errors.append(f"'{question_number_str}': Numéro invalide")
+                skipped_count += 1
+            except Exception as e:
+                errors.append(f"Q{question_number_str}: {str(e)}")
+                skipped_count += 1
+        
+        return {
+            "updated": updated_count,
+            "skipped": skipped_count,
+            "errors": errors
+        }

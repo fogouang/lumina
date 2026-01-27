@@ -23,18 +23,27 @@ class UserService:
         self.db = db
         self.repo = UserRepository(db)
     
-    async def get_all(self, skip: int = 0, limit: int = 100) -> list[User]:
+    async def get_all(self, skip: int = 0, limit: int = 100, current_user: User = None) -> list[User]:
         """
         Récupérer tous les utilisateurs (admin uniquement).
         
         Args:
             skip: Offset
             limit: Limit
+            current_user: Utilisateur authentifié
             
         Returns:
             Liste d'utilisateurs
+            
+        Raises:
+            ForbiddenException: Si pas admin
         """
+        
+        if current_user and current_user.role != UserRole.PLATFORM_ADMIN:
+            raise ForbiddenException(detail="Seuls les admins peuvent lister les utilisateurs")
+        
         return await self.repo.get_all(skip=skip, limit=limit)
+
     
     async def get_by_id(self, user_id: UUID) -> User:
         """

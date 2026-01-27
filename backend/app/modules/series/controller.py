@@ -8,6 +8,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Query, status
 
 from app.modules.questions.schemas import (
+    QuestionBatchImageUpdate,
     QuestionCreate,
     QuestionImportRequest,
     QuestionResponse,
@@ -231,6 +232,24 @@ async def get_questions(
         message=f"{len(questions)} question(s) trouvée(s)"
     )
 
+@router.patch(
+    "/questions/batch-images",
+    response_model=SuccessResponse[dict],
+    summary="Mettre à jour images en batch"
+)
+async def batch_update_question_images(
+    data: QuestionBatchImageUpdate,
+    service: Annotated[SeriesService, Depends(get_series_service)] = None,
+    current_user: CurrentUser = None
+):
+    result = await service.batch_update_question_images(data, current_user)
+    
+    return SuccessResponse(
+        data=result,
+        message=f"Mise à jour terminée: {result['updated']} images mises à jour, {result['skipped']} ignorées"
+    )
+    
+    
 
 @router.patch(
     "/questions/{question_id}",
@@ -346,7 +365,8 @@ async def import_written_questions(
         message=f"Import terminé: {result['created']} créées, {result['skipped']} ignorées"
     )
     
-    
+
+       
 @router.get(
     "/my-access",
     response_model=SuccessResponse[dict],

@@ -1,13 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Save, User, Lock, Bell, Trash2 } from "lucide-react";
+import { useUserDetail } from "@/hooks/queries/useUsersQueries";
+import {
+  useUpdateUser,
+  useDeleteUser,
+} from "@/hooks/mutations/useUsersMutations";
 import PageHeader from "@/components/shared/PageHeader";
+import LoadingSpinner from "@/components/shared/LoadingSpinner";
+import ErrorState from "@/components/shared/ErrorState";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/useToats";
 import {
@@ -21,16 +34,26 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function SettingsPage() {
   const { toast } = useToast();
+  const { user: currentUser, logout } = useAuth();
 
-  // TODO: Fetch depuis API
+  const {
+    data: user,
+    isLoading,
+    error,
+    refetch,
+  } = useUserDetail(currentUser?.id || "");
+  const { mutate: updateUser, isPending: isUpdating } = useUpdateUser();
+  const { mutate: deleteUser, isPending: isDeleting } = useDeleteUser();
+
   const [profile, setProfile] = useState({
-    first_name: "John",
-    last_name: "Doe",
-    email: "john.doe@example.com",
-    phone: "+237 690 000 000",
+    first_name: "",
+    last_name: "",
+    email: "",
+    phone: "",
   });
 
   const [notifications, setNotifications] = useState({
@@ -46,12 +69,36 @@ export default function SettingsPage() {
     confirm: "",
   });
 
+  // Charger les données utilisateur
+  useEffect(() => {
+    if (user) {
+      setProfile({
+        first_name: user.first_name || "",
+        last_name: user.last_name || "",
+        email: user.email || "",
+        phone: user.phone || "",
+      });
+    }
+  }, [user]);
+
   const handleSaveProfile = () => {
-    // TODO: API call
-    toast({
-      title: "Profil mis à jour",
-      description: "Vos informations ont été sauvegardées",
-    });
+    if (!currentUser?.id) return;
+
+    updateUser(
+      {
+        userId: currentUser.id,
+        data: {
+          first_name: profile.first_name,
+          last_name: profile.last_name,
+          phone: profile.phone,
+        },
+      },
+      {
+        onSuccess: () => {
+          refetch();
+        },
+      },
+    );
   };
 
   const handleChangePassword = () => {
@@ -64,7 +111,16 @@ export default function SettingsPage() {
       return;
     }
 
-    // TODO: API call
+    if (passwords.new.length < 8) {
+      toast({
+        title: "Erreur",
+        description: "Le mot de passe doit contenir au moins 8 caractères",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // TODO: Implémenter changement mot de passe (endpoint à créer)
     toast({
       title: "Mot de passe modifié",
       description: "Votre mot de passe a été mis à jour",
@@ -72,22 +128,37 @@ export default function SettingsPage() {
     setPasswords({ current: "", new: "", confirm: "" });
   };
 
-  const handleSaveNotifications = () => {
-    // TODO: API call
-    toast({
-      title: "Préférences enregistrées",
-      description: "Vos préférences de notifications ont été mises à jour",
+  const handleDeleteAccount = () => {
+    if (!currentUser?.id) return;
+
+    deleteUser(currentUser.id, {
+      onSuccess: () => {
+        logout();
+        window.location.href = "/";
+      },
     });
   };
 
-  const handleDeleteAccount = () => {
-    // TODO: API call
-    toast({
-      title: "Compte supprimé",
-      description: "Votre compte a été supprimé",
-      variant: "destructive",
-    });
-  };
+  if (isLoading) {
+    return (
+      <LoadingSpinner className="py-8" text="Chargement des paramètres..." />
+    );
+  }
+
+  if (error || !user) {
+    return (
+      <div className="space-y-6">
+        <PageHeader
+          title="Paramètres"
+          description="Gérer votre compte et vos préférences"
+        />
+        <ErrorState
+          message="Impossible de charger vos paramètres"
+          retry={() => refetch()}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -103,9 +174,7 @@ export default function SettingsPage() {
             <User className="h-5 w-5" />
             Informations personnelles
           </CardTitle>
-          <CardDescription>
-            Modifier vos informations de profil
-          </CardDescription>
+          <CardDescription>Modifier vos informations de profil</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
@@ -117,6 +186,7 @@ export default function SettingsPage() {
                 onChange={(e) =>
                   setProfile({ ...profile, first_name: e.target.value })
                 }
+                disabled={isUpdating}
               />
             </div>
             <div className="space-y-2">
@@ -127,6 +197,7 @@ export default function SettingsPage() {
                 onChange={(e) =>
                   setProfile({ ...profile, last_name: e.target.value })
                 }
+                disabled={isUpdating}
               />
             </div>
           </div>
@@ -137,8 +208,12 @@ export default function SettingsPage() {
               id="email"
               type="email"
               value={profile.email}
-              onChange={(e) => setProfile({ ...profile, email: e.target.value })}
+              disabled
+              className="bg-muted cursor-not-allowed"
             />
+            <p className="text-xs text-muted-foreground">
+              L'email ne peut pas être modifié
+            </p>
           </div>
 
           <div className="space-y-2">
@@ -147,19 +222,29 @@ export default function SettingsPage() {
               id="phone"
               type="tel"
               value={profile.phone}
-              onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
+              onChange={(e) =>
+                setProfile({ ...profile, phone: e.target.value })
+              }
+              disabled={isUpdating}
+              placeholder="+237 690 000 000"
             />
           </div>
 
-          <Button onClick={handleSaveProfile}>
-            <Save className="mr-2 h-4 w-4" />
-            Sauvegarder
+          <Button onClick={handleSaveProfile} disabled={isUpdating}>
+            {isUpdating ? (
+              <>Enregistrement...</>
+            ) : (
+              <>
+                <Save className="mr-2 h-4 w-4" />
+                Sauvegarder
+              </>
+            )}
           </Button>
         </CardContent>
       </Card>
 
       {/* Mot de passe */}
-      <Card>
+      {/* <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Lock className="h-5 w-5" />
@@ -192,6 +277,9 @@ export default function SettingsPage() {
                 setPasswords({ ...passwords, new: e.target.value })
               }
             />
+            <p className="text-xs text-muted-foreground">
+              Minimum 8 caractères
+            </p>
           </div>
 
           <div className="space-y-2">
@@ -206,96 +294,16 @@ export default function SettingsPage() {
             />
           </div>
 
-          <Button onClick={handleChangePassword}>
+          <Button
+            onClick={handleChangePassword}
+            disabled={
+              !passwords.current || !passwords.new || !passwords.confirm
+            }
+          >
             Changer le mot de passe
           </Button>
         </CardContent>
-      </Card>
-
-      {/* Notifications */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Bell className="h-5 w-5" />
-            Préférences de notifications
-          </CardTitle>
-          <CardDescription>
-            Choisir les notifications que vous souhaitez recevoir
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label>Corrections disponibles</Label>
-              <p className="text-sm text-muted-foreground">
-                Recevoir un email quand une correction est prête
-              </p>
-            </div>
-            <Switch
-              checked={notifications.email_corrections}
-              onCheckedChange={(checked) =>
-                setNotifications({ ...notifications, email_corrections: checked })
-              }
-            />
-          </div>
-
-          <Separator />
-
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label>Résultats d'examen</Label>
-              <p className="text-sm text-muted-foreground">
-                Recevoir un email avec vos résultats
-              </p>
-            </div>
-            <Switch
-              checked={notifications.email_results}
-              onCheckedChange={(checked) =>
-                setNotifications({ ...notifications, email_results: checked })
-              }
-            />
-          </div>
-
-          <Separator />
-
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label>Notifications push</Label>
-              <p className="text-sm text-muted-foreground">
-                Recevoir des notifications dans le navigateur
-              </p>
-            </div>
-            <Switch
-              checked={notifications.push_enabled}
-              onCheckedChange={(checked) =>
-                setNotifications({ ...notifications, push_enabled: checked })
-              }
-            />
-          </div>
-
-          <Separator />
-
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label>Emails marketing</Label>
-              <p className="text-sm text-muted-foreground">
-                Recevoir des offres et nouveautés
-              </p>
-            </div>
-            <Switch
-              checked={notifications.email_marketing}
-              onCheckedChange={(checked) =>
-                setNotifications({ ...notifications, email_marketing: checked })
-              }
-            />
-          </div>
-
-          <Button onClick={handleSaveNotifications}>
-            <Save className="mr-2 h-4 w-4" />
-            Sauvegarder les préférences
-          </Button>
-        </CardContent>
-      </Card>
+      </Card> */}
 
       {/* Danger Zone */}
       <Card className="border-destructive">
@@ -311,16 +319,16 @@ export default function SettingsPage() {
         <CardContent>
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="destructive">
-                Supprimer mon compte
+              <Button variant="destructive" disabled={isDeleting}>
+                {isDeleting ? "Suppression..." : "Supprimer mon compte"}
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogTitle>Êtes-vous absolument sûr ?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Cette action est irréversible. Toutes vos données, résultats et
-                  corrections seront définitivement supprimés.
+                  Cette action est irréversible. Toutes vos données, résultats
+                  et corrections seront définitivement supprimés.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>

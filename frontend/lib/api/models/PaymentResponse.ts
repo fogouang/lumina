@@ -19,5 +19,6 @@ export type PaymentResponse = {
     transaction_reference: (string | null);
     invoice_number: string;
     invoice_url: (string | null);
+    created_at: string;
 };
 

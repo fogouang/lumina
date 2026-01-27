@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Plus, Upload, Filter } from "lucide-react";
+import { ArrowLeft, Plus, Upload, Filter, ImageIcon } from "lucide-react";
 import Link from "next/link";
 import { QuestionResponse, QuestionType } from "@/lib/api";
 import { useQuestionsList } from "@/hooks/queries/useQuestionsQueries";
@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/select";
 import { ROUTES } from "@/lib/constants";
 import QuestionForm from "@/components/admin/QuestionForm";
+import QuestionImagesBatchUpdate from "@/components/exam/QuestionImagesBatchUpdate";
 
 export default function QuestionsPage() {
   const params = useParams();
@@ -34,6 +35,10 @@ export default function QuestionsPage() {
   const [questionToDelete, setQuestionToDelete] = useState<string | null>(null);
   const [editingQuestion, setEditingQuestion] =
     useState<QuestionResponse | null>(null);
+  const [imageUpdateDialogOpen, setImageUpdateDialogOpen] = useState(false);
+  const [imageUpdateType, setImageUpdateType] = useState<QuestionType | null>(
+    null,
+  );
 
   const {
     data: questions,
@@ -106,6 +111,31 @@ export default function QuestionsPage() {
                     Importer JSON
                   </Link>
                 </Button>
+
+                {/* Bouton images CE */}
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setImageUpdateType(QuestionType.WRITTEN);
+                    setImageUpdateDialogOpen(true);
+                  }}
+                >
+                  <ImageIcon className="mr-2 h-4 w-4" />
+                  Images CE
+                </Button>
+
+                {/* Bouton images CO */}
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setImageUpdateType(QuestionType.ORAL);
+                    setImageUpdateDialogOpen(true);
+                  }}
+                >
+                  <ImageIcon className="mr-2 h-4 w-4" />
+                  Images CO
+                </Button>
+
                 <Button>
                   <Plus className="mr-2 h-4 w-4" />
                   Nouvelle question
@@ -191,7 +221,17 @@ export default function QuestionsPage() {
         variant="destructive"
         loading={isDeleting}
       />
-      
+
+      {/* Image Batch Update */}
+      {imageUpdateType && (
+        <QuestionImagesBatchUpdate
+          open={imageUpdateDialogOpen}
+          onOpenChange={setImageUpdateDialogOpen}
+          seriesId={seriesId}
+          questionType={imageUpdateType}
+        />
+      )}
+
       {editingQuestion && (
         <QuestionForm
           open={!!editingQuestion}

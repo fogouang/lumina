@@ -28,14 +28,14 @@ async def get_user_service(db: DbSession) -> UserService:
 )
 async def get_users(
     skip: int = Query(0, ge=0),
-    limit: int = Query(20, ge=1, le=100),
+    limit: int = Query(20, ge=1, le=10000),
     service: Annotated[UserService, Depends(get_user_service)] = None,
     current_user: CurrentUser = None
 ):
     """
     Récupérer la liste des utilisateurs (admin uniquement).
     """
-    users = await service.get_all(skip=skip, limit=limit)
+    users = await service.get_all(skip=skip, limit=limit, current_user=current_user)
     
     return SuccessResponse(
         data=[UserListResponse.model_validate(u) for u in users],

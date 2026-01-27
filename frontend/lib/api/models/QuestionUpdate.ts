@@ -7,6 +7,7 @@
  */
 export type QuestionUpdate = {
     question_text?: (string | null);
+    asked_question?: (string | null);
     image_url?: (string | null);
     audio_url?: (string | null);
     option_a?: (string | null);

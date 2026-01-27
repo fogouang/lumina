@@ -72,12 +72,7 @@ export default function StatsCards({ stats }: StatsCardsProps) {
         description="Séries disponibles"
         icon={BookOpen}
       />
-      <StatCard
-        title="Tentatives d'examen"
-        value={stats.totalAttempts.toLocaleString()}
-        description="Total tentatives"
-        icon={FileText}
-      />
+
       <StatCard
         title="Revenus"
         value={`${stats.totalRevenue.toLocaleString()} F`}

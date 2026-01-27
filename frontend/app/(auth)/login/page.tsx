@@ -21,7 +21,7 @@ export default function LoginPage() {
     <div className=" flex min-h-screen w-full items-center justify-center px-4 py-8">
       <Card className="w-full max-w-md border-none shadow-lg sm:border sm:shadow-md">
         <CardHeader className="space-y-1 text-center sm:text-left">
-          <CardTitle className="text-2xl font-bold">
+          <CardTitle className="text-primary text-2xl font-bold">
             Bienvenue sur TCF Canada
           </CardTitle>
           <CardDescription>

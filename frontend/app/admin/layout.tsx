@@ -6,16 +6,19 @@ import ProtectedRoute from "@/providers/Protectedroute";
 export default function AdminLayout({ children }: { children: ReactNode }) {
   return (
     <ProtectedRoute>
-      <div className="min-h-dvh flex flex-col bg-background">
-        {/* Header fixe */}
-        <header className="sticky top-0 z-50 h-16 border-b bg-background">
+      <div className="h-screen flex flex-col bg-background">
+        {/* Header fixe - 4rem de hauteur */}
+        <header className="sticky top-0 z-50 h-16 border-b bg-background shrink-0">
           <Header />
         </header>
 
-        <div className="flex flex-1 overflow-hidden">
-          {/* Sidebar fixe et scrollable */}
-          <aside className="hidden lg:flex lg:w-64 border-r bg-background">
-            <Sidebar />
+        {/* Container avec hauteur fixe = 100vh - header */}
+        <div className="flex h-[calc(100vh-4rem)] overflow-hidden">
+          {/* Sidebar fixe, non scrollable */}
+          <aside className="hidden lg:block lg:w-64 border-r bg-background shrink-0">
+            <div className="h-full overflow-y-auto">
+              <Sidebar />
+            </div>
           </aside>
 
           {/* Main content scrollable */}

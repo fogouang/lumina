@@ -2,6 +2,7 @@
 Schemas Pydantic pour les paiements.
 """
 
+from datetime import datetime
 from uuid import UUID
 
 from pydantic import Field
@@ -54,6 +55,7 @@ class PaymentResponse(BaseSchema):
     transaction_reference: str | None
     invoice_number: str
     invoice_url: str | None
+    created_at: datetime
 
 
 class WebhookData(BaseSchema):

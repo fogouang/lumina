@@ -2,6 +2,7 @@
 Schemas Pydantic pour les utilisateurs.
 """
 
+from datetime import datetime
 from uuid import UUID
 
 from pydantic import EmailStr, Field
@@ -56,3 +57,4 @@ class UserListResponse(BaseSchema):
     last_name: str
     role: UserRole
     is_active: bool
+    created_at: datetime

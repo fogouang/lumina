@@ -247,25 +247,27 @@ class PaymentService:
         
         if is_credit_purchase:
             # C'était un achat de crédits, on a déjà crédité
-            pass  # Continue quand même pour générer la facture
+            return  # Continue quand même pour générer la facture
         
         # Sinon: Flow classique (activation souscription B2C/B2B)
-        elif payment.subscription_id:
-            subscription = await self.db.get(Subscription, payment.subscription_id)
-            if subscription:
-                await self.db.execute(
-                    f"UPDATE subscriptions SET is_active = true WHERE id = '{subscription.id}'"
-                )
-                await self.db.commit()
+        if payment.subscription_id:
+            from app.modules.subscriptions.repository import SubscriptionRepository
+            
+            sub_repo = SubscriptionRepository(self.db)
+            await sub_repo.update(
+                payment.subscription_id,
+                is_active=True 
+            )
         
         elif payment.org_subscription_id:
-            org_sub = await self.db.get(OrganizationSubscription, payment.org_subscription_id)
-            if org_sub:
-                await self.db.execute(
-                    f"UPDATE organization_subscriptions SET is_active = true WHERE id = '{org_sub.id}'"
-                )
-                await self.db.commit()
+            from app.modules.subscriptions.repository import OrganizationSubscriptionRepository
         
+            org_repo = OrganizationSubscriptionRepository(self.db)
+            await org_repo.update(
+                payment.org_subscription_id,
+                is_active=True
+            )
+            
         # Générer automatiquement la facture PDF (pour tous les types de paiement)
         from app.modules.invoices.service import InvoiceService
         invoice_service = InvoiceService(self.db)
