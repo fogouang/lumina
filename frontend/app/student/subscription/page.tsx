@@ -105,7 +105,7 @@ export default function SubscriptionPage() {
             <LoadingSpinner text="Chargement des plans..." />
           ) : plans && plans.length > 0 ? (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {plans.slice(0, 3).map((plan) => (
+              {plans.slice(0, 10).map((plan) => (
                 <PricingCard key={plan.id} plan={plan} />
               ))}
             </div>

@@ -1,3 +1,4 @@
+// app/layout.tsx
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
@@ -14,8 +15,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="fr">
-      <body className={inter.className}>
+    <html lang="fr" suppressHydrationWarning> 
+      <body className={inter.className} suppressHydrationWarning> 
         <Providers>
           {children}
         </Providers>

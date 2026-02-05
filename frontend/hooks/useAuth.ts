@@ -15,8 +15,8 @@ export const useAuth = () => {
   }, []);
 
   // Utiliser les données de l'API si disponibles, sinon le store
-  const user = currentUser ?? (isHydrated ? storedUser : null);
-  const isAuthenticated = isHydrated && !!user;
+  const user = isHydrated ? (currentUser ?? storedUser) : null;
+  const isAuthenticated = isHydrated ? !!user : false;
 
   return {
     user,
