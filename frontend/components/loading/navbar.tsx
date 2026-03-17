@@ -26,19 +26,34 @@ export function Navbar() {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
-            <Link href="/" className="text-sm font-medium hover:text-emerald-600 transition-colors">
+            <Link
+              href="/"
+              className="text-sm font-medium hover:text-emerald-600 transition-colors"
+            >
               Accueil
             </Link>
-            <Link href="/about" className="text-sm font-medium hover:text-emerald-600 transition-colors">
+            <Link
+              href="/about"
+              className="text-sm font-medium hover:text-emerald-600 transition-colors"
+            >
               À propos
             </Link>
-            <Link href="/plans" className="text-sm font-medium hover:text-emerald-600 transition-colors">
+            <Link
+              href="/plans"
+              className="text-sm font-medium hover:text-emerald-600 transition-colors"
+            >
               Abonnements
             </Link>
-            <Link href="/contact" className="text-sm font-medium hover:text-emerald-600 transition-colors">
+            <Link
+              href="/contact"
+              className="text-sm font-medium hover:text-emerald-600 transition-colors"
+            >
               Contact
             </Link>
-            <Link href="/expressions" className="text-sm font-medium hover:text-emerald-600 transition-colors">
+            <Link
+              href="/expressions"
+              className="text-sm font-medium hover:text-emerald-600 transition-colors"
+            >
               Sujets d'actualité
             </Link>
 
@@ -47,7 +62,10 @@ export function Navbar() {
               <>
                 {isAuthenticated ? (
                   <>
-                    <Link href="/dashboard" className="text-sm font-medium hover:text-emerald-600 transition-colors">
+                    <Link
+                      href="/dashboard"
+                      className="text-sm font-medium hover:text-emerald-600 transition-colors"
+                    >
                       Tableau de bord
                     </Link>
                     <Button
@@ -61,7 +79,10 @@ export function Navbar() {
                 ) : (
                   <>
                     <Link href="/login">
-                      <Button variant="outline" className="border-emerald-600 text-emerald-600 hover:bg-emerald-50">
+                      <Button
+                        variant="outline"
+                        className="border-emerald-600 text-emerald-600 hover:bg-emerald-50"
+                      >
                         Connexion
                       </Button>
                     </Link>
@@ -85,25 +106,51 @@ export function Navbar() {
             </SheetTrigger>
             <SheetContent side="right" className="w-86 sm:w-100">
               <div className="flex flex-col space-y-6 m-8">
-                <Link href="/" onClick={() => setIsOpen(false)}>Accueil</Link>
-                <Link href="/about" onClick={() => setIsOpen(false)}>À propos</Link>
-                <Link href="/plans" onClick={() => setIsOpen(false)}>Formules</Link>
-                <Link href="/contact" onClick={() => setIsOpen(false)}>Contact</Link>
+                <Link href="/" onClick={() => setIsOpen(false)}>
+                  Accueil
+                </Link>
+                <Link href="/about" onClick={() => setIsOpen(false)}>
+                  À propos
+                </Link>
+                <Link href="/plans" onClick={() => setIsOpen(false)}>
+                  Formules
+                </Link>
+                <Link href="/contact" onClick={() => setIsOpen(false)}>
+                  Contact
+                </Link>
+                <Link href="/expressions" onClick={() => setIsOpen(false)}>
+                  {" "}
+                  Sujets d'actualité
+                </Link>
 
                 {/* ✅ Pareil pour mobile */}
                 {isHydrated && (
                   <>
                     {isAuthenticated ? (
                       <>
-                        <Link href="/dashboard" onClick={() => setIsOpen(false)}>Tableau de bord</Link>
-                        <Button variant="destructive" onClick={() => { logout(); setIsOpen(false); }}>
+                        <Link
+                          href="/dashboard"
+                          onClick={() => setIsOpen(false)}
+                        >
+                          Tableau de bord
+                        </Link>
+                        <Button
+                          variant="destructive"
+                          onClick={() => {
+                            logout();
+                            setIsOpen(false);
+                          }}
+                        >
                           Déconnexion
                         </Button>
                       </>
                     ) : (
                       <>
                         <Link href="/login" onClick={() => setIsOpen(false)}>
-                          <Button variant="outline" className="w-auto border-emerald-600 text-emerald-600">
+                          <Button
+                            variant="outline"
+                            className="w-auto border-emerald-600 text-emerald-600"
+                          >
                             Connexion
                           </Button>
                         </Link>
