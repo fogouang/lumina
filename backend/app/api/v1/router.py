@@ -20,7 +20,7 @@ from app.modules.oral_expressions.controller import router as oral_expressions_r
 from app.modules.notifications.controller import router as notifications_router
 from app.modules.ai_credit_purchases import ai_credits_router
 from app.modules.analytics import  analytics_router
-
+from app.modules.public_expression.controller import router as public_expression_router
 
 api_router = APIRouter()
 
@@ -41,3 +41,5 @@ api_router.include_router( oral_expressions_router, tags=["Oral Expressions"])
 api_router.include_router( notifications_router,tags=["Notifications"])
 api_router.include_router(ai_credits_router,tags=["AI Purchase Credit"])
 api_router.include_router(analytics_router, tags=["Statistics"])
+api_router.include_router(public_expression_router,  tags=["Public Expression "])
+

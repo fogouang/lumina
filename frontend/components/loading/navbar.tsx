@@ -38,6 +38,9 @@ export function Navbar() {
             <Link href="/contact" className="text-sm font-medium hover:text-emerald-600 transition-colors">
               Contact
             </Link>
+            <Link href="/expressions" className="text-sm font-medium hover:text-emerald-600 transition-colors">
+              Sujets d'actualité
+            </Link>
 
             {/* ✅ Afficher les boutons seulement quand hydraté */}
             {isHydrated && (

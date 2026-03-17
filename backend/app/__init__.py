@@ -40,6 +40,7 @@ from app.modules.payments.models import Payment
 from app.modules.ai_credit_purchases.models import  AICreditPurchase
 from app.modules.analytics.models import StudentAggregatedStats
 from app.modules.notifications.models import Notification
+from app.modules.public_expression.models import MonthlySession, EECombination,EOTask2,EOTask3
 
 # 4. Export explicite (utile pour `from .models import *` ou introspection)
 __all__ = [
@@ -83,4 +84,10 @@ __all__ = [
     # Stats & Notifications
     "StudentAggregatedStats",
     "Notification",
+    
+    # Public expression
+    "MonthlySession",
+    "EECombination",
+    "EOTask2",
+    "EOTask3",
 ]

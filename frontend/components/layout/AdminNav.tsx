@@ -51,7 +51,7 @@ const contentNavItems: NavItem[] = [
     icon: BookOpen,
   },
   {
-    title: "Tâches d'expression",
+    title: "Expression public",
     href: ROUTES.ADMIN_TASKS,
     icon: FileQuestion,
   },

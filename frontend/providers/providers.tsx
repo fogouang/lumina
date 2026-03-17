@@ -5,7 +5,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { configureAPI } from "@/lib/api/config";
 import { Toaster } from "@/components/ui/sonner";
-import { setupApiInterceptor } from "@/lib/api-client";
 
 const queryClient = new QueryClient({
   defaultOptions: {

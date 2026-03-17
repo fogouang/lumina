@@ -50,7 +50,7 @@ export const ROUTES = {
   STUDENT_SUBSCRIPTION: "/student/subscription",
   STUDENT_INVOICES: "/student/invoices",
   PAYMENT_CALLBACK: "/payment/callback",
-  
+
   // Notifications
   STUDENT_NOTIFICATIONS: "/student/notifications",
 
@@ -101,10 +101,16 @@ export const ROUTES = {
     `/admin/series/${seriesId}/questions/import`,
 
   // Expression Tasks
-  ADMIN_TASKS: "/admin/tasks",
+  ADMIN_TASKS: "/admin/sessions",
   ADMIN_TASKS_WRITTEN: (seriesId: string) => `/admin/tasks/${seriesId}/written`,
   ADMIN_TASKS_ORAL: (seriesId: string) => `/admin/tasks/${seriesId}/oral`,
   ADMIN_SERIES_TASKS: (seriesId: string) => `/admin/series/${seriesId}/tasks`,
+  ADMIN_SESSION_TASKS: (sessionId: string) =>
+    `/admin/sessions/${sessionId}/tasks`,
+  EXPRESSIONS_SESSION_EE: (id: string) => `/expressions/ee/${id}`,
+  EXPRESSIONS_SESSION_EO: (id: string) => `/expressions/eo/${id}`,
+  EXPRESSIONS_SESSION: (sessionId: string) =>
+    `/landing/expressions/${sessionId}`,
 
   // Payments
   ADMIN_PAYMENTS: "/admin/payments",
@@ -122,4 +128,11 @@ export const ROUTES = {
   // Analytics (optionnel)
   ADMIN_ANALYTICS: "/admin/analytics",
   ADMIN_SETTINGS_ORAL_AUDIOS: "/admin/settings/oral-audios",
+
+  WRITTEN_EXPRESSION_SELECTION: (attemptId: string) =>
+    `/exam/${attemptId}/written`,
+
+  WRITTEN_EXPRESSION_COMBINATION: (attemptId: string, combinationId: string) =>
+    `/expressions/ee/${attemptId}/${combinationId}`,
+  EXPRESSIONS: "/expressions",
 } as const;
