@@ -96,8 +96,8 @@ class Settings(BaseSettings):
         "http://localhost:3000",
         "http://localhost:5173",
         "https://my-coolpay.com/api",
-        "https://lumina-tcf.com",
-        "https://www.lumina-tcf.com"
+        "https://lumina-tcf.online",
+        "https://www.lumina-tcf.online"
     ]
     
     # === PAGINATION ===

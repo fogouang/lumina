@@ -30,6 +30,7 @@
         </NuxtLink>
         <Button
           label="Se connecter"
+          @click="openLogin()"
           icon="pi pi-sign-in"
           class="navbar__btn-connect"
         />
@@ -83,6 +84,7 @@ const props = defineProps({
 
 const isScrolled = ref(false);
 const menuOpen = ref(false);
+const { openLogin } = useAuthModal();
 
 function onScroll() {
   isScrolled.value = window.scrollY > 60;

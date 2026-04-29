@@ -6,16 +6,16 @@ export default defineNuxtConfig({
   compatibilityDate: "2025-07-15",
 
   modules: ["@primevue/nuxt-module", "@pinia/nuxt"],
-  css: ["~/assets/css/main.css","primeicons/primeicons.css"],
+  css: ["~/assets/css/main.css", "primeicons/primeicons.css"],
   primevue: {
     options: {
       theme: {
         preset: Aura,
       },
     },
-     autoImport: true,
+    autoImport: true,
   },
-    nitro: {
+  nitro: {
     devProxy: {
       "/api": {
         target: "http://localhost:8002/api",
@@ -26,8 +26,7 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     public: {
-      apiBaseUrl:
-        process.env.NODE_ENV === "production" ? "http://localhost:8002" : "", 
+      apiBaseUrl: process.env.NUXT_PUBLIC_API_BASE_URL ?? "",
     },
   },
   devtools: { enabled: true },

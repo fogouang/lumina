@@ -6,6 +6,8 @@
       <slot />
     </main>
     <LandingFooter />
+    <AuthModal />
+    <Toast />
   </div>
 </template>
 
