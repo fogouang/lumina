@@ -69,22 +69,18 @@ backend/**/*.crt
 
 backend/storage/uploads/images
 backend/storage/uploads/audio
-
 # ============================================
-# FRONTEND (Next.js/React)
+# FRONTEND (Nuxt 4)
 # ============================================
-
 # Dependencies
 frontend/node_modules/
-frontend/.pnp
-frontend/.pnp.js
 
-# Testing
-frontend/coverage/
-
-# Next.js
-frontend/.next/
-frontend/out/
+# Nuxt build outputs
+frontend/.nuxt/
+frontend/.output/
+frontend/.data/
+frontend/.nitro/
+frontend/.cache/
 
 # Production
 frontend/build/
@@ -97,54 +93,41 @@ frontend/.env.development.local
 frontend/.env.test.local
 frontend/.env.production.local
 
-# Vercel
-frontend/.vercel
-
-# TypeScript
-frontend/*.tsbuildinfo
-frontend/next-env.d.ts
-
 # Logs
 frontend/npm-debug.log*
 frontend/yarn-debug.log*
 frontend/yarn-error.log*
 frontend/pnpm-debug.log*
-frontend/lerna-debug.log*
+
+# TypeScript
+frontend/*.tsbuildinfo
+
+# Vercel
+frontend/.vercel
+
+# Lock files (garder un seul selon ton package manager)
+# frontend/pnpm-lock.yaml   # décommenter si tu utilises npm/yarn
+# frontend/yarn.lock        # décommenter si tu utilises pnpm/npm
+# frontend/package-lock.json # décommenter si tu utilises pnpm/yarn
 
 # ============================================
-# IDEs and Editors
+# IDEs et Éditeurs
 # ============================================
-
-# VSCode
 .vscode/
 *.code-workspace
-
-# PyCharm / WebStorm / IntelliJ
 .idea/
 *.iml
 *.iws
 *.ipr
-
-# Sublime Text
 *.sublime-project
 *.sublime-workspace
-
-# Vim
 *.swp
 *.swo
 *~
 
-# Emacs
-*~
-\#*\#
-/.emacs.desktop
-/.emacs.desktop.lock
-*.elc
-
 # ============================================
-# OS Files
+# OS
 # ============================================
-
 # macOS
 .DS_Store
 .AppleDouble
@@ -153,46 +136,26 @@ frontend/lerna-debug.log*
 
 # Windows
 Thumbs.db
-Thumbs.db:encryptable
 ehthumbs.db
-ehthumbs_vista.db
-*.stackdump
 [Dd]esktop.ini
 $RECYCLE.BIN/
 *.lnk
 
 # Linux
-*~
 .directory
 .Trash-*
 
 # ============================================
-# Docker (racine ou sous-dossiers)
+# Docker
 # ============================================
-
-# Docker volumes persistants (optionnel)
 # postgres_data/
 # redis_data/
 
 # ============================================
 # Misc
 # ============================================
-
-# Editor backup files
-*~
-*.swp
-*.swo
-.#*
-
-# Debug files
 debug.log
 error.log
-
-# Profile data
 *.prof
-
-# System files
 .fuse_hidden*
-
-frontend/pnpm-lock.yaml     # Décommenter si tu utilises npm ou yarn
-back.sh
+node_modules/
