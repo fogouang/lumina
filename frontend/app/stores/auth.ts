@@ -31,6 +31,7 @@ export const useAuthStore = defineStore("auth", () => {
         credentials,
       );
       user.value = res.data?.user ?? null;
+      navigateTo("/mon-compte");
     } catch (err: unknown) {
       error.value = extractError(err);
       throw err;
@@ -49,6 +50,7 @@ export const useAuthStore = defineStore("auth", () => {
         payload,
       );
       user.value = res.data?.user ?? null;
+      navigateTo("/mon-compte");
     } catch (err: unknown) {
       error.value = extractError(err);
       throw err;

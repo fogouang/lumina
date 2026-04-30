@@ -15,6 +15,23 @@ export default defineNuxtConfig({
     },
     autoImport: true,
   },
+  // nitro: {
+  //   devProxy:
+  //     process.env.NODE_ENV === "development"
+  //       ? {
+  //           "/api": {
+  //             target: "https://lumina-tcf.online/api",
+  //             changeOrigin: true,
+  //           },
+  //         }
+  //       : {},
+  // },
+  // runtimeConfig: {
+  //   public: {
+  //     apiBaseUrl: process.env.NUXT_PUBLIC_API_BASE_URL ?? "",
+  //   },
+  // },
+
   nitro: {
     devProxy: {
       "/api": {
@@ -26,7 +43,8 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     public: {
-      apiBaseUrl: process.env.NUXT_PUBLIC_API_BASE_URL ?? "",
+      apiBaseUrl:
+        process.env.NODE_ENV === "production" ? "http://localhost:8002" : "",
     },
   },
   devtools: { enabled: true },

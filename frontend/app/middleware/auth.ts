@@ -1,8 +1,16 @@
 // app/middleware/auth.ts
-export default defineNuxtRouteMiddleware(() => {
+export default defineNuxtRouteMiddleware(async (to) => {
   const auth = useAuthStore()
 
+  // Toujours rehydrater au refresh
+  if (!auth.user) {
+    await auth.fetchMe()
+  }
+
+  // Après fetchMe, si toujours pas connecté → redirect
   if (!auth.isAuthenticated) {
-    return navigateTo('/connexion')
+    const { openLogin } = useAuthModal()
+    openLogin()
+    return navigateTo('/')
   }
 })

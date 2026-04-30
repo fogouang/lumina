@@ -1,10 +1,8 @@
 <template>
   <div v-if="epreuve">
-
     <!-- ── Hero ─────────────────────────────────────────────── -->
     <section class="epreuve-hero">
       <div class="container epreuve-hero__inner">
-
         <div class="epreuve-hero__icon" :style="{ background: epreuve.iconBg }">
           <i :class="epreuve.icon" :style="{ color: epreuve.iconColor }" />
         </div>
@@ -19,16 +17,24 @@
               :icon="cta.icon"
               :outlined="cta.outlined"
               size="large"
-              :class="cta.outlined ? 'epreuve-hero__btn--outline' : 'epreuve-hero__btn--primary'"
+              :class="
+                cta.outlined
+                  ? 'epreuve-hero__btn--outline'
+                  : 'epreuve-hero__btn--primary'
+              "
             />
           </NuxtLink>
         </div>
-
       </div>
 
       <!-- Wave -->
       <div class="epreuve-hero__wave">
-        <svg viewBox="0 0 1440 80" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+        <svg
+          viewBox="0 0 1440 80"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          preserveAspectRatio="none"
+        >
           <path
             d="M0 80L60 72C120 64 240 48 360 42.7C480 37 600 43 720 48C840 53 960 59 1080 58.7C1200 59 1320 53 1380 50.7L1440 48V80H0Z"
             fill="var(--bg-ground)"
@@ -41,7 +47,11 @@
     <section class="section section--light">
       <div class="container">
         <div class="format-grid">
-          <div v-for="stat in epreuve.format" :key="stat.label" class="format-card">
+          <div
+            v-for="stat in epreuve.format"
+            :key="stat.label"
+            class="format-card"
+          >
             <div class="format-card__icon">
               <i :class="stat.icon" />
             </div>
@@ -76,12 +86,14 @@
     </section>
 
     <!-- ── Structure du programme ────────────────────────────── -->
-    <section class="section section--teal">
+    <section class="section section--red">
       <div class="container">
         <div class="section-header">
           <Tag value="Programme" severity="warning" />
-          <h2 class="section-title" style="color:#fff;">Structure du programme</h2>
-          <p class="section-subtitle" style="color:rgba(255,255,255,0.75);">
+          <h2 class="section-title" style="color: #fff">
+            Structure du programme
+          </h2>
+          <p class="section-subtitle" style="color: rgba(255, 255, 255, 0.75)">
             Un programme complet pour vous préparer efficacement à l'épreuve.
           </p>
         </div>
@@ -106,7 +118,9 @@
       <div class="container">
         <div class="section-header">
           <Tag value="Détail" severity="success" />
-          <h2 class="section-title">Les {{ epreuve.taches.length }} tâches de l'épreuve</h2>
+          <h2 class="section-title">
+            Les {{ epreuve.taches.length }} tâches de l'épreuve
+          </h2>
           <p class="section-subtitle">
             Découvrez en détail chaque tâche et ce qui est attendu.
           </p>
@@ -124,7 +138,9 @@
                 <h3 class="tache-card__title">{{ tache.title }}</h3>
                 <div class="tache-card__meta">
                   <span><i class="pi pi-tag" /> {{ tache.niveau }}</span>
-                  <span><i class="pi pi-align-left" /> {{ tache.longueur }}</span>
+                  <span
+                    ><i class="pi pi-align-left" /> {{ tache.longueur }}</span
+                  >
                   <span><i class="pi pi-clock" /> {{ tache.temps }}</span>
                 </div>
               </div>
@@ -149,7 +165,8 @@
             Prêt à maîtriser l'{{ epreuve.title.toLowerCase() }} ?
           </h2>
           <p class="cta-final__sub">
-            Rejoignez des milliers de candidats qui se préparent avec Lumina TCF.
+            Rejoignez des milliers de candidats qui se préparent avec Lumina
+            TCF.
           </p>
           <div class="cta-final__actions">
             <NuxtLink :to="epreuve.ctaFinal.to">
@@ -173,31 +190,36 @@
         </div>
       </div>
     </section>
-
   </div>
 
   <!-- 404 -->
-  <div v-else class="container" style="padding: 5rem 1.5rem; text-align:center;">
+  <div
+    v-else
+    class="container"
+    style="padding: 5rem 1.5rem; text-align: center"
+  >
     <h2>Épreuve introuvable.</h2>
-    <NuxtLink to="/"><Button label="Retour à l'accueil" icon="pi pi-home" /></NuxtLink>
+    <NuxtLink to="/"
+      ><Button label="Retour à l'accueil" icon="pi pi-home"
+    /></NuxtLink>
   </div>
 </template>
 
 <script setup>
-import { useEpreuve } from '~/composables/useEpreuve'
+import { useEpreuve } from "~/composables/useEpreuve";
 
-const route = useRoute()
-const { epreuve } = useEpreuve(route.params.slug)
+const route = useRoute();
+const { epreuve } = useEpreuve(route.params.slug);
 
 useHead({
-  title: epreuve ? `${epreuve.title} TCF Canada | Lumina` : 'Épreuve | Lumina',
+  title: epreuve ? `${epreuve.title} TCF Canada | Lumina` : "Épreuve | Lumina",
   meta: [
     {
-      name: 'description',
-      content: epreuve?.description ?? '',
+      name: "description",
+      content: epreuve?.description ?? "",
     },
   ],
-})
+});
 </script>
 
 <style scoped>
@@ -223,6 +245,18 @@ useHead({
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.programme-card h3 {
+  color: #ffffff !important;
+}
+
+.programme-card p {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.programme-card__icon i {
+  color: #ffffff !important;
 }
 
 .epreuve-hero__icon i {
@@ -533,7 +567,7 @@ useHead({
 }
 
 .tache-card__exemples ul li::before {
-  content: '→';
+  content: "→";
   position: absolute;
   left: 0;
   color: var(--color-primary-500);
@@ -587,15 +621,29 @@ useHead({
 
 /* ── Responsive ────────────────────────────────────────────── */
 @media (max-width: 1024px) {
-  .apprentissage-grid { grid-template-columns: repeat(2, 1fr); }
-  .programme-grid     { grid-template-columns: repeat(2, 1fr); }
+  .apprentissage-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .programme-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 @media (max-width: 640px) {
-  .apprentissage-grid { grid-template-columns: 1fr; }
-  .programme-grid     { grid-template-columns: 1fr; }
-  .format-grid        { grid-template-columns: repeat(3, 1fr); }
-  .tache-card         { flex-direction: column; }
-  .tache-card__header { flex-direction: column; }
+  .apprentissage-grid {
+    grid-template-columns: 1fr;
+  }
+  .programme-grid {
+    grid-template-columns: 1fr;
+  }
+  .format-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .tache-card {
+    flex-direction: column;
+  }
+  .tache-card__header {
+    flex-direction: column;
+  }
 }
 </style>

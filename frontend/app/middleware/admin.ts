@@ -1,9 +1,13 @@
 // app/middleware/admin.ts
-export default defineNuxtRouteMiddleware(() => {
+export default defineNuxtRouteMiddleware(async () => {
   const auth = useAuthStore()
 
+  if (!auth.user) {
+    await auth.fetchMe()
+  }
+
   if (!auth.isAuthenticated) {
-    return navigateTo('/connexion')
+    return navigateTo('/')
   }
 
   if (!auth.isAdmin) {

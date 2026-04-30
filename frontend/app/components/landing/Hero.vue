@@ -79,12 +79,10 @@
         <!-- Colonne droite — image flottante -->
         <div class="hero__visual anim-fade-right">
           <img
-            src="/images/hero2.png"
+            src="/images/hero2.jpg"
             alt="Candidat TCF Canada"
             class="hero__visual-img"
           />
-          <div class="hero__visual-glow hero__visual-glow--amber" />
-          <div class="hero__visual-glow hero__visual-glow--teal" />
         </div>
       </div>
     </div>
@@ -305,10 +303,27 @@
 .hero__visual-img {
   width: 100%;
   max-width: 480px;
-  border-radius: 9999px;
   object-fit: cover;
-  box-shadow: 0 32px 64px rgba(0, 0, 0, 0.3);
+  border-radius: 24px;
   animation: float 4s ease-in-out infinite;
+  box-shadow: 
+    0 2px 4px rgba(0,0,0,0.1),
+    0 8px 16px rgba(0,0,0,0.15),
+    0 24px 48px rgba(0,0,0,0.25),
+    0 48px 80px rgba(0,0,0,0.2);
+  transform-style: preserve-3d;
+  perspective: 1000px;
+  transform: perspective(1000px) rotateY(-8deg) rotateX(4deg);
+  transition: transform 0.4s ease;
+}
+
+.hero__visual-img:hover {
+  transform: perspective(1000px) rotateY(-4deg) rotateX(2deg) scale(1.02);
+}
+
+.hero__visual {
+  perspective: 1200px;
+  transform-style: preserve-3d;
 }
 
 .hero__visual-glow {
