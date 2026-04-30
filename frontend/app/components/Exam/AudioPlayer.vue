@@ -32,9 +32,11 @@
     <audio
       ref="audioEl"
       :src="fullSrc"
+      preload="auto"
       @timeupdate="onTimeUpdate"
       @loadedmetadata="onMetadata"
       @ended="isPlaying = false"
+      @error="onError"
     />
   </div>
 </template>
@@ -52,14 +54,25 @@ const progress = computed(() =>
   duration.value ? (currentTime.value / duration.value) * 100 : 0,
 );
 
-function togglePlay() {
+async function togglePlay() {
   if (!audioEl.value) return;
-  if (isPlaying.value) {
-    audioEl.value.pause();
-  } else {
-    audioEl.value.play();
+  try {
+    if (isPlaying.value) {
+      audioEl.value.pause();
+      isPlaying.value = false;
+    } else {
+      await audioEl.value.play();
+      isPlaying.value = true;
+    }
+  } catch (e) {
+    console.error("Play error:", e);
+    isPlaying.value = false;
   }
-  isPlaying.value = !isPlaying.value;
+}
+
+function onError() {
+  console.error("Audio error:", audioEl.value?.error);
+  isPlaying.value = false;
 }
 
 function onTimeUpdate() {

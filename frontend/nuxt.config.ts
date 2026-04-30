@@ -1,6 +1,7 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 import Aura from "@primeuix/themes/aura";
 import tailwindcss from "@tailwindcss/vite";
+import path from "path";
 
 export default defineNuxtConfig({
   compatibilityDate: "2025-07-15",
@@ -31,6 +32,14 @@ export default defineNuxtConfig({
   //     apiBaseUrl: process.env.NUXT_PUBLIC_API_BASE_URL ?? "",
   //   },
   // },
+  routeRules: {
+    "/**": {
+      headers: {
+        "Cross-Origin-Resource-Policy": "cross-origin",
+        "Cross-Origin-Embedder-Policy": "unsafe-none",
+      },
+    },
+  },
 
   nitro: {
     devProxy: {
@@ -38,13 +47,16 @@ export default defineNuxtConfig({
         target: "http://localhost:8002/api",
         changeOrigin: true,
       },
+      "/uploads": {
+        target: "http://localhost:8002",
+        changeOrigin: true,
+      },
     },
   },
 
   runtimeConfig: {
     public: {
-      apiBaseUrl:
-        process.env.NODE_ENV === "production" ? "http://localhost:8002" : "",
+      apiBaseUrl: "",
     },
   },
   devtools: { enabled: true },

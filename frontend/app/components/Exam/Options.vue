@@ -1,12 +1,10 @@
 <template>
-  <div class="options">
+  <div class="options" :class="{ 'options--single': isSingleCol }">
     <button
       v-for="opt in options"
       :key="opt.key"
       class="option"
-      :class="{
-        'option--selected': selected === opt.key,
-      }"
+      :class="{ 'option--selected': selected === opt.key }"
       :disabled="disabled"
       @click="emit('select', opt.key)"
     >
@@ -35,13 +33,22 @@ const options = computed(() => [
   { key: 'c', text: props.question.option_c },
   { key: 'd', text: props.question.option_d },
 ])
+
+// Une colonne si les textes sont longs
+const isSingleCol = computed(() =>
+  options.value.some(o => o.text && o.text.length > 40)
+)
 </script>
 
 <style scoped>
 .options {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0.75rem;
+  gap: 0.625rem;
+}
+
+.options--single {
+  grid-template-columns: 1fr;
 }
 
 .option {
@@ -51,7 +58,7 @@ const options = computed(() => [
   padding: 0.875rem 1rem;
   background: var(--bg-card);
   border: 1.5px solid var(--border-color);
-  border-radius: 0.75rem;
+  border-radius: 0.875rem;
   cursor: pointer;
   text-align: left;
   transition: all 0.2s ease;
@@ -99,6 +106,7 @@ const options = computed(() => [
   font-size: 0.9375rem;
   color: var(--text-primary);
   line-height: 1.4;
+  text-align: left;
 }
 
 @media (max-width: 640px) {

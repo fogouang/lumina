@@ -1,12 +1,10 @@
 <template>
   <div class="topbar">
     <span class="topbar__welcome">
-      🎓 Bienvenue sur Lumina — Plateforme de préparation au TCF Canada
+      Préparer au TCF Canada avec le Parck Ici
     </span>
     <nav class="topbar__links">
-      <NuxtLink to="/formations">Formations</NuxtLink>
       <NuxtLink to="/tarifs">Tarifs</NuxtLink>
-      <NuxtLink to="/blog">Blog</NuxtLink>
       <NuxtLink to="/contact">Contact</NuxtLink>
     </nav>
   </div>
@@ -15,7 +13,7 @@
 <style scoped>
 .topbar {
   background: var(--color-primary-800);
-  color: rgba(255, 255, 255, 0.85);
+  color: white;
   font-size: 0.8125rem;
   padding: 0.5rem 1.5rem;
   display: flex;
@@ -38,7 +36,7 @@
 }
 
 .topbar__links a {
-  color: rgba(255, 255, 255, 0.75);
+  color: white;
   text-decoration: none;
   font-weight: 500;
   transition: color 0.2s ease;

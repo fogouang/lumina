@@ -41,21 +41,6 @@
           </div>
         </div>
 
-        <!-- Épreuves -->
-        <div class="footer__col">
-          <h3 class="footer__col-title">
-            <i class="pi pi-book" />
-            Épreuves
-          </h3>
-          <ul class="footer__links">
-            <li v-for="link in epreuvesLinks" :key="link.to">
-              <NuxtLink :to="link.to" class="footer__link">
-                <i class="pi pi-angle-right footer__link-arrow" />
-                {{ link.label }}
-              </NuxtLink>
-            </li>
-          </ul>
-        </div>
 
         <!-- Ressources -->
         <div class="footer__col">
@@ -113,24 +98,13 @@
 </template>
 
 <script setup>
-const epreuvesLinks = [
-  { to: '/expression-ecrite',    label: 'Expression écrite'    },
-  { to: '/expression-orale',     label: 'Expression orale'     },
-  { to: '/comprehension-ecrite', label: 'Compréhension écrite' },
-  { to: '/comprehension-orale',  label: 'Compréhension orale'  },
-]
 
 const ressourcesLinks = [
-  { to: '/blog',                  label: 'Blog & actualités'   },
-  { to: '/calculateur-nclc',      label: 'Calculateur NCLC'    },
-  { to: '/faq',                   label: 'FAQ'                  },
   { to: '/politique-confidentialite', label: 'Confidentialité' },
 ]
 
 const aproposLinks = [
-  { to: '/formations', label: 'Nos formations' },
   { to: '/tarifs',     label: 'Tarifs'         },
-  { to: '/cgu',        label: 'CGU'            },
   { to: '/contact',    label: 'Contact'        },
 ]
 </script>

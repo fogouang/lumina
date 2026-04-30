@@ -1,55 +1,64 @@
 <template>
   <div class="question-panel">
+
     <!-- Header -->
     <div class="question-panel__header">
-      <span class="question-panel__badge"
-        >Question {{ question.question_number }}</span
-      >
-      <Tag
-        :value="`${question.points} pts`"
-        severity="success"
-        class="question-panel__pts"
-      />
+      <span class="question-panel__badge">Question {{ question.question_number }}</span>
+      <Tag :value="`${question.points} pts`" severity="success" />
     </div>
 
     <!-- Contenu -->
     <div class="question-panel__body">
+
       <!-- ORAL -->
       <template v-if="question.type === 'oral'">
-        <img
+        <div
           v-if="question.image_url"
-          :src="mediaUrl(question.image_url) ?? ''"
-          class="question-panel__image"
-          alt="Document"
-        />
+          class="question-panel__image-wrap"
+          @click="openZoom(mediaUrl(question.image_url) ?? '')"
+        >
+          <img
+            :src="mediaUrl(question.image_url) ?? ''"
+            class="question-panel__image"
+            alt="Document"
+          />
+          <div class="question-panel__image-overlay">
+            <i class="pi pi-search-plus" />
+          </div>
+        </div>
         <p v-if="question.asked_question" class="question-panel__asked">
           {{ question.asked_question }}
         </p>
         <ExamAudioPlayer
           v-if="question.audio_url"
           :src="mediaUrl(question.audio_url) ?? ''"
-          class="question-panel__audio"
         />
       </template>
 
       <!-- ÉCRIT -->
       <template v-else>
-        <img
-          v-if="question.image_url"
-          :src="mediaUrl(question.image_url) ?? ''"
-          class="question-panel__image"
-          alt="Document"
-        />
         <div
-          v-else-if="question.question_text"
-          class="question-panel__text-doc"
+          v-if="question.image_url"
+          class="question-panel__image-wrap"
+          @click="openZoom(mediaUrl(question.image_url) ?? '')"
         >
+          <img
+            :src="mediaUrl(question.image_url) ?? ''"
+            class="question-panel__image"
+            alt="Document"
+          />
+          <div class="question-panel__image-overlay">
+            <i class="pi pi-search-plus" />
+          </div>
+        </div>
+        <div v-else-if="question.question_text" class="question-panel__text-doc">
           {{ question.question_text }}
         </div>
         <p v-if="question.asked_question" class="question-panel__asked">
           {{ question.asked_question }}
         </p>
       </template>
+
     </div>
 
     <!-- Options -->
@@ -57,7 +66,6 @@
       :question="question"
       :selected="selected"
       :disabled="submitting"
-      class="question-panel__options"
       @select="emit('select', $event)"
     />
 
@@ -71,11 +79,7 @@
         @click="emit('prev')"
       />
 
-      <div class="question-panel__footer-center">
-        <span class="question-panel__progress">
-          {{ currentIndex + 1 }} / {{ total }}
-        </span>
-      </div>
+      <span class="question-panel__progress">{{ currentIndex + 1 }} / {{ total }}</span>
 
       <Button
         v-if="!isLast"
@@ -84,54 +88,76 @@
         icon-pos="right"
         class="question-panel__next bg-gradient-primary"
         :loading="submitting"
+        :disabled="!selected"
         @click="emit('next')"
       />
       <Button
         v-else
-        label="Terminer l'examen"
+        label="Terminer"
         icon="pi pi-check"
         icon-pos="right"
         severity="success"
         :loading="submitting"
+        :disabled="!selected"
         @click="emit('finish')"
       />
     </div>
+
+    <!-- Dialog zoom image -->
+    <Dialog
+      v-model:visible="zoomVisible"
+      modal
+      :closable="true"
+      :style="{ width: '90vw', maxWidth: '900px', background: '#000' }"
+      :pt="{ content: { style: 'padding:0;background:#000' }, header: { style: 'background:#000;border:none' } }"
+    >
+      <img :src="zoomSrc" style="width:100%;height:auto;display:block;" alt="Zoom" />
+    </Dialog>
+
   </div>
 </template>
 
 <script setup lang="ts">
-import type { QuestionResponse } from "#shared/api/models/QuestionResponse";
+import type { QuestionResponse } from '#shared/api/models/QuestionResponse'
 
 defineProps<{
-  question: QuestionResponse;
-  selected: string | null;
-  currentIndex: number;
-  total: number;
-  isFirst: boolean;
-  isLast: boolean;
-  submitting: boolean;
-}>();
-
-const { mediaUrl } = useMedia();
+  question:     QuestionResponse
+  selected:     string | null
+  currentIndex: number
+  total:        number
+  isFirst:      boolean
+  isLast:       boolean
+  submitting:   boolean
+}>()
 
 const emit = defineEmits<{
-  select: [key: string];
-  prev: [];
-  next: [];
-  finish: [];
-}>();
+  select: [key: string]
+  prev:   []
+  next:   []
+  finish: []
+}>()
+
+const { mediaUrl } = useMedia()
+
+// ── Zoom image ────────────────────────────────────────────────
+const zoomVisible = ref(false)
+const zoomSrc     = ref('')
+
+function openZoom(src: string) {
+  zoomSrc.value     = src
+  zoomVisible.value = true
+}
 </script>
 
 <style scoped>
 .question-panel {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1.25rem;
   background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: 1rem;
-  padding: 1.75rem;
-  height: 100%;
+  padding: 1.5rem;
 }
 
 /* Header */
@@ -144,12 +170,12 @@ const emit = defineEmits<{
 .question-panel__badge {
   display: inline-flex;
   align-items: center;
-  padding: 0.5rem 1.25rem;
+  padding: 0.4rem 1rem;
   background: var(--color-primary-50);
   color: var(--color-primary-700);
   border: 1px solid var(--color-primary-200);
   border-radius: 9999px;
-  font-size: 0.9375rem;
+  font-size: 0.9rem;
   font-weight: 700;
 }
 
@@ -157,27 +183,67 @@ const emit = defineEmits<{
 .question-panel__body {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
-  flex: 1;
+  gap: 1rem;
+}
+
+/* Image zoomable */
+.question-panel__image-wrap {
+  position: relative;
+  cursor: zoom-in;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
 }
 
 .question-panel__image {
   width: 100%;
-  max-height: 320px;
+  max-height: 280px;
   object-fit: contain;
-  border-radius: 0.75rem;
-  border: 1px solid var(--border-color);
+  display: block;
+  transition: transform 0.2s ease;
 }
 
+.question-panel__image-wrap:hover .question-panel__image {
+  transform: scale(1.02);
+}
+
+.question-panel__image-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0);
+  transition: background 0.2s ease;
+}
+
+.question-panel__image-wrap:hover .question-panel__image-overlay {
+  background: rgba(0,0,0,0.25);
+}
+
+.question-panel__image-overlay i {
+  font-size: 1.75rem;
+  color: #ffffff;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.question-panel__image-wrap:hover .question-panel__image-overlay i {
+  opacity: 1;
+}
+
+/* Texte doc */
 .question-panel__text-doc {
   background: var(--bg-ground);
   border: 1px solid var(--border-color);
   border-radius: 0.75rem;
-  padding: 1.25rem 1.5rem;
-  font-size: 1rem;
+  padding: 1rem 1.25rem;
+  font-size: 0.9375rem;
   line-height: 1.8;
   color: var(--text-primary);
   white-space: pre-wrap;
+  max-height: 240px;
+  overflow-y: auto;
 }
 
 .question-panel__asked {
@@ -193,14 +259,16 @@ const emit = defineEmits<{
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-top: 1rem;
+  padding-top: 0.875rem;
   border-top: 1px solid var(--border-color);
+  gap: 0.5rem;
 }
 
-.question-panel__footer-center {
+.question-panel__progress {
   font-size: 0.875rem;
   color: var(--text-tertiary);
   font-weight: 500;
+  white-space: nowrap;
 }
 
 .question-panel__next {
@@ -210,9 +278,7 @@ const emit = defineEmits<{
 }
 
 @media (max-width: 640px) {
-  .question-panel {
-    padding: 1.25rem;
-    gap: 1rem;
-  }
+  .question-panel { padding: 1rem; gap: 1rem; }
+  .question-panel__image { max-height: 200px; }
 }
 </style>

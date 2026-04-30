@@ -43,15 +43,12 @@
                 class="hero__btn-primary"
               />
             </NuxtLink>
-            <NuxtLink to="/expression-ecrite">
-              <Button
-                label="Voir les sujets"
-                icon="pi pi-book"
-                outlined
-                size="large"
-                class="hero__btn-outline"
-              />
-            </NuxtLink>
+            <Button
+              label="Pratiquer"
+              @click="openLogin()"
+              icon="pi pi-sign-in"
+              class="hero__btn-primary"
+            />
           </div>
 
           <!-- Stats -->
@@ -103,6 +100,10 @@
     </div>
   </section>
 </template>
+
+<script setup>
+const { openLogin } = useAuthModal();
+</script>
 
 <style scoped>
 /* ── Wrapper ───────────────────────────────────────────────── */
@@ -306,11 +307,11 @@
   object-fit: cover;
   border-radius: 24px;
   animation: float 4s ease-in-out infinite;
-  box-shadow: 
-    0 2px 4px rgba(0,0,0,0.1),
-    0 8px 16px rgba(0,0,0,0.15),
-    0 24px 48px rgba(0,0,0,0.25),
-    0 48px 80px rgba(0,0,0,0.2);
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.1),
+    0 8px 16px rgba(0, 0, 0, 0.15),
+    0 24px 48px rgba(0, 0, 0, 0.25),
+    0 48px 80px rgba(0, 0, 0, 0.2);
   transform-style: preserve-3d;
   perspective: 1000px;
   transform: perspective(1000px) rotateY(-8deg) rotateX(4deg);
