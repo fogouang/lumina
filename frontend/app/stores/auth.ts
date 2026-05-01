@@ -31,7 +31,11 @@ export const useAuthStore = defineStore("auth", () => {
         credentials,
       );
       user.value = res.data?.user ?? null;
-      navigateTo("/mon-compte");
+      if (user.value?.role === "platform_admin") {
+        navigateTo("/admin");
+      } else {
+        navigateTo("/mon-compte");
+      }
     } catch (err: unknown) {
       error.value = extractError(err);
       throw err;

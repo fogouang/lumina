@@ -150,6 +150,7 @@
       </div>
     </section>
   </div>
+  <PaymentDialog v-model="paymentVisible" :plan="paymentPlan" />
 </template>
 
 <script setup lang="ts">
@@ -165,6 +166,9 @@ const toast = useToast();
 const loading = ref(true);
 const error = ref<string | null>(null);
 const plans = ref<PlanListResponse[]>([]);
+
+const paymentPlan = ref<PlanListResponse | null>(null);
+const paymentVisible = ref(false);
 
 onMounted(async () => {
   try {
@@ -228,12 +232,8 @@ function onChoosePlan(plan: PlanListResponse) {
     openLogin();
     return;
   }
-  toast.add({
-    severity: "info",
-    summary: "Paiement",
-    detail: `Redirection vers le paiement pour ${plan.name}...`,
-    life: 3000,
-  });
+  paymentPlan.value = plan;
+  paymentVisible.value = true;
 }
 
 const guarantees = [

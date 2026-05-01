@@ -1,7 +1,6 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 import Aura from "@primeuix/themes/aura";
 import tailwindcss from "@tailwindcss/vite";
-import path from "path";
 
 export default defineNuxtConfig({
   compatibilityDate: "2025-07-15",
@@ -39,6 +38,9 @@ export default defineNuxtConfig({
         "Cross-Origin-Embedder-Policy": "unsafe-none",
       },
     },
+    "/mon-compte/**": { ssr: false },
+    "/admin/**": { ssr: false },
+    "/epreuve/**": { ssr: false },
   },
 
   nitro: {
@@ -59,8 +61,17 @@ export default defineNuxtConfig({
       apiBaseUrl: "",
     },
   },
+
   devtools: { enabled: true },
   vite: {
+    optimizeDeps: {
+      include: [
+        "@primevue/forms/form",
+        "zod",
+        "@primevue/forms/resolvers/zod",
+        "chart.js",
+      ],
+    },
     plugins: [tailwindcss() as any],
   },
 });

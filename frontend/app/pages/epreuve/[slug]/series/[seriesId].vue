@@ -1,353 +1,294 @@
 <template>
-  <div class="exam-page">
-
+  <div class="min-h-screen bg-(--bg-ground)">
     <!-- Loading -->
-    <div v-if="loading" class="exam-page__loading">
-      <ProgressSpinner style="width:48px;height:48px" />
-      <p>Chargement de l'examen...</p>
+    <div
+      v-if="loading"
+      class="flex flex-col items-center justify-center min-h-screen gap-4 text-(--text-secondary)"
+    >
+      <ProgressSpinner style="width: 48px; height: 48px" />
+      <p>{{ msgs.loading }}</p>
     </div>
 
     <!-- Erreur -->
-    <div v-else-if="error" class="exam-page__error">
-      <i class="pi pi-exclamation-triangle" />
+    <div
+      v-else-if="error"
+      class="flex flex-col items-center justify-center min-h-screen gap-4 text-(--text-secondary)"
+    >
+      <i class="pi pi-exclamation-triangle text-4xl text-red-500" />
       <p>{{ error }}</p>
       <NuxtLink :to="`/epreuve/${slug}/series`">
         <Button label="Retour aux séries" icon="pi pi-arrow-left" />
       </NuxtLink>
     </div>
 
-    <template v-else-if="currentQuestion">
-
-      <!-- ── Topbar mobile ──────────────────────────────────── -->
-      <ExamTopBar
-        :total-seconds="totalSeconds"
-        :current-index="currentIndex"
-        :total="questions.length"
-        :answered-count="Object.keys(answers).length"
-        @open-nav="navDrawerOpen = true"
-        @quit="confirmQuit = true"
-        @expired="onExpired"
-      />
-
-      <!-- ── Layout desktop ─────────────────────────────────── -->
-      <div class="exam-page__desktop">
-
-        <!-- Question panel -->
-        <ExamQuestionPanel
-          :question="currentQuestion"
-          :selected="answers[currentQuestion.id] ?? null"
-          :current-index="currentIndex"
-          :total="questions.length"
-          :is-first="currentIndex === 0"
-          :is-last="currentIndex === questions.length - 1"
-          :submitting="submitting"
-          class="exam-page__panel"
-          @select="onSelect"
-          @prev="onPrev"
-          @next="onNext"
-          @finish="confirmFinish = true"
-        />
-
-        <!-- Sidebar desktop -->
-        <aside class="exam-page__sidebar">
-          <ExamTimer
-            :total-seconds="totalSeconds"
-            @expired="onExpired"
-          />
-          <div class="exam-page__sidebar-nav">
-            <ExamQuestionNav
-              :questions="questions"
-              :current-index="currentIndex"
-              :answered-ids="Object.keys(answers)"
-              @go="onGo"
+    <template v-else>
+      <!-- ── Indicateur de step ─────────────────────────────── -->
+      <div class="bg-(--bg-card) border-b border-(--border-color) px-4 py-2">
+        <div class="max-w-4xl mx-auto flex items-center gap-2 overflow-x-auto">
+          <div
+            v-for="(s, i) in steps"
+            :key="s.key"
+            class="flex items-center gap-1.5 shrink-0"
+          >
+            <div
+              class="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold transition-all"
+              :class="
+                currentStep === i
+                  ? 'step-active'
+                  : completedSteps.includes(i)
+                    ? 'bg-green-100 text-green-700'
+                    : 'bg-gray-100 text-gray-400'
+              "
+            >
+              <i
+                :class="completedSteps.includes(i) ? 'pi pi-check' : s.icon"
+                class="text-xs"
+              />
+              <span class="hidden sm:inline">{{ s.label }}</span>
+            </div>
+            <i
+              v-if="i < steps.length - 1"
+              class="pi pi-angle-right text-(--text-tertiary) text-xs"
             />
           </div>
-          <button class="exam-page__quit" @click="confirmQuit = true">
-            <i class="pi pi-sign-out" /> Quitter l'examen
-          </button>
-        </aside>
-
+        </div>
       </div>
 
-      <!-- ── Footer mobile ──────────────────────────────────── -->
-      <ExamFooterBar
-        :is-first="currentIndex === 0"
-        :is-last="currentIndex === questions.length - 1"
-        :selected="answers[currentQuestion.id] ?? null"
-        :level="currentQuestion.points <= 9 ? 'A1' : currentQuestion.points <= 15 ? 'A2' : currentQuestion.points <= 21 ? 'B1' : currentQuestion.points <= 26 ? 'B2' : 'C1'"
-        :pts="currentQuestion.points"
-        class="exam-page__footer-mobile"
-        @prev="onPrev"
-        @next="onNext"
-        @finish="confirmFinish = true"
+      <!-- ── Step 1 : Compréhension Orale ─────────────────── -->
+      <ExamStepComprehension
+        v-if="currentStep === 0 && attemptId && oralQuestions.length"
+        :questions="oralQuestions"
+        :all-oral-questions="oralQuestions"
+        :all-written-questions="writtenQuestions"
+        :attempt-id="attemptId"
+        :total-seconds="35 * 60"
+        :is-step-c-o="true"
+        :model-value="answers"
+        @update:model-value="answers = $event"
+        @next-step="goNext"
+        @quit="confirmQuit = true"
       />
 
+      <!-- ── Step 2 : Compréhension Écrite ─────────────────── -->
+      <ExamStepComprehension
+        v-else-if="currentStep === 1 && attemptId && writtenQuestions.length"
+        :questions="writtenQuestions"
+        :all-oral-questions="oralQuestions"
+        :all-written-questions="writtenQuestions"
+        :attempt-id="attemptId"
+        :total-seconds="60 * 60"
+        :is-step-c-o="false"
+        :model-value="answers"
+        @update:model-value="answers = $event"
+        @next-step="goNext"
+        @quit="confirmQuit = true"
+      />
+
+      <!-- ── Step 3 : Expression Écrite ────────────────────── -->
+      <ExamStepExpressionEcrite
+        v-else-if="currentStep === 2"
+        :tasks="writtenTasks"
+        :attempt-id="attemptId!"
+        :ai-credits="aiCredits"
+        @next-step="goNext"
+        @quit="confirmQuit = true"
+      />
+
+      <!-- ── Step 4 : Expression Orale ─────────────────────── -->
+      <ExamStepExpressionOrale
+        v-else-if="currentStep === 3"
+        :tasks="oralTasks"
+        @finish="confirmFinish = true"
+        @quit="confirmQuit = true"
+      />
     </template>
 
-    <!-- ── Drawer navigation ──────────────────────────────────── -->
-    <ExamNavDrawer
-      v-model="navDrawerOpen"
-      :questions="questions"
-      :current-index="currentIndex"
-      :answered-ids="Object.keys(answers)"
-      @go="onGo"
-    />
-
-    <!-- ── Dialog quitter ─────────────────────────────────────── -->
-    <Dialog v-model:visible="confirmQuit" modal header="Quitter l'examen" :style="{ width: '380px' }">
-      <p style="color:var(--text-secondary);line-height:1.6">
-        Vos réponses seront sauvegardées. Vous pourrez reprendre plus tard.
+    <!-- Dialog quitter -->
+    <Dialog
+      v-model:visible="confirmQuit"
+      modal
+      header="Quitter l'examen"
+      :style="{ width: '380px' }"
+    >
+      <p class="text-(--text-secondary) leading-relaxed">
+        {{ msgs.quit }}
       </p>
       <template #footer>
         <Button label="Annuler" text @click="confirmQuit = false" />
-        <Button label="Quitter" severity="danger" icon="pi pi-sign-out" @click="onQuit" />
+        <Button
+          label="Quitter"
+          severity="danger"
+          icon="pi pi-sign-out"
+          @click="onQuit"
+        />
       </template>
     </Dialog>
 
-    <!-- ── Dialog terminer ────────────────────────────────────── -->
-    <Dialog v-model:visible="confirmFinish" modal header="Terminer l'examen" :style="{ width: '420px' }">
-      <p style="color:var(--text-secondary);line-height:1.6">
-        Vous avez répondu à <strong>{{ Object.keys(answers).length }}</strong> question(s) sur
-        <strong>{{ questions.length }}</strong>. Confirmer ?
+    <!-- Dialog terminer -->
+    <Dialog
+      v-model:visible="confirmFinish"
+      modal
+      header="Terminer l'examen"
+      :style="{ width: '420px' }"
+    >
+      <p class="text-(--text-secondary) leading-relaxed">
+        {{ msgs.finish }}
       </p>
       <template #footer>
         <Button label="Continuer" text @click="confirmFinish = false" />
-        <Button label="Terminer" icon="pi pi-check" severity="success" :loading="submitting" @click="onFinish" />
+        <Button
+          label="Terminer"
+          icon="pi pi-check"
+          severity="success"
+          :loading="finishing"
+          @click="onFinish"
+        />
       </template>
     </Dialog>
-
   </div>
 </template>
 
 <script setup lang="ts">
-import type { QuestionResponse } from '#shared/api/models/QuestionResponse'
-import type { SuccessResponse_ExamAttemptResponse_ } from '#shared/api/models/SuccessResponse_ExamAttemptResponse_'
-import type { SuccessResponse_list_ExamAttemptResponse__ } from '#shared/api/models/SuccessResponse_list_ExamAttemptResponse__'
-import type { SuccessResponse_list_QuestionResponse__ } from '#shared/api/models/SuccessResponse_list_QuestionResponse__'
+import ExamStepComprehension from "~/components/Exam/steps/ExamStepComprehension.vue";
+import ExamStepExpressionEcrite from "~/components/Exam/steps/ExamStepExpressionEcrite.vue";
+import ExamStepExpressionOrale from "~/components/Exam/steps/ExamStepExpressionOrale.vue";
 
-definePageMeta({ middleware: 'auth', layout: 'exam' })
+import type { QuestionResponse } from "#shared/api/models/QuestionResponse";
+import type { ExpressionTaskResponse } from "#shared/api/models/ExpressionTaskResponse";
+import type { SuccessResponse_ExamAttemptResponse_ } from "#shared/api/models/SuccessResponse_ExamAttemptResponse_";
+import type { SuccessResponse_list_ExamAttemptResponse__ } from "#shared/api/models/SuccessResponse_list_ExamAttemptResponse__";
+import type { SuccessResponse_list_QuestionResponse__ } from "#shared/api/models/SuccessResponse_list_QuestionResponse__";
+import type { SuccessResponse_list_ExpressionTaskResponse__ } from "#shared/api/models/SuccessResponse_list_ExpressionTaskResponse__";
 
-const route     = useRoute()
-const { post, get } = useApi()
-const toast     = useToast()
-const slug      = route.params.slug as string
-const seriesId  = route.params.seriesId as string
+definePageMeta({ middleware: "auth", layout: "exam" });
 
-const durationMap: Record<string, number> = {
-  'comprehension-ecrite': 60 * 60,
-  'comprehension-orale':  35 * 60,
-  'expression-ecrite':    60 * 60,
-  'expression-orale':     12 * 60,
-}
-const totalSeconds = durationMap[slug] ?? 60 * 60
+const msgs = {
+  loading: "Chargement de l'examen...",
+  quit: "Vos réponses déjà soumises sont sauvegardées. Vous pourrez reprendre plus tard.",
+  finish:
+    "Vous avez complété les 4 modules. Terminer l'examen et voir vos résultats ?",
+};
 
-const loading       = ref(true)
-const error         = ref<string | null>(null)
-const submitting    = ref(false)
-const confirmQuit   = ref(false)
-const confirmFinish = ref(false)
-const navDrawerOpen = ref(false)
+const route = useRoute();
+const { post, get } = useApi();
+const toast = useToast();
+const sub = useSubscriptionStore();
+const slug = route.params.slug as string;
+const seriesId = route.params.seriesId as string;
 
-const attemptId  = ref<string | null>(null)
-const questions  = ref<QuestionResponse[]>([])
-const currentIndex = ref(0)
-const answers    = ref<Record<string, string>>({})
+// ── State ────────────────────────────────────────────────────
+const loading = ref(true);
+const error = ref<string | null>(null);
+const finishing = ref(false);
+const confirmQuit = ref(false);
+const confirmFinish = ref(false);
+const currentStep = ref(0);
+const completedSteps = ref<number[]>([]);
 
-const currentQuestion = computed(() => questions.value[currentIndex.value] ?? null)
+const attemptId = ref<string | null>(null);
+const oralQuestions = ref<QuestionResponse[]>([]);
+const writtenQuestions = ref<QuestionResponse[]>([]);
+const writtenTasks = ref<ExpressionTaskResponse[]>([]);
+const oralTasks = ref<ExpressionTaskResponse[]>([]);
+const answers = ref<Record<string, string>>({});
+const aiCredits = computed(() => sub.aiCreditsRemaining ?? 0);
 
+// ── Steps ────────────────────────────────────────────────────
+const steps = [
+  { key: "co", label: "Compréhension Orale", icon: "pi pi-headphones" },
+  { key: "ce", label: "Compréhension Écrite", icon: "pi pi-book" },
+  { key: "ee", label: "Expression Écrite", icon: "pi pi-pen-to-square" },
+  { key: "eo", label: "Expression Orale", icon: "pi pi-microphone" },
+];
+
+// ── Init ─────────────────────────────────────────────────────
 onMounted(async () => {
   try {
-    // 1. Créer ou récupérer tentative
+    await sub.fetchMySubscriptions();
+
+    // Tentative
     try {
       const res = await post<SuccessResponse_ExamAttemptResponse_>(
-        '/v1/exam-attempts', { series_id: seriesId }
-      )
-      attemptId.value = res.data?.id ?? null
+        "/v1/exam-attempts",
+        { series_id: seriesId },
+      );
+      attemptId.value = res.data?.id ?? null;
     } catch {
-      const list = await get<SuccessResponse_list_ExamAttemptResponse__>('/v1/exam-attempts')
-      const existing = (list.data ?? []).find(
-        a => a.series_id === seriesId && a.status === 'in_progress'
-      )
-      if (existing) attemptId.value = existing.id
-      else throw new Error("Impossible de démarrer l'examen.")
+      const list =
+        await get<SuccessResponse_list_ExamAttemptResponse__>(
+          "/v1/exam-attempts",
+        );
+      const ex = (list.data ?? []).find(
+        (a) => a.series_id === seriesId && a.status === "in_progress",
+      );
+      if (ex) attemptId.value = ex.id;
+      else throw new Error("Impossible de démarrer l'examen.");
     }
 
-    // 2. Charger questions
+    // Questions
     const qRes = await get<SuccessResponse_list_QuestionResponse__>(
-      `/v1/series/${seriesId}/questions`
-    )
-    questions.value = (qRes.data ?? []).sort(
-      (a, b) => a.question_number - b.question_number
-    )
+      `/v1/series/${seriesId}/questions`,
+    );
+    const allQ = (qRes.data ?? []).sort(
+      (a, b) => a.question_number - b.question_number,
+    );
+    oralQuestions.value = allQ.filter((q) => q.type === "oral");
+    writtenQuestions.value = allQ.filter((q) => q.type === "written");
 
-    if (!questions.value.length) throw new Error('Aucune question disponible.')
+    // Tâches expression
+    const tRes = await get<SuccessResponse_list_ExpressionTaskResponse__>(
+      `/v1/expression-tasks/series/${seriesId}`,
+    );
+    const allT = tRes.data ?? [];
+    writtenTasks.value = allT.filter((t) => t.type === "written");
+    oralTasks.value = allT.filter((t) => t.type === "oral");
   } catch (err: unknown) {
-    error.value = (err as Error)?.message ?? 'Une erreur est survenue.'
+    error.value = (err as Error)?.message ?? "Une erreur est survenue.";
   } finally {
-    loading.value = false
+    loading.value = false;
   }
-})
+  console.log("oralQuestions:", oralQuestions.value.length);
+  console.log("writtenQuestions:", writtenQuestions.value.length);
+  console.log("attemptId:", attemptId.value);
+  console.log("currentStep:", currentStep.value);
+});
 
-// ── Sélection locale ─────────────────────────────────────────
-function onSelect(key: string) {
-  if (!currentQuestion.value) return
-  answers.value[currentQuestion.value.id] = key
-}
-
-// ── Soumettre réponse courante ────────────────────────────────
-async function submitCurrentAnswer() {
-  if (!attemptId.value || !currentQuestion.value) return
-  const selected = answers.value[currentQuestion.value.id]
-  if (!selected) return
-  try {
-    await post(`/v1/exam-attempts/${attemptId.value}/answers`, {
-      question_id:     currentQuestion.value.id,
-      selected_answer: selected,
-    })
-  } catch { /* silencieux */ }
-}
-
-// ── Navigation ───────────────────────────────────────────────
-async function onNext() {
-  await submitCurrentAnswer()
-  if (currentIndex.value < questions.value.length - 1) currentIndex.value++
-}
-
-async function onPrev() {
-  await submitCurrentAnswer()
-  if (currentIndex.value > 0) currentIndex.value--
-}
-
-async function onGo(index: number) {
-  await submitCurrentAnswer()
-  currentIndex.value = index
+// ── Navigation steps ─────────────────────────────────────────
+function goNext() {
+  completedSteps.value.push(currentStep.value);
+  currentStep.value++;
 }
 
 // ── Terminer ─────────────────────────────────────────────────
 async function onFinish() {
-  if (!attemptId.value) return
-  submitting.value = true
+  if (!attemptId.value) return;
+  finishing.value = true;
   try {
-    await submitCurrentAnswer()
-    await post(`/v1/exam-attempts/${attemptId.value}/complete`)
-    confirmFinish.value = false
-    navigateTo(`/epreuve/${slug}/resultats/${attemptId.value}`)
+    await post(`/v1/exam-attempts/${attemptId.value}/complete`);
+    confirmFinish.value = false;
+    navigateTo(`/epreuve/${slug}/resultats/${attemptId.value}`);
   } catch {
-    toast.add({ severity: 'error', summary: 'Erreur lors de la finalisation', life: 3000 })
+    toast.add({
+      severity: "error",
+      summary: "Erreur lors de la finalisation",
+      life: 3000,
+    });
   } finally {
-    submitting.value = false
+    finishing.value = false;
   }
-}
-
-async function onExpired() {
-  toast.add({ severity: 'warn', summary: 'Temps écoulé !', life: 4000 })
-  await onFinish()
 }
 
 function onQuit() {
-  confirmQuit.value = false
-  navigateTo(`/epreuve/${slug}/series`)
+  confirmQuit.value = false;
+  navigateTo(`/epreuve/${slug}/series`);
 }
 
-useHead({ title: 'Examen | Lumina TCF' })
+useHead({ title: "Examen | Lumina TCF" });
 </script>
 
 <style scoped>
-.exam-page {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  background: var(--bg-ground);
-}
-
-.exam-page__loading,
-.exam-page__error {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  padding: 5rem 1.5rem;
-  text-align: center;
-  color: var(--text-secondary);
-  flex: 1;
-}
-
-.exam-page__error i {
-  font-size: 2rem;
-  color: var(--color-danger-500);
-}
-
-/* ── Desktop layout ────────────────────────────────────────── */
-.exam-page__desktop {
-  display: flex;
-  gap: 1.5rem;
-  padding: 1.5rem;
-  max-width: 1280px;
-  margin: 0 auto;
-  width: 100%;
-  align-items: flex-start;
-  flex: 1;
-}
-
-.exam-page__panel { flex: 1; min-width: 0; }
-
-.exam-page__sidebar {
-  width: 280px;
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  position: sticky;
-  top: 64px;
-  height: fit-content;
-}
-
-.exam-page__sidebar-nav {
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 0.875rem;
-  padding: 1.25rem;
-}
-
-.exam-page__quit {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  width: 100%;
-  padding: 0.75rem;
-  background: none;
-  border: 1px solid var(--color-danger-200);
-  border-radius: 0.75rem;
-  color: var(--color-danger-600);
-  font-size: 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
-  font-family: inherit;
-  transition: all 0.2s ease;
-}
-
-.exam-page__quit:hover {
-  background: var(--color-danger-50);
-}
-
-/* Footer mobile — caché sur desktop */
-.exam-page__footer-mobile { display: none; }
-
-/* ── Mobile ────────────────────────────────────────────────── */
-@media (max-width: 1024px) {
-  .exam-page__desktop {
-    flex-direction: column;
-    padding: 0.75rem;
-    gap: 0.75rem;
-    padding-bottom: 0;
-  }
-
-  /* Sidebar desktop cachée sur mobile */
-  .exam-page__sidebar { display: none; }
-
-  /* Footer mobile visible */
-  .exam-page__footer-mobile { display: flex; }
+.step-active {
+  background: var(--gradient-primary);
+  color: #ffffff;
 }
 </style>

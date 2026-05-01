@@ -49,7 +49,7 @@
       </div>
 
       <!-- ── Loading ─────────────────────────────────────────── -->
-      <div v-if="seriesStore.loading" class="series-loading">
+      <div v-if="!ready" class="series-loading">
         <ProgressSpinner style="width: 40px; height: 40px" />
       </div>
 
@@ -142,6 +142,8 @@
       ><Button label="Retour à l'accueil" icon="pi pi-home"
     /></NuxtLink>
   </div>
+  <p>{{ seriesStore.isAccessible(200) }}</p>
+  <p>{{ seriesStore.isAccessible(330) }}</p>
 </template>
 
 <script setup lang="ts">
@@ -151,6 +153,7 @@ const route = useRoute();
 const seriesStore = useSeriesStore();
 const subStore = useSubscriptionStore();
 const auth = useAuthStore();
+const ready = ref(false);
 
 // ── Données épreuve ──────────────────────────────────────────
 const epreuvesMeta: Record<
@@ -193,11 +196,15 @@ const epreuve = computed(
 );
 
 // ── Fetch ────────────────────────────────────────────────────
+
 onMounted(async () => {
   await Promise.all([
     seriesStore.fetchSeries(),
     subStore.fetchMySubscriptions(),
   ]);
+  console.log("hasActiveSubscription:", subStore.hasActiveSubscription);
+  console.log("subscriptions:", subStore.subscriptions);
+  ready.value = true;
 });
 
 // ── Filtres ──────────────────────────────────────────────────

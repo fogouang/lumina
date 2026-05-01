@@ -22,8 +22,9 @@ export const useSeriesStore = defineStore("series", () => {
   );
 
   function isAccessible(seriesNumber: number): boolean {
-    const { hasActiveSubscription } = useSubscriptionStore();
-    return FREE_SERIES.includes(seriesNumber) || hasActiveSubscription;
+    const sub = useSubscriptionStore();
+    if (sub.hasActiveSubscription) return true;
+    return FREE_SERIES.includes(seriesNumber);
   }
 
   // ── Actions ──────────────────────────────────────────────────
