@@ -179,7 +179,7 @@
             </NuxtLink>
             <NuxtLink to="/tarifs">
               <Button
-                label="Voir les formules"
+                label="Voir les prix"
                 icon="pi pi-dollar"
                 size="large"
                 outlined

@@ -59,7 +59,7 @@
           <i class="pi pi-crown" />
           <p>Vous n'avez pas d'abonnement actif.</p>
           <NuxtLink to="/tarifs">
-            <Button label="Voir les formules" icon="pi pi-arrow-right" icon-pos="right" class="bg-gradient-primary" />
+            <Button label="Voir les prix" icon="pi pi-arrow-right" icon-pos="right" class="bg-gradient-primary" />
           </NuxtLink>
         </div>
       </div>
@@ -92,7 +92,7 @@
         </div>
         <NuxtLink to="/tarifs">
           <Button
-            label="Voir les formules"
+            label="Voir les prix"
             icon="pi pi-arrow-right"
             icon-pos="right"
             class="bg-gradient-primary"

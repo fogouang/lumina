@@ -1,9 +1,7 @@
-// app/stores/series.ts
 import { defineStore } from "pinia";
 import type { SeriesListResponse } from "#shared/api/models/SeriesListResponse";
 import type { SuccessResponse_list_SeriesListResponse__ } from "#shared/api/models/SuccessResponse_list_SeriesListResponse__";
 
-// Séries gratuites selon le backend
 const FREE_SERIES = [100, 148, 149];
 
 export const useSeriesStore = defineStore("series", () => {
@@ -11,6 +9,7 @@ export const useSeriesStore = defineStore("series", () => {
   const series = ref<SeriesListResponse[]>([]);
   const loading = ref(false);
   const error = ref<string | null>(null);
+  const hasPremiumAccess = ref(false);
 
   // ── Getters ──────────────────────────────────────────────────
   const freeSeries = computed(() =>
@@ -22,8 +21,7 @@ export const useSeriesStore = defineStore("series", () => {
   );
 
   function isAccessible(seriesNumber: number): boolean {
-    const sub = useSubscriptionStore();
-    if (sub.hasActiveSubscription) return true;
+    if (hasPremiumAccess.value) return true;
     return FREE_SERIES.includes(seriesNumber);
   }
 
@@ -44,10 +42,23 @@ export const useSeriesStore = defineStore("series", () => {
     }
   }
 
+  async function fetchMyAccess(): Promise<void> {
+    const { get } = useApi();
+    try {
+      const res = await get<{ data: { has_premium_access: boolean } }>(
+        "/v1/series/my-access",
+      );
+      hasPremiumAccess.value = res.data?.has_premium_access ?? false;
+    } catch {
+      hasPremiumAccess.value = false;
+    }
+  }
+
   function $reset(): void {
     series.value = [];
     loading.value = false;
     error.value = null;
+    hasPremiumAccess.value = false;
   }
 
   function extractError(err: unknown): string {
@@ -62,10 +73,12 @@ export const useSeriesStore = defineStore("series", () => {
     series,
     loading,
     error,
+    hasPremiumAccess,
     freeSeries,
     premiumSeries,
     isAccessible,
     fetchSeries,
+    fetchMyAccess,
     $reset,
   };
 });

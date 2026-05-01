@@ -103,7 +103,7 @@
               outlined
               icon="pi pi-lock"
               class="serie-card__btn--locked"
-              @click.stop="navigateTo('/tarifs')"
+              @click.stop="router.push('/tarifs')"
             />
           </div>
         </div>
@@ -115,7 +115,7 @@
         <div class="series-upgrade__text">
           <h3>Débloquez toutes les séries</h3>
           <p>
-            Les séries 1, 2 et 3 sont gratuites. Passez à un forfait pour
+            Les séries 100, 148 et 149 sont gratuites. Passez à un forfait pour
             accéder aux {{ seriesCount - 3 }} séries restantes.
           </p>
         </div>
@@ -142,8 +142,6 @@
       ><Button label="Retour à l'accueil" icon="pi pi-home"
     /></NuxtLink>
   </div>
-  <p>{{ seriesStore.isAccessible(200) }}</p>
-  <p>{{ seriesStore.isAccessible(330) }}</p>
 </template>
 
 <script setup lang="ts">
@@ -200,12 +198,10 @@ const epreuve = computed(
 onMounted(async () => {
   await Promise.all([
     seriesStore.fetchSeries(),
-    subStore.fetchMySubscriptions(),
-  ]);
-  console.log("hasActiveSubscription:", subStore.hasActiveSubscription);
-  console.log("subscriptions:", subStore.subscriptions);
-  ready.value = true;
-});
+    seriesStore.fetchMyAccess(),
+  ])
+  ready.value = true
+})
 
 // ── Filtres ──────────────────────────────────────────────────
 const activeFilter = ref<"all" | "accessible" | "locked">("all");

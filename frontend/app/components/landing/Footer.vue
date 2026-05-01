@@ -1,6 +1,5 @@
 <template>
   <footer class="footer">
-
     <!-- Wave décoratif -->
     <!-- <div class="footer__wave">
       <svg viewBox="0 0 1440 80" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
@@ -13,34 +12,68 @@
 
     <div class="container footer__inner">
       <div class="footer__grid">
-
         <!-- Brand -->
         <div class="footer__brand">
           <div class="footer__logo">
-            <img src="/images/logo.png" alt="Lumina TCF" class="footer__logo-img" />
+            <img
+              src="/images/logo.png"
+              alt="Lumina TCF"
+              class="footer__logo-img"
+            />
           </div>
           <p class="footer__brand-desc">
-            Votre plateforme de préparation au TCF Canada. Simulations en conditions
-            réelles, correction IA et suivi de progression personnalisé.
+            Votre plateforme de préparation au TCF Canada. Simulations en
+            conditions réelles, correction IA et suivi de progression
+            personnalisé.
           </p>
 
           <div class="footer__socials">
-            <Button icon="pi pi-youtube"   rounded text class="footer__social-btn" aria-label="YouTube" />
-            <Button icon="pi pi-whatsapp"  rounded text class="footer__social-btn" aria-label="WhatsApp" />
-            <Button icon="pi pi-instagram" rounded text class="footer__social-btn" aria-label="Instagram" />
-            <Button icon="pi pi-facebook"  rounded text class="footer__social-btn" aria-label="Facebook" />
+            <Button
+              icon="pi pi-youtube"
+              rounded
+              text
+              class="footer__social-btn"
+              aria-label="YouTube"
+            />
+            <Button
+              icon="pi pi-whatsapp"
+              rounded
+              text
+              class="footer__social-btn"
+              aria-label="WhatsApp"
+            />
+            <Button
+              icon="pi pi-instagram"
+              rounded
+              text
+              class="footer__social-btn"
+              aria-label="Instagram"
+            />
+            <Button
+              icon="pi pi-facebook"
+              rounded
+              text
+              class="footer__social-btn"
+              aria-label="Facebook"
+            />
           </div>
 
           <!-- Newsletter -->
           <div class="footer__newsletter">
             <p class="footer__newsletter-label">Restez informé</p>
             <div class="footer__newsletter-form">
-              <InputText placeholder="Votre email" class="footer__newsletter-input" />
-              <Button icon="pi pi-arrow-right" class="footer__newsletter-btn" aria-label="S'abonner" />
+              <InputText
+                placeholder="Votre email"
+                class="footer__newsletter-input"
+              />
+              <Button
+                icon="pi pi-arrow-right"
+                class="footer__newsletter-btn"
+                aria-label="S'abonner"
+              />
             </div>
           </div>
         </div>
-
 
         <!-- Ressources -->
         <div class="footer__col">
@@ -73,7 +106,6 @@
             </li>
           </ul>
         </div>
-
       </div>
 
       <Divider class="footer__divider" />
@@ -81,32 +113,32 @@
       <!-- Bottom -->
       <div class="footer__bottom">
         <span class="footer__copyright">
-          © {{ new Date().getFullYear() }} <strong>Lumina TCF</strong> — ITIA SARL. Tous droits réservés.
+          © {{ new Date().getFullYear() }} <strong>Lumina TCF</strong> — ITIA
+          SARL. Tous droits réservés.
         </span>
         <div class="footer__badges">
-          <Tag value="Version 2026"     class="footer__badge" />
-          <Tag value="Correction IA"    class="footer__badge" />
+          <Tag value="Version 2026" class="footer__badge" />
+          <Tag value="Correction IA" class="footer__badge" />
           <div class="footer__secure">
             <i class="pi pi-shield" />
             <span>Paiement sécurisé</span>
           </div>
         </div>
       </div>
-
     </div>
   </footer>
 </template>
 
 <script setup>
-
 const ressourcesLinks = [
-  { to: '/politique-confidentialite', label: 'Confidentialité' },
-]
+  { to: "/politique-confidentialite", label: "Confidentialité" },
+  { to: "/condition-remboursemnet", label: "Condition de remboursement" },
+];
 
 const aproposLinks = [
-  { to: '/tarifs',     label: 'Tarifs'         },
-  { to: '/contact',    label: 'Contact'        },
-]
+  { to: "/tarifs", label: "Tarifs" },
+  { to: "/contact", label: "Contact" },
+];
 </script>
 
 <style scoped>

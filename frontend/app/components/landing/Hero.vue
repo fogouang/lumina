@@ -36,7 +36,7 @@
           <div class="hero__actions anim-fade-up anim-delay-300">
             <NuxtLink to="/tarifs">
               <Button
-                label="Voir les formules"
+                label="Voir les prix"
                 icon="pi pi-arrow-right"
                 icon-pos="right"
                 size="large"
@@ -203,8 +203,8 @@ const { openLogin } = useAuthModal();
   display: block;
   background: linear-gradient(
     to right,
-    var(--color-secondary-400),
-    var(--color-secondary-600)
+    var(--color-danger-400),
+    var(--color-danger-600)
   );
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
