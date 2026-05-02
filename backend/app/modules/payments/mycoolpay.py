@@ -67,8 +67,7 @@ class MyCoolPayClient:
             "customer_name": customer_name,
             "customer_phone_number": customer_phone_number,
             "customer_email": customer_email,
-            "customer_lang": customer_lang,
-            "callback_url": self.callback_url
+            "customer_lang": customer_lang
         }
         
         # Enlever les None
@@ -131,8 +130,7 @@ class MyCoolPayClient:
             "customer_phone_number": customer_phone_number,
             "customer_name": customer_name,
             "customer_email": customer_email,
-            "customer_lang": customer_lang,
-            "callback_url": self.callback_url
+            "customer_lang": customer_lang
         }
         
         payload = {k: v for k, v in payload.items() if v is not None}
