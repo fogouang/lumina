@@ -220,43 +220,71 @@ async def get_dashboard_stats(
     """
     Stats globales pour le dashboard admin.
     """
-    
-    # Vérifier que l'utilisateur est admin
+    from datetime import date
+    from app.modules.series.models import Series
+
     if not current_user or current_user.role != UserRole.PLATFORM_ADMIN:
         raise ForbiddenException(detail="Seuls les admins peuvent accéder au dashboard")
-    
-    # Compter les utilisateurs
-    total_users_result = await db.execute(
-        select(func.count(User.id))
-    )
+
+    # Total utilisateurs
+    total_users_result = await db.execute(select(func.count(User.id)))
     total_users = total_users_result.scalar_one()
-    
-    # Compter les abonnements actifs
+
+    # Abonnements actifs
     active_subs_result = await db.execute(
         select(func.count(Subscription.id))
         .where(Subscription.is_active == True)
     )
     active_subscriptions = active_subs_result.scalar_one()
-    
-    # Calculer le revenu total
+
+    # Revenu total
     revenue_result = await db.execute(
         select(func.sum(Payment.amount))
         .where(Payment.payment_status == PaymentStatus.COMPLETED)
     )
     total_revenue = float(revenue_result.scalar_one() or 0)
-    
-    # Compter les tentatives totales (via StudentAggregatedStats)
+
+    # Revenu ce mois
+    first_day = date.today().replace(day=1)
+    monthly_revenue_result = await db.execute(
+        select(func.sum(Payment.amount))
+        .where(
+            Payment.payment_status == PaymentStatus.COMPLETED,
+            Payment.created_at >= first_day
+        )
+    )
+    monthly_revenue = float(monthly_revenue_result.scalar_one() or 0)
+
+    # Total paiements complétés
+    total_payments_result = await db.execute(
+        select(func.count(Payment.id))
+        .where(Payment.payment_status == PaymentStatus.COMPLETED)
+    )
+    total_payments = total_payments_result.scalar_one()
+
+    # Séries actives
+    active_series_result = await db.execute(
+        select(func.count(Series.id))
+        .where(Series.is_active == True)
+    )
+    active_series = active_series_result.scalar_one()
+
+    # Tentatives totales
     attempts_result = await db.execute(
         select(func.sum(StudentAggregatedStats.total_attempts))
     )
     total_attempts = attempts_result.scalar_one() or 0
-    
+
     return SuccessResponse(
         data={
-            "total_users": total_users,
+            "total_users":          total_users,
             "active_subscriptions": active_subscriptions,
-            "total_revenue": total_revenue,
-            "total_attempts": total_attempts,
+            "total_revenue":        total_revenue,
+            "monthly_revenue":      monthly_revenue,
+            "total_payments":       total_payments,
+            "active_series":        active_series,
+            "total_attempts":       total_attempts,
+            "ai_corrections":       0,
         },
         message="Stats dashboard récupérées"
     )

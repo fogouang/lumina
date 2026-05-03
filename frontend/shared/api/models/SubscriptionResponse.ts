@@ -14,5 +14,6 @@ export type SubscriptionResponse = {
     end_date: string;
     is_active: boolean;
     ai_credits_remaining: number;
+    is_trial: boolean;
 };
 

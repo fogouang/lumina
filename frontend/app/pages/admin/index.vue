@@ -153,6 +153,7 @@ async function fetchAll() {
     ]);
     stats.value = statsRes.data ?? {};
     analytics.value = analyticsRes.data ?? {};
+    console.log(stats.value)
   } catch {
     // silencieux
   } finally {

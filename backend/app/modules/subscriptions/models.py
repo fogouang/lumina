@@ -110,6 +110,14 @@ class Subscription(BaseModel):
         foreign_keys=[created_by_id]
     )
     
+    is_trial: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False,
+        server_default="false",
+        doc="Abonnement d'essai gratuit"
+    )
+    
     def __repr__(self) -> str:
         return f"Subscription(id={self.id}, user_id={self.user_id}, active={self.is_active})"
 

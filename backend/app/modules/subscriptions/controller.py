@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, status
 
 from app.modules.subscriptions.schemas import (
     AddStudentToOrgRequest,
+    AdminActivateSubscriptionRequest,
     OrganizationSubscriptionCreate,
     OrganizationSubscriptionResponse,
     OrganizationSubscriptionUpdate,
@@ -101,6 +102,27 @@ async def create_org_subscription(
         message="Souscription organisation créée"
     )
 
+@router.post(
+    "/admin/activate",
+    response_model=SuccessResponse[SubscriptionResponse],
+    status_code=status.HTTP_201_CREATED,
+    summary="Activer manuellement un abonnement (admin)"
+)
+async def admin_activate_subscription(
+    data: AdminActivateSubscriptionRequest,
+    service: Annotated[SubscriptionService, Depends(get_subscription_service)] = None,
+    current_user: CurrentUser = None
+):
+    """
+    Activer manuellement un abonnement pour un utilisateur.
+    Réservé aux admins. Utilisé pour les paiements reçus hors plateforme.
+    """
+    subscription = await service.admin_activate_subscription(data, current_user)
+    return SuccessResponse(
+        data=SubscriptionResponse.model_validate(subscription),
+        message="Abonnement activé avec succès"
+    )
+ 
 
 @router.get(
     "/organizations/{org_id}",

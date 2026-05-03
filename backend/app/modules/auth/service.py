@@ -87,7 +87,8 @@ class AuthService:
         is_active=True,
         custom_duration_days=7,
         custom_ai_credits=2,
-        ai_credits_remaining=2
+        ai_credits_remaining=2,
+        is_trial=True
         )
         self.db.add(trial_subscription)
         await self.db.commit()

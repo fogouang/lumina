@@ -16,6 +16,7 @@ from app.modules.subscriptions.repository import (
 )
 from app.modules.subscriptions.schemas import (
     AddStudentToOrgRequest,
+    AdminActivateSubscriptionRequest,
     OrganizationSubscriptionCreate,
     OrganizationSubscriptionUpdate,
     SubscriptionCreateB2C,
@@ -470,3 +471,78 @@ class SubscriptionService:
             )
         
         return await self.repo.get_by_organization(org_id)
+    
+    
+    async def admin_activate_subscription(
+        self,
+        data: AdminActivateSubscriptionRequest,
+        current_user: User
+    ) -> Subscription:
+        from app.shared.enums import UserRole, PaymentMethod, PaymentStatus
+        from app.modules.payments.models import Payment
+        from app.modules.payments.repository import PaymentRepository
+        from sqlalchemy import update
+
+        if current_user.role != UserRole.PLATFORM_ADMIN:
+            raise ForbiddenException(detail="Réservé aux admins")
+
+        user = await self.db.get(User, data.user_id)
+        if not user or not user.is_active:
+            raise NotFoundException(resource="User", identifier=str(data.user_id))
+
+        plan = await self.db.get(Plan, data.plan_id)
+        if not plan or not plan.is_active:
+            raise NotFoundException(resource="Plan", identifier=str(data.plan_id))
+
+        # Désactiver anciens abonnements
+        await self.db.execute(
+            update(Subscription)
+            .where(Subscription.user_id == data.user_id, Subscription.is_active == True)
+            .values(is_active=False)
+        )
+
+        # Créer abonnement actif
+        start_date = date.today()
+        end_date = start_date + timedelta(days=plan.duration_days)
+
+        subscription = await self.repo.create(
+            user_id=data.user_id,
+            organization_id=None,
+            plan_id=plan.id,
+            custom_duration_days=None,
+            custom_ai_credits=None,
+            start_date=start_date,
+            end_date=end_date,
+            is_active=True,
+            ai_credits_remaining=plan.ai_credits,
+            created_by_id=current_user.id
+        )
+
+        # Créer paiement manuel pour la facture
+        payment_repo = PaymentRepository(self.db)
+        invoice_number = await payment_repo.generate_invoice_number()
+
+        payment = await payment_repo.create(
+            user_id=data.user_id,
+            organization_id=None,
+            subscription_id=subscription.id,
+            org_subscription_id=None,
+            amount=float(plan.price),
+            payment_method=PaymentMethod.BANK_TRANSFER,
+            payment_status=PaymentStatus.COMPLETED,
+            transaction_reference=f"MANUAL-{invoice_number}",
+            invoice_number=invoice_number,
+            invoice_url=None
+        )
+
+        await self.db.commit()
+
+        # Générer la facture PDF
+        from app.modules.invoices.service import InvoiceService
+        invoice_service = InvoiceService(self.db)
+        try:
+            await invoice_service.generate_invoice_for_payment(payment.id)
+        except Exception as e:
+            print(f"Erreur génération facture: {e}")
+
+        return subscription

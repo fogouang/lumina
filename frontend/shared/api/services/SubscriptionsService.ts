@@ -3,6 +3,7 @@
 /* tslint:disable */
 /* eslint-disable */
 import type { AddStudentToOrgRequest } from '../models/AddStudentToOrgRequest';
+import type { AdminActivateSubscriptionRequest } from '../models/AdminActivateSubscriptionRequest';
 import type { OrganizationSubscriptionCreate } from '../models/OrganizationSubscriptionCreate';
 import type { OrganizationSubscriptionUpdate } from '../models/OrganizationSubscriptionUpdate';
 import type { SubscriptionCreateB2C } from '../models/SubscriptionCreateB2C';
@@ -80,6 +81,32 @@ export class SubscriptionsService {
         return __request(OpenAPI, {
             method: 'POST',
             url: '/api/v1/subscriptions/organizations',
+            cookies: {
+                'access_token': accessToken,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: `Validation Error`,
+            },
+        });
+    }
+    /**
+     * Activer manuellement un abonnement (admin)
+     * Activer manuellement un abonnement pour un utilisateur.
+     * Réservé aux admins. Utilisé pour les paiements reçus hors plateforme.
+     * @param requestBody
+     * @param accessToken
+     * @returns SuccessResponse_SubscriptionResponse_ Successful Response
+     * @throws ApiError
+     */
+    public static adminActivateSubscriptionApiV1SubscriptionsAdminActivatePost(
+        requestBody: AdminActivateSubscriptionRequest,
+        accessToken?: (string | null),
+    ): CancelablePromise<SuccessResponse_SubscriptionResponse_> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/subscriptions/admin/activate',
             cookies: {
                 'access_token': accessToken,
             },

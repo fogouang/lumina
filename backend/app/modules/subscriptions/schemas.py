@@ -23,6 +23,7 @@ class SubscriptionResponse(BaseSchema):
     end_date: date
     is_active: bool
     ai_credits_remaining: int
+    is_trial: bool
 
 # === B2B ORGANIZATION SUBSCRIPTIONS ===
 
@@ -80,3 +81,9 @@ class StudentSubscriptionResponse(BaseSchema):
     # Info user
     user_email: str
     user_name: str
+    
+class AdminActivateSubscriptionRequest(BaseSchema):
+    """Request pour activer manuellement un abonnement."""
+    user_id: UUID = Field(..., description="ID de l'utilisateur")
+    plan_id: UUID = Field(..., description="ID du plan")
+    note: str | None = Field(None, description="Note interne (raison du paiement manuel)")
