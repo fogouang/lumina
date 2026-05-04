@@ -155,7 +155,7 @@ a {
 /* ========================================
    UTILITAIRES GRADIENT
    ======================================== */
-.bg-gradient-primary { background: var(--gradient-primary); }
+/* .bg-gradient-primary { background: var(--gradient-primary); }
 .bg-gradient-hero    { background: var(--gradient-hero); }
 
 .text-gradient-primary {
@@ -163,6 +163,17 @@ a {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+} */
+
+@layer utilities {
+  .bg-gradient-primary { background: var(--gradient-primary); }
+  .bg-gradient-hero    { background: var(--gradient-hero); }
+  .text-gradient-primary {
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
 }
 
 /* ========================================
