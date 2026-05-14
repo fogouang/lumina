@@ -5,6 +5,7 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, status
+from sqlalchemy import update
 
 from app.modules.public_expression.schemas import (
     MonthlySessionCreate,
@@ -19,7 +20,9 @@ from app.modules.public_expression.schemas import (
     EOTask2Response,
     EOTask3Create,
     EOTask3Update,
-    EOTask3Response
+    EOTask3Response,
+    SimulatorCombinedRequest,
+    SimulatorCorrectionRequest
 )
 from app.modules.public_expression.service import (
     MonthlySessionService,
@@ -30,6 +33,13 @@ from app.modules.public_expression.service import (
 from app.shared.database.session import DbSession
 from app.shared.dependencies import CurrentUser
 from app.shared.schemas.responses import SuccessResponse
+from app.modules.corrections.ai_corrector import AICorrector
+from app.shared.exceptions.http import BadRequestException
+from pydantic import BaseModel
+
+from app.modules.subscriptions.models import Subscription
+from app.modules.subscriptions.repository import SubscriptionRepository
+
 
 router = APIRouter(prefix="/public-expressions", tags=["Public Expression"])
 
@@ -401,4 +411,109 @@ async def delete_eo_task3(
     return SuccessResponse(
         data={"deleted": True, "task_id": str(task_id)},
         message="Sujet supprimé"
+    )
+    
+
+
+
+@router.post("/ai-correct-combined", response_model=SuccessResponse[dict])
+async def ai_correct_combined(
+    data: SimulatorCombinedRequest,
+    db: DbSession,
+    current_user: CurrentUser = None
+):
+    # Vérifier 3 crédits minimum
+    sub_repo = SubscriptionRepository(db)
+    subs = await sub_repo.get_active_by_user(current_user.id)
+    active_sub = next((s for s in subs if s.ai_credits_remaining >= 1), None)
+
+    if not active_sub:
+        raise BadRequestException(detail="Il vous faut au moins 1 crédits IA")
+
+    from app.modules.corrections.prompts import get_combined_correction_prompt
+    from app.modules.corrections.ai_providers.gemini import GeminiProvider
+
+    prompt = get_combined_correction_prompt(
+        task1_text=data.task1_content,
+        task1_instruction=data.task1_instruction,
+        task2_text=data.task2_content,
+        task2_instruction=data.task2_instruction,
+        task3_text=data.task3_content,
+        task3_instruction=data.task3_instruction,
+    )
+
+    provider = GeminiProvider()
+    result = await provider.correct_combined(prompt)
+
+    # Décrémenter 3 crédits
+    await db.execute(
+        update(Subscription)
+        .where(Subscription.id == active_sub.id)
+        .values(ai_credits_remaining=active_sub.ai_credits_remaining - 1)
+    )
+    await db.commit()
+
+    return SuccessResponse(data=result, message="Correction combinée effectuée")
+
+
+@router.post(
+    "/ai-correct",
+    response_model=SuccessResponse[dict],
+    summary="Correction IA simulateur EE"
+)
+async def ai_correct_simulator(
+    data: SimulatorCorrectionRequest,
+    db: DbSession,
+    current_user: CurrentUser = None
+):
+    """
+    Corriger une tâche EE du simulateur avec l'IA.
+    Consomme 1 crédit IA par tâche.
+    """
+    from app.modules.subscriptions.repository import SubscriptionRepository
+    from sqlalchemy import update
+    from app.modules.subscriptions.models import Subscription
+
+    # Vérifier crédits
+    sub_repo = SubscriptionRepository(db)
+    subs = await sub_repo.get_active_by_user(current_user.id)
+    active_sub = next((s for s in subs if s.ai_credits_remaining > 0), None)
+
+    if not active_sub:
+        raise BadRequestException(detail="Aucun crédit IA disponible")
+
+    # Correction IA
+    corrector = AICorrector()
+    result = await corrector.correct_written_expression(
+        text=data.content,
+        task_instruction=data.instruction,
+        word_count_min=data.word_min,
+        word_count_max=data.word_max
+    )
+
+    # Décrémenter le crédit
+    await db.execute(
+        update(Subscription)
+        .where(Subscription.id == active_sub.id)
+        .values(ai_credits_remaining=active_sub.ai_credits_remaining - 1)
+    )
+    await db.commit()
+
+    return SuccessResponse(
+        data={
+            "score":    result.get("overall_score"),
+            "level":    result.get("cecrl_level"),
+            "feedback": result.get("appreciation"),
+            "corrections": result.get("corrections", []),
+            "suggestions": result.get("suggestions", []),
+            "corrected_text": result.get("corrected_text"),
+            "details": {
+                "structure":   {"score": result.get("structure_score"),  "feedback": result.get("structure_feedback")},
+                "cohesion":    {"score": result.get("cohesion_score"),   "feedback": result.get("cohesion_feedback")},
+                "vocabulary":  {"score": result.get("vocabulary_score"), "feedback": result.get("vocabulary_feedback")},
+                "grammar":     {"score": result.get("grammar_score"),    "feedback": result.get("grammar_feedback")},
+                "task":        {"score": result.get("task_score"),       "feedback": result.get("task_feedback")},
+            }
+        },
+        message="Correction IA effectuée"
     )

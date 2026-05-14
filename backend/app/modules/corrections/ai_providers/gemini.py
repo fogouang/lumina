@@ -18,7 +18,7 @@ class GeminiProvider(AIProvider):
     
     def __init__(self):
         self.client = genai.Client(api_key=settings.GEMINI_API_KEY)
-        self.model_id = "gemini-2.5-flash"
+        self.model_id = "gemini-2.5-flash-lite"
     
     async def correct_text(
         self,
@@ -91,3 +91,21 @@ class GeminiProvider(AIProvider):
                 "corrections": [],
                 "suggestions": []
             }
+            
+    
+    async def correct_combined(self, prompt: str) -> dict[str, Any]:
+        """Corriger les 3 tâches avec un prompt combiné."""
+        try:
+            response = await self.client.aio.models.generate_content(
+                model=self.model_id,
+                contents=prompt
+            )
+            return self._parse_response(response.text)
+        except Exception as e:
+            error_msg = str(e)
+            if "429" in error_msg or "RESOURCE_EXHAUSTED" in error_msg:
+                raise Exception("Quota Gemini dépassé. Veuillez réessayer dans quelques minutes.")
+            elif "401" in error_msg or "INVALID_API_KEY" in error_msg:
+                raise Exception("Clé API Gemini invalide. Vérifiez votre configuration.")
+            else:
+                raise Exception(f"Erreur Gemini API: {error_msg[:200]}")

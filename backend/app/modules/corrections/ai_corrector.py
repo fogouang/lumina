@@ -7,9 +7,7 @@ from typing import Any
 
 from app.config import get_settings
 from app.modules.corrections.ai_providers.base import AIProvider
-from app.modules.corrections.ai_providers.claude import ClaudeProvider
 from app.modules.corrections.ai_providers.gemini import GeminiProvider
-from app.modules.corrections.ai_providers.grok import GrokProvider
 
 settings = get_settings()
 logger = logging.getLogger(__name__)
@@ -30,18 +28,11 @@ class AICorrectorFactory:
             ValueError: Si provider invalide
         """
         provider = settings.AI_PROVIDER.lower()
+             
         
-        if provider == "grok":
-            logger.info("Using Grok (xAI) for AI correction")
-            return GrokProvider()
-        
-        elif provider == "gemini":
+        if provider == "gemini":
             logger.info("Using Gemini (Google) for AI correction")
             return GeminiProvider()
-        
-        elif provider == "claude":
-            logger.info("Using Claude (Anthropic) for AI correction")
-            return ClaudeProvider()
         
         else:
             raise ValueError(

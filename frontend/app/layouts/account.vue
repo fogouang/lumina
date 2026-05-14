@@ -1,9 +1,7 @@
 <template>
   <div class="account-layout">
-
     <!-- ── Sidebar ───────────────────────────────────────────── -->
     <aside class="account-sidebar">
-
       <!-- Avatar + infos -->
       <div class="account-sidebar__profile">
         <div class="account-sidebar__avatar">
@@ -35,29 +33,69 @@
         <i class="pi pi-sign-out" />
         <span>Déconnexion</span>
       </button>
-
     </aside>
 
     <!-- ── Contenu ───────────────────────────────────────────── -->
     <main class="account-main">
       <slot />
     </main>
-
   </div>
 </template>
 
 <script setup lang="ts">
-const auth = useAuthStore()
+const auth = useAuthStore();
 
 const navItems = [
-  { to: '/mon-compte',             label: 'Tableau de bord', icon: 'pi pi-home',        exact: true  },
-  { to: '/mon-compte/profil',      label: 'Mon profil',      icon: 'pi pi-user',        exact: false },
-  { to: '/mon-compte/securite',    label: 'Sécurité',        icon: 'pi pi-shield',      exact: false },
-  { to: '/mon-compte/tentatives',  label: 'Mes tentatives',  icon: 'pi pi-list',        exact: false },
-  { to: '/mon-compte/abonnement',  label: 'Abonnement',      icon: 'pi pi-crown',       exact: false },
-  { to: '/mon-compte/factures',    label: 'Factures',        icon: 'pi pi-receipt',     exact: false },
-  { to: '/contact',                label: 'Support',         icon: 'pi pi-envelope',    exact: false },
-]
+  {
+    to: "/mon-compte",
+    label: "Tableau de bord",
+    icon: "pi pi-home",
+    exact: true,
+  },
+  {
+    to: "/simulateur/expression-ecrite",
+    label: "Simulateur",
+    icon: "pi pi-pen-to-square",
+    exact: false,
+  },
+   {
+    to: "/mon-compte/methodologie",
+    label: "Méthodologie",
+    icon: "pi pi-pen-to-square",
+    exact: false,
+  },
+  {
+    to: "/mon-compte/profil",
+    label: "Mon profil",
+    icon: "pi pi-user",
+    exact: false,
+  },
+  {
+    to: "/mon-compte/securite",
+    label: "Sécurité",
+    icon: "pi pi-shield",
+    exact: false,
+  },
+  {
+    to: "/mon-compte/tentatives",
+    label: "Mes tentatives",
+    icon: "pi pi-list",
+    exact: false,
+  },
+  {
+    to: "/mon-compte/abonnement",
+    label: "Abonnement",
+    icon: "pi pi-crown",
+    exact: false,
+  },
+  {
+    to: "/mon-compte/factures",
+    label: "Factures",
+    icon: "pi pi-receipt",
+    exact: false,
+  },
+  { to: "/contact", label: "Support", icon: "pi pi-envelope", exact: false },
+];
 </script>
 
 <style>

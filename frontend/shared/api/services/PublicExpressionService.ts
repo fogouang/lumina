@@ -10,6 +10,7 @@ import type { EOTask3Create } from '../models/EOTask3Create';
 import type { EOTask3Update } from '../models/EOTask3Update';
 import type { MonthlySessionCreate } from '../models/MonthlySessionCreate';
 import type { MonthlySessionUpdate } from '../models/MonthlySessionUpdate';
+import type { SimulatorCorrectionRequest } from '../models/SimulatorCorrectionRequest';
 import type { SuccessResponse_dict_ } from '../models/SuccessResponse_dict_';
 import type { SuccessResponse_EECombinationResponse_ } from '../models/SuccessResponse_EECombinationResponse_';
 import type { SuccessResponse_EOTask2Response_ } from '../models/SuccessResponse_EOTask2Response_';
@@ -949,6 +950,58 @@ export class PublicExpressionService {
             cookies: {
                 'access_token': accessToken,
             },
+            errors: {
+                422: `Validation Error`,
+            },
+        });
+    }
+    /**
+     * Correction IA simulateur EE
+     * Corriger une tâche EE du simulateur avec l'IA.
+     * Consomme 1 crédit IA par tâche.
+     * @param requestBody
+     * @param accessToken
+     * @returns SuccessResponse_dict_ Successful Response
+     * @throws ApiError
+     */
+    public static aiCorrectSimulatorApiV1PublicExpressionsAiCorrectPost(
+        requestBody: SimulatorCorrectionRequest,
+        accessToken?: (string | null),
+    ): CancelablePromise<SuccessResponse_dict_> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/public-expressions/ai-correct',
+            cookies: {
+                'access_token': accessToken,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: `Validation Error`,
+            },
+        });
+    }
+    /**
+     * Correction IA simulateur EE
+     * Corriger une tâche EE du simulateur avec l'IA.
+     * Consomme 1 crédit IA par tâche.
+     * @param requestBody
+     * @param accessToken
+     * @returns SuccessResponse_dict_ Successful Response
+     * @throws ApiError
+     */
+    public static aiCorrectSimulatorApiV1PublicExpressionsAiCorrectPost1(
+        requestBody: SimulatorCorrectionRequest,
+        accessToken?: (string | null),
+    ): CancelablePromise<SuccessResponse_dict_> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/public-expressions/ai-correct',
+            cookies: {
+                'access_token': accessToken,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
             errors: {
                 422: `Validation Error`,
             },

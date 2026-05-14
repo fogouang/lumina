@@ -177,7 +177,7 @@ const epreuves: Record<string, Epreuve> = {
     ctaFinal: {
       label: "Lancer le simulateur",
       icon: "pi pi-play",
-      to: "/epreuve/expression-ecrite/simulateur",
+      to: "/simulateur/expression-ecrite",
     },
   },
 

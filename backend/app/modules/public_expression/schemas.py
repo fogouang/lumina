@@ -146,3 +146,26 @@ class EOTask3Response(BaseSchema):
     order: int
     created_at: datetime
     updated_at: datetime
+    
+
+class SimulatorCombinedRequest(BaseSchema):
+    task1_content: str
+    task1_instruction: str
+    task1_word_min: int
+    task1_word_max: int
+    task2_content: str
+    task2_instruction: str
+    task2_word_min: int
+    task2_word_max: int
+    task3_content: str
+    task3_instruction: str  # title + docs combinés
+    task3_word_min: int
+    task3_word_max: int
+    
+
+class SimulatorCorrectionRequest(BaseSchema):
+    task_number: int  # 1, 2 ou 3
+    content: str
+    instruction: str
+    word_min: int
+    word_max: int
