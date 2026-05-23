@@ -21,14 +21,15 @@
           <!-- Titre -->
           <div class="hero__headline anim-fade-up anim-delay-200">
             <h1 class="hero__title">
-              Réussissez votre
-              <span class="hero__title-accent">TCF Canada</span>
-              avec confiance
+              Ne sois pas la énième personne à repasser le 
+              <span class="">TCF Canada</span>
+              ,ton pack à moindre coût t'attend
             </h1>
             <p class="hero__subtitle">
-              Simulations en conditions réelles, correction IA instantanée et
-              suivi de progression personnalisé. Tout ce dont vous avez besoin
-              pour obtenir le score visé.
+              Ici, on ne passe pas le TCF Canada deux fois. Simulations en
+              conditions réelles, correction IA instantanée et suivi de
+              progression personnalisé, tout ce dont vous avez besoin pour
+              obtenir le score visé.
             </p>
           </div>
 

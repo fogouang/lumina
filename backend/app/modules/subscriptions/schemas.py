@@ -87,3 +87,4 @@ class AdminActivateSubscriptionRequest(BaseSchema):
     user_id: UUID = Field(..., description="ID de l'utilisateur")
     plan_id: UUID = Field(..., description="ID du plan")
     note: str | None = Field(None, description="Note interne (raison du paiement manuel)")
+    promo_code: str | None = None 

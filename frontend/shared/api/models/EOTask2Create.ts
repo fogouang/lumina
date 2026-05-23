@@ -7,6 +7,7 @@
  */
 export type EOTask2Create = {
     subject: string;
+    eo_task2_correction: (string | null);
     order?: number;
 };
 

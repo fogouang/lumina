@@ -69,13 +69,13 @@ const epreuves: Record<string, Epreuve> = {
       {
         label: "Méthodologie & Astuces",
         icon: "pi pi-lightbulb",
-        to: "/epreuve/expression-ecrite/astuces",
+        to: "/simulateur/expression-ecrite",
         outlined: false,
       },
       {
         label: "Sujets d'actualités",
         icon: "pi pi-calendar",
-        to: "/epreuve/expression-ecrite/sujets-actualites",
+        to: "/simulateur/expression-ecrite",
         outlined: true,
       },
       {

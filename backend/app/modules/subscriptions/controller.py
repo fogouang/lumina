@@ -76,7 +76,22 @@ async def get_my_subscriptions(
         message=f"{len(subscriptions)} souscription(s) active(s)"
     )
 
-
+@router.get(
+    "/admin/list",
+    response_model=SuccessResponse[list[dict]],
+    summary="Liste tous les abonnements actifs (admin)"
+)
+async def admin_list_subscriptions(
+    service: Annotated[SubscriptionService, Depends(get_subscription_service)] = None,
+    current_user: CurrentUser = None
+):
+    subscriptions = await service.admin_list_subscriptions(current_user)
+    return SuccessResponse(
+        data=subscriptions,
+        message=f"{len(subscriptions)} abonnement(s) actif(s)"
+    )
+    
+    
 # === B2B ORGANIZATION SUBSCRIPTIONS ===
 
 @router.post(

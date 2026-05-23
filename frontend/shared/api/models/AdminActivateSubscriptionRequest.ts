@@ -18,5 +18,6 @@ export type AdminActivateSubscriptionRequest = {
      * Note interne (raison du paiement manuel)
      */
     note?: (string | null);
+    promo_code?: (string | null);
 };
 

@@ -21,25 +21,31 @@ from app.modules.notifications.controller import router as notifications_router
 from app.modules.ai_credit_purchases import ai_credits_router
 from app.modules.analytics import  analytics_router
 from app.modules.public_expression.controller import router as public_expression_router
+from app.modules.partners.controller import router as partners_router
+from app.modules.promo_codes.controller import router as promo_codes_router
+
 
 api_router = APIRouter()
 
 # Enregistrer les routes
-api_router.include_router(auth_router,  tags=["Authentication"])
-api_router.include_router(users_router,  tags=["Users"])
-api_router.include_router(plans_router, tags=["Plans"])
-api_router.include_router(organizations_router,  tags=["Organizations"])
-api_router.include_router(subscriptions_router,  tags=["Subscriptions"])
-api_router.include_router(payments_router,  tags=["Payments"])
-api_router.include_router(series_router, tags=["Series & Questions"])
-api_router.include_router(upload_router,  tags=["Upload"])
-api_router.include_router(expression_tasks_router,  tags=["Expression Tasks"])
-api_router.include_router(exam_attempts_router,  tags=["Exam Attempts"])
-api_router.include_router(invoices_router, tags=["Invoices"])
-api_router.include_router( written_expressions_router,tags=["Written Expressions"])
-api_router.include_router( oral_expressions_router, tags=["Oral Expressions"])
-api_router.include_router( notifications_router,tags=["Notifications"])
-api_router.include_router(ai_credits_router,tags=["AI Purchase Credit"])
-api_router.include_router(analytics_router, tags=["Statistics"])
-api_router.include_router(public_expression_router,  tags=["Public Expression "])
+api_router.include_router(auth_router)
+api_router.include_router(users_router)
+api_router.include_router(plans_router)
+api_router.include_router(organizations_router)
+api_router.include_router(subscriptions_router)
+api_router.include_router(payments_router)
+api_router.include_router(series_router)
+api_router.include_router(upload_router)
+api_router.include_router(expression_tasks_router)
+api_router.include_router(exam_attempts_router)
+api_router.include_router(invoices_router)
+api_router.include_router(written_expressions_router)
+api_router.include_router(oral_expressions_router)
+api_router.include_router(notifications_router)
+api_router.include_router(ai_credits_router)
+api_router.include_router(analytics_router)
+api_router.include_router(public_expression_router)
+api_router.include_router(partners_router)
+api_router.include_router(promo_codes_router)
+
 

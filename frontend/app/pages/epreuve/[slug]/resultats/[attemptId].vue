@@ -5,7 +5,9 @@
       <div class="resultats__header-inner container">
         <div class="resultats__serie-badge">
           <i class="pi pi-check-circle" />
-          Série {{ attempt.series_number }} · Terminée
+          Série {{ attempt.series_number }} ·
+          {{ fromModule ? moduleLabels[fromModule] : "Série complète" }} ·
+          Terminée
         </div>
 
         <div class="resultats__score-main">
@@ -46,7 +48,7 @@
         <h2 class="resultats__section-title">Aperçu des réponses</h2>
         <div class="resultats__grid">
           <div
-            v-for="(ans, idx) in answers"
+            v-for="(ans, idx) in answersFiltered"
             :key="idx"
             class="resultats__dot"
             :class="{
@@ -77,9 +79,10 @@
 
       <!-- ── Actions ──────────────────────────────────────────── -->
       <div class="resultats__actions">
-        <NuxtLink :to="`/epreuve/${slug}/series`">
+        <!-- Retour : vers modules si on vient d'un module, sinon vers séries -->
+        <NuxtLink :to="backLink">
           <Button
-            label="Retour aux séries"
+            :label="fromSeriesId ? 'Autres modules' : 'Retour aux séries'"
             icon="pi pi-arrow-left"
             outlined
             class="resultats__action-btn"
@@ -87,7 +90,7 @@
         </NuxtLink>
         <NuxtLink :to="`/epreuve/${slug}/series/${attempt.series_id}`">
           <Button
-            label="Refaire cette série"
+            :label="fromSeriesId ? 'Refaire ce module' : 'Refaire cette série'"
             icon="pi pi-refresh"
             class="resultats__action-btn bg-gradient-primary"
           />
@@ -100,7 +103,7 @@
 
         <div class="correction-list">
           <div
-            v-for="(question, idx) in questions"
+            v-for="(question, idx) in questionsFiltered"
             :key="question.id"
             :id="`question-${idx}`"
             class="correction-card"
@@ -281,6 +284,50 @@ const answersMap = computed(() => {
   return map;
 });
 
+const fromSeriesId = route.query.from as string | undefined;
+const fromModule = route.query.module as string | undefined; // 'co' | 'ce' | 'ee' | 'eo' | undefined
+
+const backLink = computed(() =>
+  fromSeriesId
+    ? `/epreuve/${slug}/series/${fromSeriesId}`
+    : `/epreuve/${slug}/series`,
+);
+
+// Remplace questions.value par questionsFiltered dans le template
+const questionsFiltered = computed(() => {
+  if (!fromModule) return questions.value; // séquence complète → tout afficher
+  if (fromModule === "co")
+    return questions.value.filter((q) => q.type === "oral");
+  if (fromModule === "ce")
+    return questions.value.filter((q) => q.type === "written");
+  return []; // ee et eo n'ont pas de questions QCM
+});
+
+// Idem pour les réponses dans l'aperçu
+const answersFiltered = computed(() => {
+  if (!fromModule) return answers.value;
+  if (fromModule === "co") {
+    const oralIds = new Set(
+      questions.value.filter((q) => q.type === "oral").map((q) => q.id),
+    );
+    return answers.value.filter((a) => oralIds.has(a.question_id));
+  }
+  if (fromModule === "ce") {
+    const writtenIds = new Set(
+      questions.value.filter((q) => q.type === "written").map((q) => q.id),
+    );
+    return answers.value.filter((a) => writtenIds.has(a.question_id));
+  }
+  return [];
+});
+
+const moduleLabels: Record<string, string> = {
+  co: "Compréhension Orale",
+  ce: "Compréhension Écrite",
+  ee: "Expression Écrite",
+  eo: "Expression Orale",
+};
+
 onMounted(async () => {
   try {
     const [attemptRes, answersRes] = await Promise.all([
@@ -311,22 +358,41 @@ onMounted(async () => {
 });
 
 // ── Computed ─────────────────────────────────────────────────
-const mainScore = computed(
-  () => attempt.value?.oral_score ?? attempt.value?.written_score ?? 0,
-);
+const mainScore = computed(() => {
+  if (!fromModule)
+    return attempt.value?.oral_score ?? attempt.value?.written_score ?? 0;
+  if (fromModule === "co") return attempt.value?.oral_score ?? 0;
+  if (fromModule === "ce") return attempt.value?.written_score ?? 0;
+  return 0;
+});
 
-const mainLevel = computed(
-  () => attempt.value?.oral_level ?? attempt.value?.written_level ?? "—",
-);
+const mainLevel = computed(() => {
+  if (!fromModule)
+    return attempt.value?.oral_level ?? attempt.value?.written_level ?? "—";
+  if (fromModule === "co") return attempt.value?.oral_level ?? "—";
+  if (fromModule === "ce") return attempt.value?.written_level ?? "—";
+  return "—";
+});
 
 const correctCount = computed(
-  () => answers.value.filter((a) => a.is_correct).length,
+  () => answersFiltered.value.filter((a) => a.is_correct).length,
 );
 const incorrectCount = computed(
-  () => answers.value.filter((a) => !a.is_correct).length,
+  () => answersFiltered.value.filter((a) => !a.is_correct).length,
 );
 
+const elapsedSeconds = route.query.elapsed
+  ? parseInt(route.query.elapsed as string)
+  : null;
+
 const timeSpent = computed(() => {
+  // Si on vient d'un module avec elapsed, on utilise ça
+  if (elapsedSeconds !== null) {
+    const m = Math.floor(elapsedSeconds / 60);
+    const s = elapsedSeconds % 60;
+    return `${m} min ${s} sec`;
+  }
+  // Sinon fallback sur started_at / completed_at (séquence complète)
   if (!attempt.value?.started_at || !attempt.value?.completed_at) return "—";
   const start = new Date(attempt.value.started_at).getTime();
   const end = new Date(attempt.value.completed_at).getTime();

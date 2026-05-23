@@ -43,6 +43,9 @@ from app.modules.written_expressions.models import (
     WrittenExpressionAICorrection,
     WrittenExpressionManualCorrection,
 )
+from app.modules.partners.models import Partner
+from app.modules.promo_codes.models import PromoCode
+
 
 settings = get_settings()
 

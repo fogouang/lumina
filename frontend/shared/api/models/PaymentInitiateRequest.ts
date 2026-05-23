@@ -23,5 +23,9 @@ export type PaymentInitiateRequest = {
      * Numéro pour mobile money
      */
     phone_number?: (string | null);
+    /**
+     * Code promo partenaire (optionnel)
+     */
+    promo_code?: (string | null);
 };
 

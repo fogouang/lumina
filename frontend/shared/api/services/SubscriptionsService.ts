@@ -8,6 +8,7 @@ import type { OrganizationSubscriptionCreate } from '../models/OrganizationSubsc
 import type { OrganizationSubscriptionUpdate } from '../models/OrganizationSubscriptionUpdate';
 import type { SubscriptionCreateB2C } from '../models/SubscriptionCreateB2C';
 import type { SuccessResponse_dict_ } from '../models/SuccessResponse_dict_';
+import type { SuccessResponse_list_dict__ } from '../models/SuccessResponse_list_dict__';
 import type { SuccessResponse_list_StudentSubscriptionResponse__ } from '../models/SuccessResponse_list_StudentSubscriptionResponse__';
 import type { SuccessResponse_list_SubscriptionResponse__ } from '../models/SuccessResponse_list_SubscriptionResponse__';
 import type { SuccessResponse_OrganizationSubscriptionResponse_ } from '../models/SuccessResponse_OrganizationSubscriptionResponse_';
@@ -56,6 +57,26 @@ export class SubscriptionsService {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/api/v1/subscriptions/me',
+            cookies: {
+                'access_token': accessToken,
+            },
+            errors: {
+                422: `Validation Error`,
+            },
+        });
+    }
+    /**
+     * Liste tous les abonnements actifs (admin)
+     * @param accessToken
+     * @returns SuccessResponse_list_dict__ Successful Response
+     * @throws ApiError
+     */
+    public static adminListSubscriptionsApiV1SubscriptionsAdminListGet(
+        accessToken?: (string | null),
+    ): CancelablePromise<SuccessResponse_list_dict__> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/subscriptions/admin/list',
             cookies: {
                 'access_token': accessToken,
             },

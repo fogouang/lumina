@@ -10,6 +10,8 @@ export type PaymentInitiateResponse = {
     payment_id: string;
     invoice_number: string;
     amount: number;
+    discount_amount?: number;
+    amount_paid: number;
     payment_status: PaymentStatus;
     /**
      * URL pour finaliser le paiement

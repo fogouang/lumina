@@ -9,6 +9,7 @@ export type EOTask2Response = {
     id: string;
     session_id: string;
     subject: string;
+    eo_task2_correction: string;
     order: number;
     created_at: string;
     updated_at: string;

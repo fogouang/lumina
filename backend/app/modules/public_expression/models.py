@@ -122,6 +122,13 @@ class EECombination(BaseModel):
         doc="Consigne complète Tâche 1"
     )
     
+    task1_correction: Mapped[str] = mapped_column(
+        Text, 
+        nullable=True,
+        doc="Correction complète Tâche 1"
+    )
+    
+    
     task1_word_min: Mapped[int] = mapped_column(
         Integer, 
         nullable=False, 
@@ -131,7 +138,7 @@ class EECombination(BaseModel):
     task1_word_max: Mapped[int] = mapped_column(
         Integer, 
         nullable=False, 
-        default=80
+        default=120
     )
     
     # ===== TÂCHE 2 =====
@@ -139,6 +146,12 @@ class EECombination(BaseModel):
         Text, 
         nullable=False,
         doc="Consigne complète Tâche 2"
+    )
+    
+    task2_correction: Mapped[str] = mapped_column(
+        Text, 
+        nullable=True,
+        doc="Correction complète Tâche 2"
     )
     
     task2_word_min: Mapped[int] = mapped_column(
@@ -172,10 +185,16 @@ class EECombination(BaseModel):
         doc="Contenu Document 2 (témoignage/citation)"
     )
     
+    task3_correction: Mapped[str] = mapped_column(
+        Text, 
+        nullable=True,
+        doc="Correction complète Tâche 3"
+    )
+    
     task3_word_min: Mapped[int] = mapped_column(
         Integer, 
         nullable=False, 
-        default=160,
+        default=150,
         doc="Nombre de mots min pour la partie argumentative uniquement"
     )
     
@@ -218,6 +237,12 @@ class EOTask2(BaseModel):
         doc="Sujet de la Tâche 2 (ex: 'Risques liés à l'utilisation des appareils électroniques')"
     )
     
+    eo_task2_correction: Mapped[str] = mapped_column(
+        Text, 
+        nullable=True,
+        doc="Correction de la Tâche 2 (ex: 'Risques liés à l'utilisation des appareils électroniques')"
+    )
+    
     order: Mapped[int] = mapped_column(
         Integer,
         nullable=False,
@@ -257,6 +282,12 @@ class EOTask3(BaseModel):
         doc="Sujet de la Tâche 3 (ex: 'Gouvernements 50/50 hommes-femmes : Qu'en pensez-vous ?')"
     )
     
+    eo_task3_correction: Mapped[str] = mapped_column(
+        Text, 
+        nullable=True,
+        doc="Correction de la Tâche 3 (ex: 'Risques liés à l'utilisation des appareils électroniques')"
+    )
+     
     order: Mapped[int] = mapped_column(
         Integer,
         nullable=False,

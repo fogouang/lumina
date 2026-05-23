@@ -23,17 +23,28 @@
       </div>
 
       <!-- Actions -->
+      <!-- Actions -->
       <div class="navbar__actions">
         <NuxtLink to="/mon-compte" class="navbar__account">
           <i class="pi pi-user" />
           <span>Mon compte</span>
         </NuxtLink>
-        <Button
-          label="Se connecter"
-          @click="openLogin()"
-          icon="pi pi-sign-in"
-          class="navbar__btn-connect"
-        />
+        <ClientOnly>
+          <Button
+            v-if="!auth.isAuthenticated"
+            label="Se connecter"
+            @click="openLogin()"
+            icon="pi pi-sign-in"
+            class="navbar__btn-connect"
+          />
+          <Button
+            v-else
+            label="Se déconnecter"
+            icon="pi pi-sign-out"
+            class="navbar__btn-connect"
+            @click="auth.logout()"
+          />
+        </ClientOnly>
       </div>
 
       <!-- Mobile toggle -->
@@ -61,11 +72,28 @@
           {{ link.label }}
         </NuxtLink>
         <div class="navbar__mobile-footer">
-          <Button
-            label="Se connecter"
-            icon="pi pi-sign-in"
-            class="navbar__btn-connect w-full"
-          />
+          <ClientOnly>
+            <Button
+              v-if="!auth.isAuthenticated"
+              label="Se connecter"
+              icon="pi pi-sign-in"
+              class="navbar__btn-connect w-full"
+              @click="
+                openLogin();
+                menuOpen = false;
+              "
+            />
+            <Button
+              v-else
+              label="Se déconnecter"
+              icon="pi pi-sign-out"
+              class="navbar__btn-connect w-full"
+              @click="
+                auth.logout();
+                menuOpen = false;
+              "
+            />
+          </ClientOnly>
         </div>
       </div>
     </Transition>
@@ -74,6 +102,8 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from "vue";
+
+const auth = useAuthStore();
 
 const props = defineProps({
   logo: {

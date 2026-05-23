@@ -130,7 +130,7 @@
             @click="mobileOpen = false"
           >
             <i :class="item.icon" class="admin__nav-icon" />
-            <span>{{ item.label }}</span>
+            <span class="text-black">{{ item.label }}</span>
           </NuxtLink>
         </template>
       </nav>
@@ -169,6 +169,12 @@ const navGroups: {
         icon: "pi pi-list",
         exact: false,
       },
+       {
+        to: "/admin/expressions",
+        label: "Expressions",
+        icon: "pi pi-copy",
+        exact: false,
+      },
       { to: "/admin/plans", label: "Plans", icon: "pi pi-tag", exact: false },
     ],
   },
@@ -195,6 +201,23 @@ const navGroups: {
       },
     ],
   },
+  {
+    label: "Partenaire",
+    items: [
+      {
+        to: "/admin/partners",
+        label: "partners",
+        icon: "pi-building",
+        exact: false,
+      },
+      {
+        to: "/admin/promo-code",
+        label: "Codes Promo",
+        icon: "pi pi-tag",
+        exact: false,
+      },
+    ],
+  },
 ];
 
 const pageTitles: Record<string, string> = {
@@ -204,6 +227,8 @@ const pageTitles: Record<string, string> = {
   "/admin/plans": "Plans",
   "/admin/subscriptions": "Abonnements",
   "/admin/payments": "Paiements",
+  "/admin/partners": "Partners",
+  "/admin/promo-code": "Codes Promo",
 };
 
 const currentPageTitle = computed(() => {

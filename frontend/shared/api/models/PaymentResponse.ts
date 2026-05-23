@@ -13,7 +13,11 @@ export type PaymentResponse = {
     organization_id: (string | null);
     subscription_id: (string | null);
     org_subscription_id: (string | null);
+    promo_code_id: (string | null);
     amount: number;
+    discount_amount: number;
+    amount_paid: number;
+    commission_due: number;
     payment_method: PaymentMethod;
     payment_status: PaymentStatus;
     transaction_reference: (string | null);

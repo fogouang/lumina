@@ -42,6 +42,9 @@ from app.modules.analytics.models import StudentAggregatedStats
 from app.modules.notifications.models import Notification
 from app.modules.public_expression.models import MonthlySession, EECombination,EOTask2,EOTask3
 
+from app.modules.partners.models import Partner
+from app.modules.promo_codes.models import PromoCode
+
 # 4. Export explicite (utile pour `from .models import *` ou introspection)
 __all__ = [
     # Base & associations
@@ -90,4 +93,7 @@ __all__ = [
     "EECombination",
     "EOTask2",
     "EOTask3",
+    
+    "Partner",
+    "PromoCode"
 ]
