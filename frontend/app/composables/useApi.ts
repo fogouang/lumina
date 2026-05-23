@@ -1,5 +1,3 @@
-// app/composables/useApi.ts
-
 type Body = Record<string, unknown> | BodyInit | null | undefined;
 
 interface FetchOptions {
@@ -12,16 +10,18 @@ export function useApi() {
   const {
     public: { apiBaseUrl },
   } = useRuntimeConfig();
-  const token = useCookie<string | null>("access_token");
 
   const base = apiBaseUrl ? `${apiBaseUrl}/api` : "/api";
 
+  const ssrCookies = import.meta.server ? useRequestHeaders(["cookie"]) : {};
+
   function getHeaders(): Record<string, string> {
-    const headers: Record<string, string> = {
+    const headers = {
       "Content-Type": "application/json",
+      ...(ssrCookies as Record<string, string>),
     };
-    if (token.value) {
-      headers["Authorization"] = `Bearer ${token.value}`;
+    if (import.meta.server) {
+      console.log("SSR headers:", JSON.stringify(headers));
     }
     return headers;
   }

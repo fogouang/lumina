@@ -1,4 +1,3 @@
-// app/stores/auth.ts
 import { defineStore } from "pinia";
 import type { LoginRequest } from "#shared/api/models/LoginRequest";
 import type { RegisterRequest } from "#shared/api/models/RegisterRequest";
@@ -7,12 +6,12 @@ import type { SuccessResponse_dict_ } from "#shared/api/models/SuccessResponse_d
 import type { app__modules__auth__schemas__UserResponse as UserResponse } from "#shared/api/models/app__modules__auth__schemas__UserResponse";
 
 export const useAuthStore = defineStore("auth", () => {
-  // ── State ────────────────────────────────────────────────────
+  // ── State ─────────────────────────────────────────────────────
   const user = ref<UserResponse | null>(null);
   const loading = ref(false);
   const error = ref<string | null>(null);
 
-  // ── Getters ──────────────────────────────────────────────────
+  // ── Getters ───────────────────────────────────────────────────
   const isAuthenticated = computed(() => !!user.value);
   const isAdmin = computed(() => user.value?.role === "platform_admin");
   const isStudent = computed(() => user.value?.role === "student");
@@ -20,17 +19,14 @@ export const useAuthStore = defineStore("auth", () => {
     user.value ? `${user.value.first_name} ${user.value.last_name}` : "",
   );
 
-  // ── Actions ──────────────────────────────────────────────────
+  // ── Actions ───────────────────────────────────────────────────
   async function login(credentials: LoginRequest): Promise<void> {
     const { post } = useApi();
     loading.value = true;
     error.value = null;
     try {
-      const res = await post<SuccessResponse_AuthResponse_>(
-        "/v1/auth/login",
-        credentials,
-      );
-      user.value = res.data?.user ?? null;
+      const res = await post<any>("/v1/auth/login", credentials);
+      user.value = res.data?.user ?? res.data ?? null;
       if (user.value?.role === "platform_admin") {
         navigateTo("/admin");
       } else {
@@ -49,11 +45,8 @@ export const useAuthStore = defineStore("auth", () => {
     loading.value = true;
     error.value = null;
     try {
-      const res = await post<SuccessResponse_AuthResponse_>(
-        "/v1/auth/register",
-        payload,
-      );
-      user.value = res.data?.user ?? null;
+      const res = await post<any>("/v1/auth/register", payload);
+      user.value = res.data?.user ?? res.data ?? null;
       navigateTo("/mon-compte");
     } catch (err: unknown) {
       error.value = extractError(err);
@@ -66,8 +59,8 @@ export const useAuthStore = defineStore("auth", () => {
   async function fetchMe(): Promise<void> {
     const { get } = useApi();
     try {
-      const res = await get<SuccessResponse_AuthResponse_>("/v1/auth/me");
-      user.value = res.data?.user ?? null;
+      const res = await get<any>("/v1/auth/me");
+      user.value = res.data ?? null;
     } catch {
       user.value = null;
     }
@@ -87,7 +80,7 @@ export const useAuthStore = defineStore("auth", () => {
     error.value = null;
   }
 
-  // ── Helper ───────────────────────────────────────────────────
+  // ── Helper ────────────────────────────────────────────────────
   function extractError(err: unknown): string {
     if (err && typeof err === "object" && "data" in err) {
       const data = (err as { data?: { message?: string } }).data;

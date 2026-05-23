@@ -7,7 +7,6 @@ import type { LoginRequest } from '../models/LoginRequest';
 import type { RegisterRequest } from '../models/RegisterRequest';
 import type { SuccessResponse_AuthResponse_ } from '../models/SuccessResponse_AuthResponse_';
 import type { SuccessResponse_dict_ } from '../models/SuccessResponse_dict_';
-import type { UserResponse } from '../models/UserResponse';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import { OpenAPI } from '../core/OpenAPI';
 import { request as __request } from '../core/request';

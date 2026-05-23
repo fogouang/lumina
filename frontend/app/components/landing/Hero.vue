@@ -21,15 +21,16 @@
           <!-- Titre -->
           <div class="hero__headline anim-fade-up anim-delay-200">
             <h1 class="hero__title">
-              Ne sois pas la énième personne à repasser le 
-              <span class="">TCF Canada</span>
-              ,ton pack à moindre coût t'attend
+              Ici, on ne passe pas le
+              <span class="hero__title-accent">TCF Canada</span>
+              deux fois.
             </h1>
             <p class="hero__subtitle">
-              Ici, on ne passe pas le TCF Canada deux fois. Simulations en
-              conditions réelles, correction IA instantanée et suivi de
-              progression personnalisé, tout ce dont vous avez besoin pour
-              obtenir le score visé.
+              Simulations en conditions réelles, correction IA instantanée des
+              expressions écrites, enregistrement et évaluation de vos
+              expressions orales directement sur la plateforme, et suivi de
+              progression personnalisé tout ce qu'il faut pour obtenir votre
+              score du premier coup, à moindre coût.
             </p>
           </div>
 
@@ -201,15 +202,11 @@ const { openLogin } = useAuthModal();
 }
 
 .hero__title-accent {
-  display: block;
-  background: linear-gradient(
-    to right,
-    var(--color-danger-400),
-    var(--color-danger-600)
-  );
+  background: linear-gradient(to right, #ffffff, #fde68a);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  color: transparent;
 }
 
 .hero__subtitle {
