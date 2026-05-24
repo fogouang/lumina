@@ -124,3 +124,46 @@ class PaymentRepository(BaseRepository[Payment]):
         
         # Formater: INV-2025-00001-1738012345
         return f"{prefix}{next_number:05d}-{timestamp}"
+    
+    
+    async def get_all(self, limit: int = 100, offset: int = 0) -> list[Payment]:
+        result = await self.db.execute(
+            select(Payment)
+            .order_by(Payment.created_at.desc())
+            .limit(limit)
+            .offset(offset)
+        )
+        return list(result.scalars().all())
+
+    async def get_stats(self) -> dict:
+        from sqlalchemy import func
+        total = await self.db.execute(select(func.count(Payment.id)))
+        completed = await self.db.execute(select(func.sum(Payment.amount_paid)).where(Payment.payment_status == PaymentStatus.COMPLETED))
+        pending = await self.db.execute(select(func.count(Payment.id)).where(Payment.payment_status == PaymentStatus.PENDING))
+        return {
+            "total_payments": total.scalar() or 0,
+            "total_revenue": float(completed.scalar() or 0),
+            "pending_count": pending.scalar() or 0,
+        }
+        
+    
+    async def get_all_with_users(self, limit: int = 100, offset: int = 0) -> list[dict]:
+        from app.modules.users.models import User
+        from sqlalchemy import select, outerjoin
+        
+        result = await self.db.execute(
+            select(Payment, User.email, User.first_name, User.last_name)
+            .outerjoin(User, Payment.user_id == User.id)
+            .order_by(Payment.created_at.desc())
+            .limit(limit)
+            .offset(offset)
+        )
+        rows = result.all()
+        return [
+            {
+                **{c.key: getattr(row.Payment, c.key) for c in Payment.__table__.columns},
+                "user_email": row.email,
+                "user_name": f"{row.first_name} {row.last_name}" if row.first_name else None,
+            }
+            for row in rows
+        ]

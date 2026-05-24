@@ -5,9 +5,9 @@
 import type { PaymentMethod } from './PaymentMethod';
 import type { PaymentStatus } from './PaymentStatus';
 /**
- * Response paiement complet.
+ * Response paiement enrichi pour l'admin.
  */
-export type PaymentResponse = {
+export type AdminPaymentResponse = {
     id: string;
     user_id: (string | null);
     user_email: (string | null);

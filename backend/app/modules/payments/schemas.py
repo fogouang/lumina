@@ -45,6 +45,8 @@ class PaymentResponse(BaseSchema):
 
     id: UUID
     user_id: UUID | None
+    user_email: str | None
+    user_name: str | None
     organization_id: UUID | None
     subscription_id: UUID | None
     org_subscription_id: UUID | None
@@ -78,3 +80,25 @@ class WebhookData(BaseSchema):
     transaction_message: str | None = Field(None, description="Message")
     customer_phone_number: str | None = Field(None, description="Téléphone")
     signature: str = Field(..., description="Signature MD5")
+    
+    
+class AdminPaymentResponse(BaseSchema):
+    """Response paiement enrichi pour l'admin."""
+    id: UUID
+    user_id: UUID | None
+    user_email: str | None
+    user_name: str | None
+    organization_id: UUID | None
+    subscription_id: UUID | None
+    org_subscription_id: UUID | None
+    promo_code_id: UUID | None
+    amount: float
+    discount_amount: float
+    amount_paid: float
+    commission_due: float
+    payment_method: PaymentMethod
+    payment_status: PaymentStatus
+    transaction_reference: str | None
+    invoice_number: str
+    invoice_url: str | None
+    created_at: datetime

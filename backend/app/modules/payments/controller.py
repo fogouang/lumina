@@ -1,31 +1,27 @@
 """
 Controller (routes) pour les paiements.
 """
-
 from typing import Annotated
 from uuid import UUID
-
 from fastapi import APIRouter, Depends, Header, Request, status
-
 from app.modules.payments.schemas import (
+    AdminPaymentResponse,
     PaymentInitiateRequest,
     PaymentInitiateResponse,
     PaymentResponse,
     WebhookData,
 )
 from app.modules.payments.service import PaymentService
+from app.modules.users.models import UserRole
 from app.shared.database.session import DbSession
 from app.shared.dependencies import CurrentUser
-from app.shared.exceptions.http import BadRequestException
+from app.shared.exceptions.http import BadRequestException, UnauthorizedException
 from app.shared.schemas.responses import SuccessResponse
 
 router = APIRouter(prefix="/payments", tags=["Payments"])
 
-
 async def get_payment_service(db: DbSession) -> PaymentService:
-    """Dépendance pour obtenir le service payments."""
     return PaymentService(db)
-
 
 @router.post(
     "/initiate",
@@ -38,21 +34,11 @@ async def initiate_payment(
     service: Annotated[PaymentService, Depends(get_payment_service)] = None,
     current_user: CurrentUser = None
 ):
-    """
-    Initier un paiement pour une souscription.
-    
-    - Pour B2C: Fournir `subscription_id`
-    - Pour B2B org: Fournir `org_subscription_id`
-    
-    Retourne un lien de paiement ou instructions USSD.
-    """
     result = await service.initiate_payment(data, current_user)
-    
     return SuccessResponse(
         data=PaymentInitiateResponse(**result),
         message="Paiement initié"
     )
-
 
 @router.post(
     "/webhook/jkdKo0Lp8lsdfjk4j0HJhskfak93d",
@@ -65,17 +51,16 @@ async def payment_webhook(
     x_forwarded_for: str | None = Header(None)
 ):
     client_ip = x_forwarded_for or request.client.host
-    
     body = await request.json()
-    
+
     import logging
     logging.getLogger("tcf_canada").info(f"📩 Webhook reçu depuis {client_ip}: {body}")
-    
+
     webhook_data = WebhookData(**body)
     success = await service.handle_webhook(webhook_data)
-    
+
     logging.getLogger("tcf_canada").info(f"✅ Webhook traité: {'OK' if success else 'KO'}")
-    
+
     if success:
         return {"status": "OK"}
     else:
@@ -90,16 +75,43 @@ async def get_my_payments(
     service: Annotated[PaymentService, Depends(get_payment_service)] = None,
     current_user: CurrentUser = None
 ):
-    """
-    Récupérer mes paiements.
-    """
     payments = await service.get_my_payments(current_user)
-    
     return SuccessResponse(
         data=[PaymentResponse.model_validate(p) for p in payments],
         message=f"{len(payments)} paiement(s) trouvé(s)"
     )
 
+@router.get(
+    "/admin/all",
+    response_model=SuccessResponse[list[AdminPaymentResponse]],
+    summary="[Admin] Tous les paiements"
+)
+async def get_all_payments(
+    limit: int = 100,
+    offset: int = 0,
+    service: Annotated[PaymentService, Depends(get_payment_service)] = None,
+    current_user: CurrentUser = None
+):
+    if current_user.role != UserRole.PLATFORM_ADMIN:
+        raise UnauthorizedException(detail="Accès réservé aux administrateurs")
+    payments = await service.get_all_payments(limit=limit, offset=offset)
+    return SuccessResponse(
+        data=[AdminPaymentResponse(**p) for p in payments],
+        message=f"{len(payments)} paiement(s)"
+    )
+
+@router.get(
+    "/admin/stats",
+    summary="[Admin] Statistiques paiements"
+)
+async def get_payment_stats(
+    service: Annotated[PaymentService, Depends(get_payment_service)] = None,
+    current_user: CurrentUser = None
+):
+    if current_user.role != UserRole.PLATFORM_ADMIN:
+        raise UnauthorizedException(detail="Accès réservé aux administrateurs")
+    stats = await service.get_payment_stats()
+    return SuccessResponse(data=stats, message="Statistiques")
 
 @router.get(
     "/{payment_id}",
@@ -111,11 +123,7 @@ async def get_payment(
     service: Annotated[PaymentService, Depends(get_payment_service)] = None,
     current_user: CurrentUser = None
 ):
-    """
-    Récupérer les détails d'un paiement.
-    """
     payment = await service.get_payment_by_id(payment_id)
-    
     return SuccessResponse(
         data=PaymentResponse.model_validate(payment),
         message="Paiement trouvé"

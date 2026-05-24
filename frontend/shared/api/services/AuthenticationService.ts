@@ -2,7 +2,7 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { app__shared__schemas__responses__SuccessResponse } from '../models/app__shared__schemas__responses__SuccessResponse';
+import type { app__shared__schemas__responses__SuccessResponse_UserResponse___1 } from '../models/app__shared__schemas__responses__SuccessResponse_UserResponse___1';
 import type { LoginRequest } from '../models/LoginRequest';
 import type { RegisterRequest } from '../models/RegisterRequest';
 import type { SuccessResponse_AuthResponse_ } from '../models/SuccessResponse_AuthResponse_';
@@ -72,12 +72,12 @@ export class AuthenticationService {
      *
      * Nécessite un token JWT valide dans le cookie ou header Authorization.
      * @param accessToken
-     * @returns app__shared__schemas__responses__SuccessResponse<UserResponse> Successful Response
+     * @returns app__shared__schemas__responses__SuccessResponse_UserResponse___1 Successful Response
      * @throws ApiError
      */
     public static getMeApiV1AuthMeGet(
         accessToken?: (string | null),
-    ): CancelablePromise<app__shared__schemas__responses__SuccessResponse> {
+    ): CancelablePromise<app__shared__schemas__responses__SuccessResponse_UserResponse___1> {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/api/v1/auth/me',

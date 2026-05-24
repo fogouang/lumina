@@ -294,3 +294,13 @@ class PaymentService:
             await invoice_service.generate_invoice_for_payment(payment.id)
         except Exception as e:
             logger.error(f"Erreur génération facture pour payment {payment.id}: {e}")
+            
+            
+    async def get_all_payments(self, limit: int = 100, offset: int = 0) -> list[Payment]:
+        return await self.repo.get_all(limit=limit, offset=offset)
+
+    async def get_payment_stats(self) -> dict:
+        return await self.repo.get_stats()
+                
+    async def get_all_payments(self, limit: int = 100, offset: int = 0) -> list[dict]:
+        return await self.repo.get_all_with_users(limit=limit, offset=offset)

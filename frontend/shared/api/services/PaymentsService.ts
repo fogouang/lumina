@@ -3,6 +3,7 @@
 /* tslint:disable */
 /* eslint-disable */
 import type { PaymentInitiateRequest } from '../models/PaymentInitiateRequest';
+import type { SuccessResponse_list_AdminPaymentResponse__ } from '../models/SuccessResponse_list_AdminPaymentResponse__';
 import type { SuccessResponse_list_PaymentResponse__ } from '../models/SuccessResponse_list_PaymentResponse__';
 import type { SuccessResponse_PaymentInitiateResponse_ } from '../models/SuccessResponse_PaymentInitiateResponse_';
 import type { SuccessResponse_PaymentResponse_ } from '../models/SuccessResponse_PaymentResponse_';
@@ -12,12 +13,6 @@ import { request as __request } from '../core/request';
 export class PaymentsService {
     /**
      * Initier un paiement
-     * Initier un paiement pour une souscription.
-     *
-     * - Pour B2C: Fournir `subscription_id`
-     * - Pour B2B org: Fournir `org_subscription_id`
-     *
-     * Retourne un lien de paiement ou instructions USSD.
      * @param requestBody
      * @param accessToken
      * @returns SuccessResponse_PaymentInitiateResponse_ Successful Response
@@ -42,13 +37,6 @@ export class PaymentsService {
     }
     /**
      * Webhook My-CoolPay
-     * Webhook appelé par My-CoolPay après un paiement.
-     *
-     * ⚠️ IMPORTANT: Cette route doit être accessible sans authentification.
-     *
-     * Sécurité:
-     * - Vérification IP (15.236.140.89)
-     * - Vérification signature MD5
      * @param xForwardedFor
      * @returns any Successful Response
      * @throws ApiError
@@ -69,7 +57,6 @@ export class PaymentsService {
     }
     /**
      * Mes paiements
-     * Récupérer mes paiements.
      * @param accessToken
      * @returns SuccessResponse_list_PaymentResponse__ Successful Response
      * @throws ApiError
@@ -89,8 +76,55 @@ export class PaymentsService {
         });
     }
     /**
+     * [Admin] Tous les paiements
+     * @param limit
+     * @param offset
+     * @param accessToken
+     * @returns SuccessResponse_list_AdminPaymentResponse__ Successful Response
+     * @throws ApiError
+     */
+    public static getAllPaymentsApiV1PaymentsAdminAllGet(
+        limit: number = 100,
+        offset?: number,
+        accessToken?: (string | null),
+    ): CancelablePromise<SuccessResponse_list_AdminPaymentResponse__> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/payments/admin/all',
+            cookies: {
+                'access_token': accessToken,
+            },
+            query: {
+                'limit': limit,
+                'offset': offset,
+            },
+            errors: {
+                422: `Validation Error`,
+            },
+        });
+    }
+    /**
+     * [Admin] Statistiques paiements
+     * @param accessToken
+     * @returns any Successful Response
+     * @throws ApiError
+     */
+    public static getPaymentStatsApiV1PaymentsAdminStatsGet(
+        accessToken?: (string | null),
+    ): CancelablePromise<any> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/payments/admin/stats',
+            cookies: {
+                'access_token': accessToken,
+            },
+            errors: {
+                422: `Validation Error`,
+            },
+        });
+    }
+    /**
      * Détails d'un paiement
-     * Récupérer les détails d'un paiement.
      * @param paymentId
      * @param accessToken
      * @returns SuccessResponse_PaymentResponse_ Successful Response
