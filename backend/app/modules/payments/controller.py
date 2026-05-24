@@ -64,35 +64,22 @@ async def payment_webhook(
     service: Annotated[PaymentService, Depends(get_payment_service)] = None,
     x_forwarded_for: str | None = Header(None)
 ):
-    """
-    Webhook appelé par My-CoolPay après un paiement.
-    
-    ⚠️ IMPORTANT: Cette route doit être accessible sans authentification.
-    
-    Sécurité:
-    - Vérification IP (15.236.140.89)
-    - Vérification signature MD5
-    """
-    # Vérifier l'IP (My-CoolPay IP: 15.236.140.89)
     client_ip = x_forwarded_for or request.client.host
     
-    # TODO: Activer en production
-    # if client_ip != "15.236.140.89":
-    #     raise BadRequestException(detail="IP non autorisée")
-    
-    # Parser le body
     body = await request.json()
-    webhook_data = WebhookData(**body)
     
-    # Traiter le webhook
+    import logging
+    logging.getLogger("tcf_canada").info(f"📩 Webhook reçu depuis {client_ip}: {body}")
+    
+    webhook_data = WebhookData(**body)
     success = await service.handle_webhook(webhook_data)
     
-    # My-CoolPay attend "OK" ou "KO"
+    logging.getLogger("tcf_canada").info(f"✅ Webhook traité: {'OK' if success else 'KO'}")
+    
     if success:
         return {"status": "OK"}
     else:
         return {"status": "KO"}
-
 
 @router.get(
     "/me",
