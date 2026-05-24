@@ -19,7 +19,8 @@
         </h1>
         <p class="text-white/80 text-base max-w-xl mx-auto leading-relaxed">
           Entraînez-vous sur les vrais sujets du mois. Préparez vos Tâche 2 et
-          Tâche 3 et obtenez une correction IA instantanée.
+          Tâche 3 en enregistrant vos réponses, puis réécoutez-vous pour évaluer
+          vos performances.
         </p>
       </div>
     </div>
@@ -50,7 +51,10 @@
       </div>
 
       <!-- Sessions grid -->
-      <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+      <div
+        v-else
+        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mt-4"
+      >
         <div
           v-for="session in sessions"
           :key="session.id"
@@ -116,7 +120,7 @@
               class="flex items-center gap-2 text-sm text-(--text-secondary)"
             >
               <i class="pi pi-clock text-primary-400" />
-              <span>~18 minutes par passage</span>
+              <span>~ 4 minutes par passage</span>
             </div>
 
             <!-- CTA -->

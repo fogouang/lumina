@@ -40,10 +40,15 @@
       <slot />
     </main>
   </div>
+  <BuyCreditsDialog :is-open="buyCreditsOpen" />
+  <Toast />
 </template>
 
 <script setup lang="ts">
 const auth = useAuthStore();
+// Dans account.vue script setup
+const { isOpen: buyCreditsOpen } = useBuyCreditsDialog();
+watch(buyCreditsOpen, (v) => console.log("layout buyCreditsOpen:", v));
 
 const navItems = [
   {
@@ -58,7 +63,7 @@ const navItems = [
     icon: "pi pi-pen-to-square",
     exact: false,
   },
-   {
+  {
     to: "/mon-compte/methodologie",
     label: "Méthodologie",
     icon: "pi pi-pen-to-square",
