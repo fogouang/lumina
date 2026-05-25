@@ -88,7 +88,49 @@ async def get_series(
         message=f"{len(series_list)} série(s) trouvée(s)"
     )
 
-
+@router.get(
+    "/my-access",
+    response_model=SuccessResponse[dict],
+    summary="Mes séries accessibles"
+)
+async def get_my_accessible_series(
+    service: Annotated[SeriesService, Depends(get_series_service)] = None,
+    current_user: CurrentUser = None
+):
+    """
+    Récupérer les séries auxquelles j'ai accès.
+    
+    Les séries 1, 2, 3 sont gratuites.
+    Les autres nécessitent une souscription active.
+    """
+    from app.shared.utils.series_access import SeriesAccessManager
+    
+    access_manager = SeriesAccessManager(service.db)
+    access_info = await access_manager.get_accessible_series(current_user.id)
+    
+    return SuccessResponse(
+        data=access_info,
+        message="Séries accessibles"
+    )
+  
+@router.patch(
+    "/questions/batch-images",
+    response_model=SuccessResponse[dict],
+    summary="Mettre à jour images en batch"
+)
+async def batch_update_question_images(
+    data: QuestionBatchImageUpdate,
+    service: Annotated[SeriesService, Depends(get_series_service)] = None,
+    current_user: CurrentUser = None
+):
+    result = await service.batch_update_question_images(data, current_user)
+    
+    return SuccessResponse(
+        data=result,
+        message=f"Mise à jour terminée: {result['updated']} images mises à jour, {result['skipped']} ignorées"
+    )
+ 
+      
 @router.get(
     "/{series_id}",
     response_model=SuccessResponse[SeriesResponse],
@@ -231,24 +273,6 @@ async def get_questions(
         data=[QuestionResponse.model_validate(q) for q in questions],
         message=f"{len(questions)} question(s) trouvée(s)"
     )
-
-@router.patch(
-    "/questions/batch-images",
-    response_model=SuccessResponse[dict],
-    summary="Mettre à jour images en batch"
-)
-async def batch_update_question_images(
-    data: QuestionBatchImageUpdate,
-    service: Annotated[SeriesService, Depends(get_series_service)] = None,
-    current_user: CurrentUser = None
-):
-    result = await service.batch_update_question_images(data, current_user)
-    
-    return SuccessResponse(
-        data=result,
-        message=f"Mise à jour terminée: {result['updated']} images mises à jour, {result['skipped']} ignorées"
-    )
-    
     
 
 @router.patch(
@@ -367,27 +391,3 @@ async def import_written_questions(
     
 
        
-@router.get(
-    "/my-access",
-    response_model=SuccessResponse[dict],
-    summary="Mes séries accessibles"
-)
-async def get_my_accessible_series(
-    service: Annotated[SeriesService, Depends(get_series_service)] = None,
-    current_user: CurrentUser = None
-):
-    """
-    Récupérer les séries auxquelles j'ai accès.
-    
-    Les séries 1, 2, 3 sont gratuites.
-    Les autres nécessitent une souscription active.
-    """
-    from app.shared.utils.series_access import SeriesAccessManager
-    
-    access_manager = SeriesAccessManager(service.db)
-    access_info = await access_manager.get_accessible_series(current_user.id)
-    
-    return SuccessResponse(
-        data=access_info,
-        message="Séries accessibles"
-    )
