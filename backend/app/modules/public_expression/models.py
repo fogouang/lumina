@@ -15,13 +15,26 @@ WORKFLOW ADMIN:
 WORKFLOW USER:
 - Clique EE → Voit liste des combinaisons disponibles
 - Clique EO → Voit Tâche 1 (statique) + Pool Tâche 2 + Pool Tâche 3
+
+NOTE: WrittenExpressionSimulatorAttempt (fin de fichier) persiste les
+soumissions du simulateur EE public — rien n'existait à ce niveau avant,
+contrairement au niveau série (WrittenExpression/WrittenExpressionAICorrection
+déjà en place ailleurs). Hérite de Base (pas BaseModel comme les 4 classes
+ci-dessus) car son schéma exact de champs auto-fournis (id/timestamps) n'est
+pas confirmé — à harmoniser sur BaseModel si son contenu le permet.
 """
-from datetime import date
+
+from __future__ import annotations
+
+import uuid
+from datetime import date, datetime
 from typing import TYPE_CHECKING
-from sqlalchemy import Boolean, Date, ForeignKey, Integer, String, Text
-from sqlalchemy.dialects.postgresql import UUID
+
+from sqlalchemy import Boolean, Date, DateTime, Float, ForeignKey, Integer, String, Text, func
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from app.shared.database.base import BaseModel
+
+from app.shared.database.base import Base, BaseModel
 
 
 class MonthlySession(BaseModel):
@@ -303,3 +316,67 @@ class EOTask3(BaseModel):
     
     def __repr__(self) -> str:
         return f"EOTask3(id={self.id}, subject='{self.subject[:50]}...')"
+
+
+class WrittenExpressionSimulatorAttempt(Base):
+    """Une soumission combinée (3 tâches) du simulateur EE public.
+
+    Contrairement aux 4 classes ci-dessus (BaseModel), celle-ci hérite de
+    Base directement et déclare ses propres id/created_at — le contenu
+    exact de BaseModel (fournit-il déjà id ? created_at ? updated_at ?)
+    n'est pas confirmé. À harmoniser si tu veux qu'elle suive la même
+    convention que le reste du fichier.
+    """
+
+    __tablename__ = "written_expression_simulator_attempts"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+
+    student_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True
+    )
+    # Nullable : SimulatorCombinedRequest ne transporte pas encore series_id.
+    series_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("series.id"), nullable=True, index=True
+    )
+
+    # Contenu soumis, dénormalisé (pas de FK vers des tâches — le endpoint
+    # combiné reçoit du texte brut, pas des task_id).
+    task1_instruction: Mapped[str] = mapped_column(String, nullable=False)
+    task1_content: Mapped[str] = mapped_column(String, nullable=False)
+    task2_instruction: Mapped[str] = mapped_column(String, nullable=False)
+    task2_content: Mapped[str] = mapped_column(String, nullable=False)
+    task3_instruction: Mapped[str] = mapped_column(String, nullable=False)
+    task3_content: Mapped[str] = mapped_column(String, nullable=False)
+
+    # Correction — même grille que le niveau série (structure/5, cohésion/4,
+    # vocabulaire/4, grammaire/3, tâche/4 -> /20).
+    structure_score: Mapped[float] = mapped_column(Float, nullable=False)
+    structure_feedback: Mapped[str] = mapped_column(String, nullable=False)
+    cohesion_score: Mapped[float] = mapped_column(Float, nullable=False)
+    cohesion_feedback: Mapped[str] = mapped_column(String, nullable=False)
+    vocabulary_score: Mapped[float] = mapped_column(Float, nullable=False)
+    vocabulary_feedback: Mapped[str] = mapped_column(String, nullable=False)
+    grammar_score: Mapped[float] = mapped_column(Float, nullable=False)
+    grammar_feedback: Mapped[str] = mapped_column(String, nullable=False)
+    task_score: Mapped[float] = mapped_column(Float, nullable=False)
+    task_feedback: Mapped[str] = mapped_column(String, nullable=False)
+    overall_score: Mapped[float] = mapped_column(Float, nullable=False)
+    cecrl_level: Mapped[str] = mapped_column(String(10), nullable=False)
+    appreciation: Mapped[str] = mapped_column(String, nullable=False)
+
+    task_feedbacks_json: Mapped[dict] = mapped_column(JSONB, nullable=False)  # {task1,task2,task3}
+    corrections_json: Mapped[list] = mapped_column(JSONB, nullable=False, default=list)
+    suggestions_json: Mapped[list] = mapped_column(JSONB, nullable=False, default=list)
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+    def __repr__(self) -> str:  # pragma: no cover
+        return (
+            f"<WrittenExpressionSimulatorAttempt id={self.id} student={self.student_id} "
+            f"score={self.overall_score}/20 level={self.cecrl_level}>"
+        )

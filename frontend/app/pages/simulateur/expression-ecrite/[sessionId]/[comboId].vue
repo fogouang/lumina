@@ -124,7 +124,7 @@
           <!-- Tâche 1 -->
           <TaskReadCard
             number="1"
-            label="Tâche 1 — Message"
+            label="Tâche 1 - Message"
             type-label="Message court"
             :instruction="combo.task1_instruction"
             :word-min="combo.task1_word_min"
@@ -135,7 +135,7 @@
           <!-- Tâche 2 -->
           <TaskReadCard
             number="2"
-            label="Tâche 2 — Narration / Blog"
+            label="Tâche 2 - Narration / Blog"
             type-label="Narration / Blog"
             :instruction="combo.task2_instruction"
             :word-min="combo.task2_word_min"
@@ -159,7 +159,7 @@
                 </div>
                 <div>
                   <p class="text-sm font-bold text-(--text-primary)">
-                    Tâche 3 — Argumentation
+                    Tâche 3 - Argumentation
                   </p>
                   <p class="text-xs text-(--text-tertiary)">
                     {{ combo.task3_word_min }}–{{ combo.task3_word_max }} mots
@@ -537,7 +537,7 @@
                     >
                       {{ item.label }}
                     </p>
-                    <p class="text-xs text-(--text-tertiary) leading-relaxed">
+                    <p class="text-xs text-(--text-primary) leading-relaxed">
                       {{ item.feedback }}
                     </p>
                   </div>
@@ -575,9 +575,9 @@
                           class="font-semibold text-sm text-(--text-primary)"
                           >{{
                             [
-                              "Tâche 1 — Message",
-                              "Tâche 2 — Narration",
-                              "Tâche 3 — Argumentation",
+                              "Tâche 1 - Message",
+                              "Tâche 2 - Narration",
+                              "Tâche 3 - Argumentation",
                             ][idx]
                           }}</span
                         >
@@ -843,7 +843,7 @@ import type { EECombinationResponse } from "#shared/api/models/EECombinationResp
 import type { SuccessResponse_list_MonthlySessionResponse__ } from "#shared/api/models/SuccessResponse_list_MonthlySessionResponse__";
 import type { SuccessResponse_EECombinationResponse_ } from "#shared/api/models/SuccessResponse_EECombinationResponse_";
 
-definePageMeta({ middleware: "auth" });
+definePageMeta({ layout: "account", middleware: "auth" });
 
 const route = useRoute();
 const sessionId = route.params.sessionId as string;
@@ -1099,7 +1099,7 @@ function insertChar(ch: string) {
 useHead({
   title: computed(
     () =>
-      `${combo.value?.title ?? "Simulateur"} — Expression Écrite | Lumina TCF`,
+      `${combo.value?.title ?? "Simulateur"} - Expression Écrite | Lumina TCF`,
   ),
 });
 </script>

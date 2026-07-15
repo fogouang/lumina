@@ -22,6 +22,7 @@ import type { SuccessResponse_list_EOTask3Response__ } from '../models/SuccessRe
 import type { SuccessResponse_list_MonthlySessionResponse__ } from '../models/SuccessResponse_list_MonthlySessionResponse__';
 import type { SuccessResponse_MonthlySessionDetailResponse_ } from '../models/SuccessResponse_MonthlySessionDetailResponse_';
 import type { SuccessResponse_MonthlySessionResponse_ } from '../models/SuccessResponse_MonthlySessionResponse_';
+import type { SuccessResponse_WrittenAttemptHistoryListResponse_ } from '../models/SuccessResponse_WrittenAttemptHistoryListResponse_';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import { OpenAPI } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
@@ -536,6 +537,34 @@ export class PublicExpressionService {
             },
             body: requestBody,
             mediaType: 'application/json',
+            errors: {
+                422: `Validation Error`,
+            },
+        });
+    }
+    /**
+     * Historique des tentatives Expression Écrite (simulateur public)
+     * @param limit
+     * @param offset
+     * @param accessToken
+     * @returns SuccessResponse_WrittenAttemptHistoryListResponse_ Successful Response
+     * @throws ApiError
+     */
+    public static getWrittenExpressionHistoryApiV1PublicExpressionsEeHistoryGet(
+        limit: number = 20,
+        offset?: number,
+        accessToken?: (string | null),
+    ): CancelablePromise<SuccessResponse_WrittenAttemptHistoryListResponse_> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/public-expressions/ee/history',
+            cookies: {
+                'access_token': accessToken,
+            },
+            query: {
+                'limit': limit,
+                'offset': offset,
+            },
             errors: {
                 422: `Validation Error`,
             },

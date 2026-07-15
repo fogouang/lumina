@@ -44,6 +44,7 @@ from app.modules.public_expression.models import MonthlySession, EECombination,E
 
 from app.modules.partners.models import Partner
 from app.modules.promo_codes.models import PromoCode
+from app.modules.expression_orale.models import ExpressionOraleAttempt
 
 # 4. Export explicite (utile pour `from .models import *` ou introspection)
 __all__ = [
@@ -96,4 +97,5 @@ __all__ = [
     
     "Partner",
     "PromoCode"
+    "ExpressionOraleAttempt"
 ]

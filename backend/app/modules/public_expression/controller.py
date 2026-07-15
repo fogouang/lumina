@@ -39,7 +39,8 @@ from pydantic import BaseModel
 
 from app.modules.subscriptions.models import Subscription
 from app.modules.subscriptions.repository import SubscriptionRepository
-
+from app.modules.written_expressions.schemas import WrittenAttemptHistoryItem, WrittenAttemptHistoryListResponse
+from app.modules.public_expression import repository as simulator_repository
 
 router = APIRouter(prefix="/public-expressions", tags=["Public Expression"])
 
@@ -415,23 +416,22 @@ async def delete_eo_task3(
     
 
 
-
 @router.post("/ai-correct-combined", response_model=SuccessResponse[dict])
 async def ai_correct_combined(
     data: SimulatorCombinedRequest,
     db: DbSession,
     current_user: CurrentUser = None
 ):
-    # Vérifier 3 crédits minimum
+    # Vérifier 1 crédit minimum
     sub_repo = SubscriptionRepository(db)
     subs = await sub_repo.get_active_by_user(current_user.id)
     active_sub = next((s for s in subs if s.ai_credits_remaining >= 1), None)
 
     if not active_sub:
-        raise BadRequestException(detail="Il vous faut au moins 1 crédits IA")
+        raise BadRequestException(detail="Il vous faut au moins 1 crédit IA")
 
     from app.modules.corrections.prompts import get_combined_correction_prompt
-    from app.modules.corrections.ai_providers.gemini import GeminiProvider
+    from app.modules.corrections.ai_providers.claude import ClaudeProvider
 
     prompt = get_combined_correction_prompt(
         task1_text=data.task1_content,
@@ -442,15 +442,78 @@ async def ai_correct_combined(
         task3_instruction=data.task3_instruction,
     )
 
-    provider = GeminiProvider()
+    provider = ClaudeProvider()
     result = await provider.correct_combined(prompt)
 
-    # Décrémenter 3 crédits
+    # ✅ NOUVEAU: valider la structure avant de consommer le crédit ou de
+    # persister — même validation que le niveau série (request_ai_correction),
+    # pour ne pas faire confiance aveuglément à la sortie du LLM.
+    required_keys = ["global_assessment", "criteria_scores", "task_feedbacks", "corrections", "suggestions"]
+    missing_keys = [key for key in required_keys if key not in result]
+    if missing_keys:
+        raise BadRequestException(
+            detail=f"Réponse IA invalide. Clés manquantes: {', '.join(missing_keys)}."
+        )
+
+    for i in range(1, 4):
+        task_key = f"task{i}"
+        if task_key not in result["task_feedbacks"] or "corrected_text" not in result["task_feedbacks"][task_key]:
+            raise BadRequestException(detail=f"corrected_text manquant pour {task_key}")
+
+    required_criteria = [
+        "structure_score", "structure_feedback",
+        "cohesion_score", "cohesion_feedback",
+        "vocabulary_score", "vocabulary_feedback",
+        "grammar_score", "grammar_feedback",
+        "task_score", "task_feedback",
+    ]
+    missing_criteria = [key for key in required_criteria if key not in result["criteria_scores"]]
+    if missing_criteria:
+        raise BadRequestException(detail=f"Critères manquants: {', '.join(missing_criteria)}")
+
+    for key in ("overall_score", "cecrl_level", "appreciation"):
+        if key not in result["global_assessment"]:
+            raise BadRequestException(detail=f"{key} manquant dans global_assessment")
+
+    # Décrémenter 1 crédit
     await db.execute(
         update(Subscription)
         .where(Subscription.id == active_sub.id)
         .values(ai_credits_remaining=active_sub.ai_credits_remaining - 1)
     )
+    await db.commit()
+
+    # ✅ NOUVEAU: persister la tentative — rien n'était sauvegardé avant,
+    # la correction était renvoyée en direct puis perdue.
+    from app.modules.public_expression.models import WrittenExpressionSimulatorAttempt
+
+    attempt = WrittenExpressionSimulatorAttempt(
+        student_id=current_user.id,
+        series_id=getattr(data, "series_id", None),  # SimulatorCombinedRequest ne le transporte pas actuellement
+        task1_instruction=data.task1_instruction,
+        task1_content=data.task1_content,
+        task2_instruction=data.task2_instruction,
+        task2_content=data.task2_content,
+        task3_instruction=data.task3_instruction,
+        task3_content=data.task3_content,
+        structure_score=result["criteria_scores"]["structure_score"],
+        structure_feedback=result["criteria_scores"]["structure_feedback"],
+        cohesion_score=result["criteria_scores"]["cohesion_score"],
+        cohesion_feedback=result["criteria_scores"]["cohesion_feedback"],
+        vocabulary_score=result["criteria_scores"]["vocabulary_score"],
+        vocabulary_feedback=result["criteria_scores"]["vocabulary_feedback"],
+        grammar_score=result["criteria_scores"]["grammar_score"],
+        grammar_feedback=result["criteria_scores"]["grammar_feedback"],
+        task_score=result["criteria_scores"]["task_score"],
+        task_feedback=result["criteria_scores"]["task_feedback"],
+        overall_score=result["global_assessment"]["overall_score"],
+        cecrl_level=result["global_assessment"]["cecrl_level"],
+        appreciation=result["global_assessment"]["appreciation"],
+        task_feedbacks_json=result["task_feedbacks"],
+        corrections_json=result.get("corrections", []),
+        suggestions_json=result.get("suggestions", []),
+    )
+    db.add(attempt)
     await db.commit()
 
     return SuccessResponse(data=result, message="Correction combinée effectuée")
@@ -516,4 +579,41 @@ async def ai_correct_simulator(
             }
         },
         message="Correction IA effectuée"
+    )
+    
+from fastapi import Query
+from app.modules.public_expression.repository import WrittenExpressionSimulatorAttemptRepository
+from app.modules.written_expressions.schemas import (
+    WrittenAttemptHistoryItem,
+    WrittenAttemptHistoryListResponse,
+)
+ 
+ 
+@router.get(
+    "/ee/history",
+    response_model=SuccessResponse[WrittenAttemptHistoryListResponse],
+    summary="Historique des tentatives Expression Écrite (simulateur public)",
+)
+async def get_written_expression_history(
+    db: DbSession,
+    current_user: CurrentUser,
+    limit: int = Query(default=20, le=100),
+    offset: int = Query(default=0, ge=0),
+):
+    repo = WrittenExpressionSimulatorAttemptRepository(db)
+    rows = await repo.get_by_student(current_user.id, limit=limit, offset=offset)
+    total = await repo.count_by_student(current_user.id)
+    items = [
+        WrittenAttemptHistoryItem(
+            attempt_id=row.id,
+            series_id=row.series_id,
+            overall_score=row.overall_score,
+            cecrl_level=row.cecrl_level,
+            created_at=row.created_at,
+        )
+        for row in rows
+    ]
+    return SuccessResponse(
+        data=WrittenAttemptHistoryListResponse(items=items, total=total),
+        message="Historique récupéré",
     )

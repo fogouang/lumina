@@ -46,7 +46,7 @@
       </div>
 
       <!-- Code promo -->
-      <div class="flex flex-col gap-1.5">
+      <div class="flex flex-col gap-1.5">8
         <label class="text-sm font-semibold text-(--text-secondary)">
           Code partenaire (optionnel)
         </label>

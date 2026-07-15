@@ -23,6 +23,8 @@ from app.modules.analytics import  analytics_router
 from app.modules.public_expression.controller import router as public_expression_router
 from app.modules.partners.controller import router as partners_router
 from app.modules.promo_codes.controller import router as promo_codes_router
+from app.modules.expression_orale.controller import router as expression_orale_router
+
 
 
 api_router = APIRouter()
@@ -47,5 +49,6 @@ api_router.include_router(analytics_router)
 api_router.include_router(public_expression_router)
 api_router.include_router(partners_router)
 api_router.include_router(promo_codes_router)
+api_router.include_router(expression_orale_router)
 
 

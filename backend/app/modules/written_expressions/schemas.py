@@ -71,3 +71,16 @@ class ManualCorrectionResponse(BaseSchema):
     score: int | None
     feedback: str | None
     corrected_at: datetime
+    
+
+class WrittenAttemptHistoryItem(BaseSchema):
+    attempt_id: UUID
+    series_id: UUID | None
+    overall_score: float
+    cecrl_level: str
+    created_at: datetime
+ 
+ 
+class WrittenAttemptHistoryListResponse(BaseSchema):
+    items: list[WrittenAttemptHistoryItem]
+    total: int

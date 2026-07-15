@@ -77,6 +77,54 @@ export class SeriesQuestionsService {
         });
     }
     /**
+     * Mes séries accessibles
+     * Récupérer les séries auxquelles j'ai accès.
+     *
+     * Les séries 1, 2, 3 sont gratuites.
+     * Les autres nécessitent une souscription active.
+     * @param accessToken
+     * @returns SuccessResponse_dict_ Successful Response
+     * @throws ApiError
+     */
+    public static getMyAccessibleSeriesApiV1SeriesMyAccessGet(
+        accessToken?: (string | null),
+    ): CancelablePromise<SuccessResponse_dict_> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/series/my-access',
+            cookies: {
+                'access_token': accessToken,
+            },
+            errors: {
+                422: `Validation Error`,
+            },
+        });
+    }
+    /**
+     * Mettre à jour images en batch
+     * @param requestBody
+     * @param accessToken
+     * @returns SuccessResponse_dict_ Successful Response
+     * @throws ApiError
+     */
+    public static batchUpdateQuestionImagesApiV1SeriesQuestionsBatchImagesPatch(
+        requestBody: QuestionBatchImageUpdate,
+        accessToken?: (string | null),
+    ): CancelablePromise<SuccessResponse_dict_> {
+        return __request(OpenAPI, {
+            method: 'PATCH',
+            url: '/api/v1/series/questions/batch-images',
+            cookies: {
+                'access_token': accessToken,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: `Validation Error`,
+            },
+        });
+    }
+    /**
      * Détails d'une série
      * Récupérer les détails d'une série avec statistiques.
      * @param seriesId
@@ -216,30 +264,6 @@ export class SeriesQuestionsService {
         });
     }
     /**
-     * Mettre à jour images en batch
-     * @param requestBody
-     * @param accessToken
-     * @returns SuccessResponse_dict_ Successful Response
-     * @throws ApiError
-     */
-    public static batchUpdateQuestionImagesApiV1SeriesQuestionsBatchImagesPatch(
-        requestBody: QuestionBatchImageUpdate,
-        accessToken?: (string | null),
-    ): CancelablePromise<SuccessResponse_dict_> {
-        return __request(OpenAPI, {
-            method: 'PATCH',
-            url: '/api/v1/series/questions/batch-images',
-            cookies: {
-                'access_token': accessToken,
-            },
-            body: requestBody,
-            mediaType: 'application/json',
-            errors: {
-                422: `Validation Error`,
-            },
-        });
-    }
-    /**
      * Mettre à jour une question
      * Mettre à jour une question (admin uniquement).
      * @param questionId
@@ -366,30 +390,6 @@ export class SeriesQuestionsService {
             },
             body: requestBody,
             mediaType: 'application/json',
-            errors: {
-                422: `Validation Error`,
-            },
-        });
-    }
-    /**
-     * Mes séries accessibles
-     * Récupérer les séries auxquelles j'ai accès.
-     *
-     * Les séries 1, 2, 3 sont gratuites.
-     * Les autres nécessitent une souscription active.
-     * @param accessToken
-     * @returns SuccessResponse_dict_ Successful Response
-     * @throws ApiError
-     */
-    public static getMyAccessibleSeriesApiV1SeriesMyAccessGet(
-        accessToken?: (string | null),
-    ): CancelablePromise<SuccessResponse_dict_> {
-        return __request(OpenAPI, {
-            method: 'GET',
-            url: '/api/v1/series/my-access',
-            cookies: {
-                'access_token': accessToken,
-            },
             errors: {
                 422: `Validation Error`,
             },

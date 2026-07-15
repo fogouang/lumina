@@ -64,6 +64,12 @@ const navItems = [
     exact: false,
   },
   {
+    to: "/simulateur-oral",
+    label: "Simulateur  orale",
+    icon: "pi pi-microphone",
+    exact: false,
+  },
+  {
     to: "/mon-compte/methodologie",
     label: "Méthodologie",
     icon: "pi pi-pen-to-square",

@@ -11,7 +11,8 @@ from app.modules.public_expression.models import (
     MonthlySession,
     EECombination,
     EOTask2,
-    EOTask3
+    EOTask3,
+    WrittenExpressionSimulatorAttempt,
 )
 from app.shared.database.repository import BaseRepository
 
@@ -125,3 +126,49 @@ class EOTask3Repository(BaseRepository[EOTask3]):
             .where(EOTask3.session_id == session_id)
         )
         return result.scalar_one()
+
+
+class WrittenExpressionSimulatorAttemptRepository(BaseRepository[WrittenExpressionSimulatorAttempt]):
+    """Repository pour les tentatives du simulateur EE public.
+
+    NOTE: create() n'est pas redéfini ici — on suppose que BaseRepository
+    fournit déjà une méthode générique de création (même pattern que les
+    4 repositories ci-dessus, qui ne redéfinissent pas non plus create()).
+    Si ce n'est pas le cas, il faudra soit l'ajouter ici, soit construire
+    l'instance manuellement côté controller avant db.add()/flush().
+    """
+
+    def __init__(self, db: AsyncSession):
+        super().__init__(WrittenExpressionSimulatorAttempt, db)
+
+    async def get_by_student(
+        self, student_id: UUID, *, limit: int = 20, offset: int = 0
+    ) -> list[WrittenExpressionSimulatorAttempt]:
+        """Récupérer les tentatives d'un étudiant, les plus récentes d'abord."""
+        result = await self.db.execute(
+            select(WrittenExpressionSimulatorAttempt)
+            .where(WrittenExpressionSimulatorAttempt.student_id == student_id)
+            .order_by(WrittenExpressionSimulatorAttempt.created_at.desc())
+            .limit(limit)
+            .offset(offset)
+        )
+        return list(result.scalars().all())
+
+    async def count_by_student(self, student_id: UUID) -> int:
+        """Compter les tentatives d'un étudiant."""
+        result = await self.db.execute(
+            select(func.count())
+            .select_from(WrittenExpressionSimulatorAttempt)
+            .where(WrittenExpressionSimulatorAttempt.student_id == student_id)
+        )
+        return result.scalar_one()
+
+    async def get_by_series(self, series_id: UUID) -> list[WrittenExpressionSimulatorAttempt]:
+        """Tentatives liées à une série précise (series_id est nullable —
+        ne renverra rien tant que SimulatorCombinedRequest ne le transporte pas)."""
+        result = await self.db.execute(
+            select(WrittenExpressionSimulatorAttempt)
+            .where(WrittenExpressionSimulatorAttempt.series_id == series_id)
+            .order_by(WrittenExpressionSimulatorAttempt.created_at.desc())
+        )
+        return list(result.scalars().all())

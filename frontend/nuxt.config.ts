@@ -59,6 +59,8 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       apiBaseUrl: process.env.NUXT_PUBLIC_API_BASE_URL ?? "",
+      expressionOraleWsBaseUrl:
+        process.env.NUXT_PUBLIC_EXPRESSION_ORALE_WS_BASE_URL ?? "ws://localhost:8002",
     },
   },
 

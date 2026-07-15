@@ -1,20 +1,16 @@
 <template>
-  <div class="min-h-screen bg-(--bg-ground)">
-
+  <div class="">
     <!-- Hero -->
-    <div class="relative bg-linear-to-br from-primary-700 to-primary-900 py-14 text-center overflow-hidden">
-      <div class="absolute inset-0 opacity-10"
-        style="background-image: linear-gradient(to right, white 1px, transparent 1px), linear-gradient(to bottom, white 1px, transparent 1px); background-size: 24px 24px;" />
-      <div class="relative z-10 container mx-auto px-4">
-        <h1 class="text-3xl lg:text-4xl font-extrabold text-white mb-3">Méthodologie TCF Canada</h1>
-        <p class="text-white/80 text-base lg:text-lg max-w-xl mx-auto">Stratégies et astuces pour réussir chaque épreuve du TCF Canada</p>
-      </div>
+    <div class="mb-6">
+      <h1 class="account-page-title mb-1">Méthodologie TCF Canada</h1>
+      <p class="text-sm text-(--text-secondary) max-w-xl">
+        Stratégies et astuces pour réussir chaque épreuve du TCF Canada
+      </p>
     </div>
 
     <!-- Tabs -->
-    <div class="container mx-auto px-4 py-8 max-w-4xl">
+    <div class="account-section8">
       <TabView>
-
         <!-- CE -->
         <TabPanel value="0">
           <template #header>
@@ -62,37 +58,52 @@
           </template>
           <MethodologyEO />
         </TabPanel>
-
       </TabView>
 
       <!-- CTA -->
-      <div class="mt-8 bg-(--bg-card) border border-(--border-color) rounded-2xl p-8 text-center flex flex-col items-center gap-4">
+      <div
+        class="mt-8 bg-(--bg-card) border border-(--border-color) rounded-2xl p-8 text-center flex flex-col items-center gap-4"
+      >
         <p class="text-(--text-secondary) text-base">
           Prêt à vous entraîner ? Découvrez nos
-          <NuxtLink to="/epreuve/comprehension-ecrite/series" class="text-primary-600 font-semibold hover:underline">examens blancs</NuxtLink>
+          <NuxtLink
+            to="/epreuve/comprehension-ecrite/series"
+            class="text-primary-600 font-semibold hover:underline"
+            >examens blancs</NuxtLink
+          >
           et nos
-          <NuxtLink to="/tarifs" class="text-primary-600 font-semibold hover:underline">corrections détaillées IA</NuxtLink> !
+          <NuxtLink
+            to="/tarifs"
+            class="text-primary-600 font-semibold hover:underline"
+            >corrections détaillées IA</NuxtLink
+          >
+          !
         </p>
         <NuxtLink v-if="!seriesStore.hasPremiumAccess" to="/tarifs">
-          <Button label="Débloquer l'accès complet" icon="pi pi-crown" icon-pos="left" class="bg-gradient-primary border-none font-bold px-6" />
+          <Button
+            label="Débloquer l'accès complet"
+            icon="pi pi-crown"
+            icon-pos="left"
+            class="bg-gradient-primary border-none font-bold px-6"
+          />
         </NuxtLink>
       </div>
     </div>
-
   </div>
 </template>
 
 <script setup lang="ts">
-import MethodologyCE from '~/components/Methodology/MethodologyCE.vue'
-import MethodologyCO from '~/components/Methodology/MethodologyCO.vue'
-import MethodologyEE from '~/components/Methodology/MethodologyEE.vue'
-import MethodologyEO from '~/components/Methodology/MethodologyEO.vue'
+import MethodologyCE from "~/components/Methodology/MethodologyCE.vue";
+import MethodologyCO from "~/components/Methodology/MethodologyCO.vue";
+import MethodologyEE from "~/components/Methodology/MethodologyEE.vue";
+import MethodologyEO from "~/components/Methodology/MethodologyEO.vue";
+definePageMeta({ layout: "account", middleware: "auth" });
 
-const seriesStore = useSeriesStore()
+const seriesStore = useSeriesStore();
 
 onMounted(() => {
-  seriesStore.fetchMyAccess()
-})
+  seriesStore.fetchMyAccess();
+});
 
-useHead({ title: 'Méthodologie TCF Canada | Lumina TCF' })
+useHead({ title: "Méthodologie TCF Canada | Lumina TCF" });
 </script>

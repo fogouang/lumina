@@ -169,6 +169,14 @@
         </div>
       </div>
     </div>
+
+    <div class="account-section" style="margin-top: 1.5rem">
+      <ExpressionOraleHistory />
+    </div>
+
+    <div class="account-section" style="margin-top: 1.5rem">
+      <ExpressionecriteHistory />
+    </div>
   </div>
 </template>
 

@@ -18,6 +18,8 @@ export type { app__modules__auth__schemas__UserResponse } from './models/app__mo
 export type { app__modules__users__schemas__UserResponse } from './models/app__modules__users__schemas__UserResponse';
 export type { app__shared__schemas__responses__SuccessResponse } from './models/app__shared__schemas__responses__SuccessResponse';
 export type { app__shared__schemas__responses__SuccessResponse_UserResponse___1 } from './models/app__shared__schemas__responses__SuccessResponse_UserResponse___1';
+export type { AttemptHistoryItem } from './models/AttemptHistoryItem';
+export type { AttemptHistoryListResponse } from './models/AttemptHistoryListResponse';
 export { AttemptStatus } from './models/AttemptStatus';
 export type { AuthResponse } from './models/AuthResponse';
 export type { BatchUploadResponse } from './models/BatchUploadResponse';
@@ -120,6 +122,7 @@ export type { SubscriptionCreateB2C } from './models/SubscriptionCreateB2C';
 export type { SubscriptionResponse } from './models/SubscriptionResponse';
 export type { SuccessResponse_AICorrectionResponse_ } from './models/SuccessResponse_AICorrectionResponse_';
 export type { SuccessResponse_AnalyticsData_ } from './models/SuccessResponse_AnalyticsData_';
+export type { SuccessResponse_AttemptHistoryListResponse_ } from './models/SuccessResponse_AttemptHistoryListResponse_';
 export type { SuccessResponse_AuthResponse_ } from './models/SuccessResponse_AuthResponse_';
 export type { SuccessResponse_BatchUploadResponse_ } from './models/SuccessResponse_BatchUploadResponse_';
 export type { SuccessResponse_CreditPricingResponse_ } from './models/SuccessResponse_CreditPricingResponse_';
@@ -133,6 +136,7 @@ export type { SuccessResponse_ExpressionTaskResponse_ } from './models/SuccessRe
 export type { SuccessResponse_FileUploadResponse_ } from './models/SuccessResponse_FileUploadResponse_';
 export type { SuccessResponse_InvoiceResponse_ } from './models/SuccessResponse_InvoiceResponse_';
 export type { SuccessResponse_list_AdminPaymentResponse__ } from './models/SuccessResponse_list_AdminPaymentResponse__';
+export type { SuccessResponse_list_AttemptHistoryItem__ } from './models/SuccessResponse_list_AttemptHistoryItem__';
 export type { SuccessResponse_list_dict__ } from './models/SuccessResponse_list_dict__';
 export type { SuccessResponse_list_EECombinationResponse__ } from './models/SuccessResponse_list_EECombinationResponse__';
 export type { SuccessResponse_list_EOTask2Response__ } from './models/SuccessResponse_list_EOTask2Response__';
@@ -177,18 +181,22 @@ export type { SuccessResponse_SubscriptionResponse_ } from './models/SuccessResp
 export type { SuccessResponse_Union_AICorrectionResponse__NoneType__ } from './models/SuccessResponse_Union_AICorrectionResponse__NoneType__';
 export type { SuccessResponse_Union_ManualCorrectionResponse__NoneType__ } from './models/SuccessResponse_Union_ManualCorrectionResponse__NoneType__';
 export type { SuccessResponse_Union_OralCorrectionResponse__NoneType__ } from './models/SuccessResponse_Union_OralCorrectionResponse__NoneType__';
+export type { SuccessResponse_WrittenAttemptHistoryListResponse_ } from './models/SuccessResponse_WrittenAttemptHistoryListResponse_';
 export type { SuccessResponse_WrittenExpressionResponse_ } from './models/SuccessResponse_WrittenExpressionResponse_';
 export type { UserCreate } from './models/UserCreate';
 export type { UserListResponse } from './models/UserListResponse';
 export { UserRole } from './models/UserRole';
 export type { UserUpdate } from './models/UserUpdate';
 export type { ValidationError } from './models/ValidationError';
+export type { WrittenAttemptHistoryItem } from './models/WrittenAttemptHistoryItem';
+export type { WrittenAttemptHistoryListResponse } from './models/WrittenAttemptHistoryListResponse';
 export type { WrittenExpressionResponse } from './models/WrittenExpressionResponse';
 
 export { AiCreditsService } from './services/AiCreditsService';
 export { AuthenticationService } from './services/AuthenticationService';
 export { DefaultService } from './services/DefaultService';
 export { ExamAttemptsService } from './services/ExamAttemptsService';
+export { ExpressionOraleService } from './services/ExpressionOraleService';
 export { ExpressionTasksService } from './services/ExpressionTasksService';
 export { InvoicesService } from './services/InvoicesService';
 export { NotificationsService } from './services/NotificationsService';
