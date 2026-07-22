@@ -12,9 +12,6 @@ export type PurchaseResponse = {
     price_per_credit: number;
     total_amount: number;
     payment_status: string;
-    redirect_url?: (string | null);
-    ussd?: (string | null);
-    action?: (string | null);
     transaction_reference?: (string | null);
 };
 

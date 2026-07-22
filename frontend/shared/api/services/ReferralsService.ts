@@ -4,6 +4,7 @@
 /* eslint-disable */
 import type { ReferralDashboardResponse } from '../models/ReferralDashboardResponse';
 import type { SetAmbassadorRequest } from '../models/SetAmbassadorRequest';
+import type { SuccessResponse_list_dict__ } from '../models/SuccessResponse_list_dict__';
 import type { SuccessResponse_NoneType_ } from '../models/SuccessResponse_NoneType_';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import { OpenAPI } from '../core/OpenAPI';
@@ -51,6 +52,51 @@ export class ReferralsService {
             },
             body: requestBody,
             mediaType: 'application/json',
+            errors: {
+                422: `Validation Error`,
+            },
+        });
+    }
+    /**
+     * List Ambassadors
+     * @param accessToken
+     * @returns SuccessResponse_list_dict__ Successful Response
+     * @throws ApiError
+     */
+    public static listAmbassadorsApiV1ReferralsAdminAmbassadorsGet(
+        accessToken?: (string | null),
+    ): CancelablePromise<SuccessResponse_list_dict__> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/referrals/admin/ambassadors',
+            cookies: {
+                'access_token': accessToken,
+            },
+            errors: {
+                422: `Validation Error`,
+            },
+        });
+    }
+    /**
+     * List All Earnings
+     * @param limit
+     * @param accessToken
+     * @returns SuccessResponse_list_dict__ Successful Response
+     * @throws ApiError
+     */
+    public static listAllEarningsApiV1ReferralsAdminEarningsGet(
+        limit: number = 100,
+        accessToken?: (string | null),
+    ): CancelablePromise<SuccessResponse_list_dict__> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/referrals/admin/earnings',
+            cookies: {
+                'access_token': accessToken,
+            },
+            query: {
+                'limit': limit,
+            },
             errors: {
                 422: `Validation Error`,
             },

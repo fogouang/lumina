@@ -11,11 +11,9 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 class CreditPricingResponse(BaseModel):
     """Informations de pricing des crédits IA."""
-    price_per_credit: int  # FCFA
-    min_purchase: int  # crédits
-    max_purchase: int  # crédits
-    
-    # Exemples de calcul
+    price_per_credit: int
+    min_purchase: int
+    max_purchase: int
     examples: list[dict] = [
         {"credits": 10, "price": 500},
         {"credits": 50, "price": 2500},
@@ -27,18 +25,18 @@ class CreditPricingResponse(BaseModel):
 # ============================================================================
 
 class PurchaseRequest(BaseModel):
-    """Requête d'achat de crédits."""
+    """Requête d'achat de crédits — mobile money uniquement (pawaPay)."""
     credits: int = Field(..., ge=10, le=1000, description="Nombre de crédits à acheter (10-1000)")
-    payment_method: str = Field(..., pattern="^(mobile_money|card|bank_transfer)$")
-    phone_number: str | None = Field(None, description="Requis pour mobile_money")
-    
-    @field_validator("payment_method")
+    phone_number: str = Field(..., description="Numéro Mobile Money")
+    operator: str = Field(..., description="MTN ou ORANGE")
+
+    @field_validator("operator")
     @classmethod
-    def validate_payment_method(cls, v: str) -> str:
-        allowed = ["mobile_money", "card", "bank_transfer"]
-        if v not in allowed:
-            raise ValueError(f"payment_method doit être parmi: {', '.join(allowed)}")
-        return v
+    def validate_operator(cls, v: str) -> str:
+        if v.upper() not in ("MTN", "ORANGE"):
+            raise ValueError("operator doit être MTN ou ORANGE")
+        return v.upper()
+
 
 class PurchaseResponse(BaseModel):
     """Réponse après initiation d'achat de crédits."""
@@ -48,12 +46,10 @@ class PurchaseResponse(BaseModel):
     price_per_credit: float
     total_amount: float
     payment_status: str
-    redirect_url: str | None = None
-    ussd: str | None = None
-    action: str | None = None
     transaction_reference: str | None = None
-    
+
     model_config = ConfigDict(from_attributes=True)
+
 
 class PurchaseHistoryItem(BaseModel):
     """Item d'historique d'achat."""
@@ -67,14 +63,16 @@ class PurchaseHistoryItem(BaseModel):
     transaction_reference: str | None
     invoice_number: str
     created_at: datetime
-    
+
     model_config = ConfigDict(from_attributes=True)
+
 
 class PurchaseHistoryResponse(BaseModel):
     """Liste d'historique d'achats."""
     purchases: list[PurchaseHistoryItem]
     total_spent: float
     total_credits_purchased: int
+
 
 class CreditBalanceResponse(BaseModel):
     """Réponse du solde de crédits IA."""

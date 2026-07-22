@@ -141,6 +141,7 @@ class PaymentService:
                 provider="MTN_MOMO_CMR" if data.operator == "MTN" else "ORANGE_CMR",
                 client_reference_id=invoice_number,
                 customer_message="Lumina TCF",
+                 metadata={"app": "lumina"}
             )
         except Exception as e:
             await self.repo.update(payment.id, payment_status=PaymentStatus.FAILED)

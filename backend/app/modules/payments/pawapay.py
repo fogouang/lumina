@@ -27,11 +27,12 @@ class PawapayClient:
     async def initiate_deposit(
         self,
         deposit_id: str,
-        amount: int,
+        amount: float,
         phone_number: str,
         provider: str,
         client_reference_id: str,
-        customer_message: str = "Lumina TCF",
+        customer_message: str = "Paiement",
+        metadata: dict | None = None,  # ← ajouter
     ) -> dict:
         payload = {
             "depositId": deposit_id,
@@ -47,14 +48,14 @@ class PawapayClient:
             "clientReferenceId": client_reference_id,
             "customerMessage": customer_message,
         }
-        logger.info(f"pawaPay initiate_deposit payload: {payload}")
+        if metadata:
+            payload["metadata"] = metadata  # ← ajouter
         async with httpx.AsyncClient(timeout=30) as client:
             response = await client.post(
                 f"{self.base_url}/v2/deposits",
                 json=payload,
                 headers=self._headers(),
             )
-            logger.info(f"pawaPay response: {response.status_code} {response.text}")
             response.raise_for_status()
             return response.json()
 

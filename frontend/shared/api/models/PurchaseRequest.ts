@@ -3,17 +3,20 @@
 /* tslint:disable */
 /* eslint-disable */
 /**
- * Requête d'achat de crédits.
+ * Requête d'achat de crédits — mobile money uniquement (pawaPay).
  */
 export type PurchaseRequest = {
     /**
      * Nombre de crédits à acheter (10-1000)
      */
     credits: number;
-    payment_method: string;
     /**
-     * Requis pour mobile_money
+     * Numéro Mobile Money
      */
-    phone_number?: (string | null);
+    phone_number: string;
+    /**
+     * MTN ou ORANGE
+     */
+    operator: string;
 };
 
