@@ -36,26 +36,6 @@ export class PaymentsService {
         });
     }
     /**
-     * Webhook My-CoolPay
-     * @param xForwardedFor
-     * @returns any Successful Response
-     * @throws ApiError
-     */
-    public static paymentWebhookApiV1PaymentsWebhookJkdKo0Lp8Lsdfjk4J0HJhskfak93DPost(
-        xForwardedFor?: (string | null),
-    ): CancelablePromise<any> {
-        return __request(OpenAPI, {
-            method: 'POST',
-            url: '/api/v1/payments/webhook/jkdKo0Lp8lsdfjk4j0HJhskfak93d',
-            headers: {
-                'x-forwarded-for': xForwardedFor,
-            },
-            errors: {
-                422: `Validation Error`,
-            },
-        });
-    }
-    /**
      * Mes paiements
      * @param accessToken
      * @returns SuccessResponse_list_PaymentResponse__ Successful Response

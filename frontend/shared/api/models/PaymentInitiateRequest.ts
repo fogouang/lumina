@@ -24,6 +24,10 @@ export type PaymentInitiateRequest = {
      */
     phone_number?: (string | null);
     /**
+     * MTN ou ORANGE
+     */
+    operator?: (string | null);
+    /**
      * Code promo partenaire (optionnel)
      */
     promo_code?: (string | null);

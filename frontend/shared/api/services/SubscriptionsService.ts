@@ -86,6 +86,34 @@ export class SubscriptionsService {
         });
     }
     /**
+     * Activer manuellement un abonnement pour un filleul (ambassadeur)
+     * Permet à un ambassadeur d'activer manuellement un abonnement pour
+     * l'un de ses propres filleuls, quand My-CoolPay est instable —
+     * scope volontairement limité à ses filleuls, contrairement à la
+     * route admin équivalente.
+     * @param requestBody
+     * @param accessToken
+     * @returns SuccessResponse_SubscriptionResponse_ Successful Response
+     * @throws ApiError
+     */
+    public static ambassadorActivateSubscriptionApiV1SubscriptionsAmbassadorActivatePost(
+        requestBody: AdminActivateSubscriptionRequest,
+        accessToken?: (string | null),
+    ): CancelablePromise<SuccessResponse_SubscriptionResponse_> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/subscriptions/ambassador/activate',
+            cookies: {
+                'access_token': accessToken,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: `Validation Error`,
+            },
+        });
+    }
+    /**
      * Créer une souscription organisation
      * Créer une souscription pour une organisation (admin uniquement).
      *

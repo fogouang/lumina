@@ -10,8 +10,8 @@ import type { PaymentStatus } from './PaymentStatus';
 export type PaymentResponse = {
     id: string;
     user_id: (string | null);
-    user_email: (string | null);
-    user_name: (string | null);
+    user_email?: (string | null);
+    user_name?: (string | null);
     organization_id: (string | null);
     subscription_id: (string | null);
     org_subscription_id: (string | null);

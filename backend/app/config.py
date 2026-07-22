@@ -74,6 +74,8 @@ class Settings(BaseSettings):
     MYCOOLPAY_PRIVATE_KEY:str
     MYCOOLPAY_BASE_URL:str
     MYCOOLPAY_CALLBACK_URL:str
+    PAWAPAY_API_TOKEN: str
+    PAWAPAY_SANDBOX: bool = True
     
     # === CELERY & REDIS ===
     REDIS_URL: str = "redis://localhost:6379/0"
@@ -99,6 +101,8 @@ class Settings(BaseSettings):
         "https://lumina-tcf.online",
         "https://www.lumina-tcf.online"
     ]
+    
+    FRONTEND_BASE_URL: str = "http://localhost:3000"
     
     # === PAGINATION ===
     DEFAULT_PAGE_SIZE: int = 20

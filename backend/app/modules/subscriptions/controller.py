@@ -91,7 +91,33 @@ async def admin_list_subscriptions(
         message=f"{len(subscriptions)} abonnement(s) actif(s)"
     )
     
-    
+@router.post(
+"/ambassador/activate",
+    response_model=SuccessResponse[SubscriptionResponse],
+    status_code=status.HTTP_201_CREATED,
+    summary="Activer manuellement un abonnement pour un filleul (ambassadeur)"
+)
+async def ambassador_activate_subscription(
+    data: AdminActivateSubscriptionRequest,
+    service: Annotated[SubscriptionService, Depends(get_subscription_service)] = None,
+    current_user: CurrentUser = None
+):
+    """
+    Permet à un ambassadeur d'activer manuellement un abonnement pour
+    l'un de ses propres filleuls, quand My-CoolPay est instable —
+    scope volontairement limité à ses filleuls, contrairement à la
+    route admin équivalente.
+    """
+    if not current_user.is_ambassador:
+        from app.shared.exceptions.http import ForbiddenException
+        raise ForbiddenException(detail="Accès réservé aux ambassadeurs.")
+
+    subscription = await service.ambassador_activate_subscription(data, current_user)
+    return SuccessResponse(
+        data=SubscriptionResponse.model_validate(subscription),
+        message="Abonnement activé avec succès"
+    )
+       
 # === B2B ORGANIZATION SUBSCRIPTIONS ===
 
 @router.post(

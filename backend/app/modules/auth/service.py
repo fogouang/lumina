@@ -11,13 +11,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.auth.schemas import AuthResponse, LoginRequest, RegisterRequest, UserResponse
 from app.modules.users.models import User
+from app.modules.referrals.service import ReferralService
 from app.shared.enums import UserRole
 from app.shared.exceptions.http import BadRequestException, UnauthorizedException
 from app.shared.security.jwt import create_access_token, decode_access_token
 from app.shared.security.password import hash_password, verify_password
 from datetime import date, timedelta
 from app.modules.subscriptions.models import Subscription
-
 
 class AuthService:
     """
@@ -37,32 +37,22 @@ class AuthService:
             db: Session database async
         """
         self.db = db
+        self.referral_service = ReferralService(db)
     
     async def register(self, data: RegisterRequest) -> AuthResponse:
-        """
-        Inscrire un nouvel utilisateur.
-        
-        Args:
-            data: Données d'inscription
-            
-        Returns:
-            Token + infos utilisateur
-            
-        Raises:
-            BadRequestException: Si email déjà utilisé
-            
-        Example:
-            >>> service = AuthService(db)
-            >>> response = await service.register(RegisterRequest(...))
-        """
         # Vérifier que l'email n'existe pas déjà
         existing_user = await self._get_user_by_email(data.email)
         if existing_user:
             raise BadRequestException(detail="Cet email est déjà utilisé")
-        
+
+        # Résolution du parrainage AVANT création (code invalide → on ignore, on ne bloque pas)
+        referrer = None
+        if data.referral_code:
+            referrer = await self.referral_service.resolve_referrer(data.referral_code)
+
         # Hasher le mot de passe
         hashed_password = hash_password(data.password)
-        
+
         # Créer l'utilisateur
         user = User(
             email=data.email,
@@ -70,40 +60,44 @@ class AuthService:
             first_name=data.first_name,
             last_name=data.last_name,
             phone=data.phone,
-            role=UserRole.STUDENT,  # Par défaut STUDENT
+            role=UserRole.STUDENT,
             is_active=True
         )
-        
+
         self.db.add(user)
         await self.db.commit()
         await self.db.refresh(user)
-        
+
+        # Enregistrer le parrainage une fois l'utilisateur créé (besoin de son id)
+        if referrer is not None:
+            await self.referral_service.record_signup(user.id, referrer.id)
+            await self.db.commit()  # record_signup ne fait qu'un flush() côté ReferralService
+            await self.db.refresh(user)
+
         trial_subscription = Subscription(
-        user_id=user.id,
-        organization_id=None,
-        plan_id=None,
-        start_date=date.today(),
-        end_date=date.today() + timedelta(days=7),
-        is_active=True,
-        custom_duration_days=7,
-        custom_ai_credits=2,
-        ai_credits_remaining=2,
-        is_trial=True
+            user_id=user.id,
+            organization_id=None,
+            plan_id=None,
+            start_date=date.today(),
+            end_date=date.today() + timedelta(days=7),
+            is_active=True,
+            custom_duration_days=7,
+            custom_ai_credits=2,
+            ai_credits_remaining=2,
+            is_trial=True
         )
         self.db.add(trial_subscription)
         await self.db.commit()
         await self.db.refresh(user)
-        
-        # Générer le token
+
         access_token = create_access_token(data={"sub": str(user.id)})
-        
-        # Retourner la réponse
+
         return AuthResponse(
             access_token=access_token,
             token_type="bearer",
             user=UserResponse.model_validate(user)
         )
-    
+
     async def login(self, data: LoginRequest) -> AuthResponse:
         """
         Connecter un utilisateur.

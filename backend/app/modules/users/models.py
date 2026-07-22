@@ -3,8 +3,9 @@ Modèle User - Gestion des utilisateurs.
 """
 import enum
 from typing import TYPE_CHECKING
-from sqlalchemy import Boolean, Enum, String
+from sqlalchemy import Boolean, Enum, String, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.dialects.postgresql import UUID
 from app.shared.database.base import BaseModel
 
 if TYPE_CHECKING:
@@ -37,17 +38,23 @@ class User(BaseModel):
         index=True
     )
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, index=True)
+
+    # ── Parrainage ──
+    is_ambassador: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, index=True)
+    referred_by_user_id: Mapped[UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True
+    )
     
     # Relationships - utiliser les strings pour éviter l'import
     managed_organizations: Mapped[list["Organization"]] = relationship(
         "Organization", 
-        secondary="organization_admins",  # STRING au lieu d'objet
+        secondary="organization_admins",
         back_populates="admins", 
         lazy="selectin"
     )
     teaching_at_organizations: Mapped[list["Organization"]] = relationship(
         "Organization", 
-        secondary="organization_teachers",  # STRING au lieu d'objet
+        secondary="organization_teachers",
         back_populates="teachers", 
         lazy="selectin"
     )

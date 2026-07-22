@@ -13,10 +13,7 @@ export type PaymentInitiateResponse = {
     discount_amount?: number;
     amount_paid: number;
     payment_status: PaymentStatus;
-    /**
-     * URL pour finaliser le paiement
-     */
-    redirect_url?: (string | null);
     transaction_reference?: (string | null);
+    message?: string;
 };
 

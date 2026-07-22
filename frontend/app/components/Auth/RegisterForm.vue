@@ -6,6 +6,10 @@
     class="auth-form"
     @submit="onSubmit"
   >
+    <div v-if="referralCode" class="auth-form__referral-banner">
+      Vous avez été invité·e à rejoindre Lumina TCF 🎉
+    </div>
+
     <!-- Prénom + Nom -->
     <div class="auth-form__row">
       <div class="auth-form__field">
@@ -108,12 +112,12 @@
     />
 
     <!-- Switch -->
-    <p class="auth-form__switch">
+    <p v-if="showSwitch" class="auth-form__switch">
       Déjà un compte ?
       <button
         type="button"
         class="auth-form__switch-btn"
-        @click="switchTab('login')"
+        @click="handleSwitchToLogin"
       >
         Se connecter
       </button>
@@ -125,8 +129,23 @@
 import { z } from "zod";
 import { zodResolver } from "@primevue/forms/resolvers/zod";
 
+const props = defineProps<{
+  referralCode?: string | null;
+  showSwitch?: boolean;
+}>();
+
+const emit = defineEmits<{
+  success: [];
+}>();
+
 const auth = useAuthStore();
-const { close, switchTab } = useAuthModal();
+const { close, switchTab, openLogin } = useAuthModal();
+
+function handleSwitchToLogin() {
+  switchTab("login"); // pour le cas où le composant est dans le modal
+  openLogin(); // pour le cas où on est sur une page standalone (no-op si déjà ouvert)
+}
+
 const toast = useToast();
 
 const initialValues = {
@@ -178,14 +197,16 @@ async function onSubmit({
       email: values.email,
       phone: values.phone || null,
       password: values.password,
+      referral_code: props.referralCode || undefined,
     });
     toast.add({
       severity: "success",
       summary: "Compte créé !",
-      detail: "Bienvenue sur Pack Ice TCF.",
+      detail: "Bienvenue sur Lumina TCF.",
       life: 3000,
     });
     close();
+    emit("success");
   } catch {
     // erreur déjà dans auth.error
   }
@@ -197,6 +218,16 @@ async function onSubmit({
   display: flex;
   flex-direction: column;
   gap: 1rem;
+}
+
+.auth-form__referral-banner {
+  text-align: center;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-primary-700);
+  background: var(--color-primary-50);
+  border-radius: 0.625rem;
+  padding: 0.625rem 0.875rem;
 }
 
 .auth-form__row {

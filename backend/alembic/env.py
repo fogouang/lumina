@@ -45,7 +45,7 @@ from app.modules.written_expressions.models import (
 )
 from app.modules.partners.models import Partner
 from app.modules.promo_codes.models import PromoCode
-
+from app.modules.referrals.models import ReferralEarning 
 
 settings = get_settings()
 

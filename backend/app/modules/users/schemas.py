@@ -43,6 +43,7 @@ class UserResponse(BaseSchema):
     phone: str | None
     role: UserRole
     is_active: bool
+    is_ambassador: bool
     
     @property
     def full_name(self) -> str:
@@ -58,3 +59,4 @@ class UserListResponse(BaseSchema):
     role: UserRole
     is_active: bool
     created_at: datetime
+    is_ambassador: bool

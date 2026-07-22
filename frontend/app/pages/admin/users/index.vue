@@ -120,9 +120,31 @@
       </Column>
 
       <!-- Actions -->
-      <Column header="Actions" style="min-width: 100px" :exportable="false">
+      <Column header="Actions" style="min-width: 170px" :exportable="false">
         <template #body="{ data }">
           <div class="flex items-center gap-1">
+            <Button
+              :icon="data.is_ambassador ? 'pi pi-star-fill' : 'pi pi-star'"
+              size="small"
+              text
+              rounded
+              :severity="data.is_ambassador ? 'warning' : 'secondary'"
+              v-tooltip.top="
+                data.is_ambassador
+                  ? 'Retirer le statut ambassadeur'
+                  : 'Faire ambassadeur'
+              "
+              @click="toggleAmbassador(data)"
+            />
+            <Button
+              icon="pi pi-credit-card"
+              size="small"
+              text
+              rounded
+              severity="success"
+              v-tooltip.top="'Activer abonnement'"
+              @click="openActivate(data)"
+            />
             <Button
               icon="pi pi-pencil"
               size="small"
@@ -254,16 +276,68 @@
         />
       </template>
     </Dialog>
+
+    <!-- Dialog activation abonnement -->
+    <Dialog
+      v-model:visible="activateVisible"
+      :header="`Activer un abonnement — ${activatingUser?.first_name ?? ''} ${activatingUser?.last_name ?? ''}`"
+      modal
+      :style="{ width: '440px' }"
+      :draggable="false"
+    >
+      <div class="flex flex-col gap-4 pt-2">
+        <div class="flex flex-col gap-1.5">
+          <label class="text-sm font-semibold text-(--text-secondary)"
+            >Plan</label
+          >
+          <Select
+            v-model="activateForm.plan_id"
+            :options="planOptions"
+            option-label="label"
+            option-value="value"
+            placeholder="Choisir un plan"
+            fluid
+          />
+        </div>
+        <div class="flex flex-col gap-1.5">
+          <label class="text-sm font-semibold text-(--text-secondary)"
+            >Code promo (optionnel)</label
+          >
+          <InputText
+            v-model="activateForm.promo_code"
+            placeholder="Ex: PARTNER10"
+            fluid
+          />
+        </div>
+        <Message v-if="activateError" severity="error" :closable="false">
+          {{ activateError }}
+        </Message>
+      </div>
+      <template #footer>
+        <Button label="Annuler" text @click="activateVisible = false" />
+        <Button
+          label="Activer"
+          icon="pi pi-check"
+          :loading="activating"
+          :disabled="!activateForm.plan_id"
+          class="bg-gradient-primary border-none font-bold"
+          @click="onActivate"
+        />
+      </template>
+    </Dialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import type { UserListResponse } from "#shared/api/models/UserListResponse";
 import type { SuccessResponse_list_UserListResponse__ } from "#shared/api/models/SuccessResponse_list_UserListResponse__";
+import { useSubscriptionStore } from "~/stores/subscription";
 
 definePageMeta({ layout: "admin", middleware: "admin" });
 
 const { get, post, patch, del } = useApi();
+const subscriptionStore = useSubscriptionStore();
+
 const toast = useToast();
 
 const loading = ref(true);
@@ -274,6 +348,50 @@ const total = ref(0);
 const filters = ref({
   global: { value: null as string | null, matchMode: "contains" },
 });
+
+const planOptions = computed(() =>
+  subscriptionStore.plans.map((p) => ({ label: p.name, value: p.id })),
+);
+
+const activateVisible = ref(false);
+const activatingUser = ref<UserListResponse | null>(null);
+const activating = ref(false);
+const activateError = ref<string | null>(null);
+const activateForm = reactive({
+  plan_id: "",
+  promo_code: "",
+});
+
+function openActivate(user: UserListResponse) {
+  activatingUser.value = user;
+  activateForm.plan_id = "";
+  activateForm.promo_code = "";
+  activateError.value = null;
+  activateVisible.value = true;
+}
+
+async function onActivate() {
+  if (!activatingUser.value) return;
+  activating.value = true;
+  activateError.value = null;
+  try {
+    await post("/v1/subscriptions/admin/activate", {
+      user_id: activatingUser.value.id,
+      plan_id: activateForm.plan_id,
+      promo_code: activateForm.promo_code || null,
+    });
+    toast.add({
+      severity: "success",
+      summary: "Abonnement activé",
+      life: 3000,
+    });
+    activateVisible.value = false;
+  } catch (err: any) {
+    activateError.value = err?.data?.message || "Erreur lors de l'activation";
+  } finally {
+    activating.value = false;
+  }
+}
 
 // ── Fetch ─────────────────────────────────────────────────────
 async function fetchUsers() {
@@ -294,6 +412,10 @@ async function fetchUsers() {
     loading.value = false;
   }
 }
+
+onMounted(async () => {
+  if (!subscriptionStore.plans.length) await subscriptionStore.fetchPlans();
+});
 
 onMounted(fetchUsers);
 
@@ -397,6 +519,37 @@ async function onSave() {
     toast.add({ severity: "error", summary: "Erreur", life: 3000 });
   } finally {
     saving.value = false;
+  }
+}
+
+const togglingAmbassador = ref<string | null>(null);
+
+async function toggleAmbassador(user: UserListResponse) {
+  togglingAmbassador.value = user.id;
+  const newStatus = !user.is_ambassador;
+  try {
+    await post("/v1/referrals/admin/set-ambassador", {
+      user_id: user.id,
+      is_ambassador: newStatus,
+    });
+    toast.add({
+      severity: "success",
+      summary: newStatus
+        ? "Statut ambassadeur activé"
+        : "Statut ambassadeur retiré",
+      life: 3000,
+    });
+    // Mise à jour locale immédiate, sans re-fetch complet
+    const target = users.value.find((u) => u.id === user.id);
+    if (target) (target as any).is_ambassador = newStatus;
+  } catch (err: any) {
+    toast.add({
+      severity: "error",
+      summary: err?.data?.message || "Erreur lors de la mise à jour du statut",
+      life: 3000,
+    });
+  } finally {
+    togglingAmbassador.value = null;
   }
 }
 

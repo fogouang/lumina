@@ -606,3 +606,116 @@ class SubscriptionService:
                 print(f"Erreur génération facture: {e}")
 
             return subscription
+        
+        
+    
+    async def ambassador_activate_subscription(
+        self,
+        data: AdminActivateSubscriptionRequest,
+        ambassador: User,
+    ) -> Subscription:
+        from app.shared.enums import UserRole, PaymentMethod, PaymentStatus
+        from app.modules.payments.models import Payment
+        from app.modules.payments.repository import PaymentRepository
+        from app.modules.referrals.service import ReferralService
+        from sqlalchemy import update
+
+        user = await self.db.get(User, data.user_id)
+        if not user or not user.is_active:
+            raise NotFoundException(resource="User", identifier=str(data.user_id))
+
+        # Scope ambassadeur : uniquement ses propres filleuls
+        if user.referred_by_user_id != ambassador.id:
+            raise ForbiddenException(
+                detail="Vous ne pouvez activer que les abonnements de vos propres filleuls."
+            )
+
+        plan = await self.db.get(Plan, data.plan_id)
+        if not plan or not plan.is_active:
+            raise NotFoundException(resource="Plan", identifier=str(data.plan_id))
+
+        # Désactiver anciens abonnements
+        await self.db.execute(
+            update(Subscription)
+            .where(Subscription.user_id == data.user_id, Subscription.is_active == True)
+            .values(is_active=False)
+        )
+
+        # Créer abonnement actif
+        start_date = date.today()
+        end_date = start_date + timedelta(days=plan.duration_days)
+
+        subscription = await self.repo.create(
+            user_id=data.user_id,
+            organization_id=None,
+            plan_id=plan.id,
+            custom_duration_days=None,
+            custom_ai_credits=None,
+            start_date=start_date,
+            end_date=end_date,
+            is_active=True,
+            ai_credits_remaining=plan.ai_credits,
+            created_by_id=ambassador.id,
+        )
+
+        # ── Code promo ─── (identique à admin_activate_subscription, pas de raison de l'exclure)
+        amount = float(plan.price)
+        discount_amount = 0.0
+        commission_due = 0.0
+        amount_paid = amount
+        promo_code_id = None
+
+        if data.promo_code:
+            from app.modules.promo_codes.service import PromoCodeService
+            from app.modules.promo_codes.repository import PromoCodeRepository
+            promo_service = PromoCodeService(self.db)
+            validation = await promo_service.validate(data.promo_code, data.plan_id)
+            if validation.is_valid:
+                promo = await promo_service.repo.find_by_code(data.promo_code.upper())
+                if promo:
+                    promo_code_id = promo.id
+                    discount_amount = float(validation.discount_amount or 0)
+                    amount_paid = float(validation.amount_paid or amount)
+                    commission_due = round(amount_paid * promo.commission_rate / 100, 2)
+                    promo_repo = PromoCodeRepository(self.db)
+                    await promo_repo.increment_used_count(promo.id)
+
+        # ── Créer paiement manuel pour la facture ────────────────
+        payment_repo = PaymentRepository(self.db)
+        invoice_number = await payment_repo.generate_invoice_number()
+
+        payment = await payment_repo.create(
+            user_id=data.user_id,
+            organization_id=None,
+            subscription_id=subscription.id,
+            org_subscription_id=None,
+            promo_code_id=promo_code_id,
+            amount=amount,
+            discount_amount=discount_amount,
+            amount_paid=amount_paid,
+            commission_due=commission_due,
+            payment_method=PaymentMethod.BANK_TRANSFER,
+            payment_status=PaymentStatus.COMPLETED,
+            transaction_reference=f"AMB-{invoice_number}",
+            invoice_number=invoice_number,
+            invoice_url=None,
+        )
+
+        await self.db.commit()
+
+        # ── Gain de parrainage ────────────────────────────────────
+        await ReferralService(self.db).record_payment_earning(
+            payment_id=payment.id,
+            payer_user_id=data.user_id,
+            payment_amount=amount_paid,
+        )
+
+        # Générer la facture PDF
+        from app.modules.invoices.service import InvoiceService
+        invoice_service = InvoiceService(self.db)
+        try:
+            await invoice_service.generate_invoice_for_payment(payment.id)
+        except Exception as e:
+            print(f"Erreur génération facture: {e}")
+
+        return subscription

@@ -14,5 +14,6 @@ export type UserListResponse = {
     role: UserRole;
     is_active: boolean;
     created_at: string;
+    is_ambassador: boolean;
 };
 

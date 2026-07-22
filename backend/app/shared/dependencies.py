@@ -10,6 +10,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from app.modules.users.models import User
 from app.shared.database.session import DbSession
 from app.shared.exceptions.http import UnauthorizedException
+from app.shared.enums.roles import UserRole
 
 # Security scheme pour Swagger UI
 security = HTTPBearer(auto_error=False)
@@ -81,3 +82,25 @@ async def get_current_user_ws(
 
 # Type annoté, même commodité que CurrentUser
 CurrentUserWs = Annotated[User, Depends(get_current_user_ws)]
+
+
+# ── Ambassadeur / Admin ──
+
+async def get_current_ambassador(current_user: CurrentUser) -> User:
+    """Vérifie que l'utilisateur connecté a le statut ambassadeur."""
+    if not current_user.is_ambassador:
+        raise UnauthorizedException(detail="Accès réservé aux ambassadeurs.")
+    return current_user
+
+
+CurrentAmbassador = Annotated[User, Depends(get_current_ambassador)]
+
+
+async def get_current_platform_admin(current_user: CurrentUser) -> User:
+    """Vérifie que l'utilisateur connecté est platform_admin."""
+    if current_user.role != UserRole.PLATFORM_ADMIN:
+        raise UnauthorizedException(detail="Accès réservé aux administrateurs.")
+    return current_user
+
+
+CurrentPlatformAdmin = Annotated[User, Depends(get_current_platform_admin)]

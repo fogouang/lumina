@@ -14,5 +14,6 @@ export type app__modules__users__schemas__UserResponse = {
     phone: (string | null);
     role: UserRole;
     is_active: boolean;
+    is_ambassador: boolean;
 };
 

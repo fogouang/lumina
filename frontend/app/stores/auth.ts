@@ -20,25 +20,27 @@ export const useAuthStore = defineStore("auth", () => {
   );
 
   // ── Actions ───────────────────────────────────────────────────
-  async function login(credentials: LoginRequest): Promise<void> {
-    const { post } = useApi();
-    loading.value = true;
-    error.value = null;
-    try {
-      const res = await post<any>("/v1/auth/login", credentials);
-      user.value = res.data?.user ?? res.data ?? null;
-      if (user.value?.role === "platform_admin") {
-        navigateTo("/admin");
-      } else {
-        navigateTo("/mon-compte");
-      }
-    } catch (err: unknown) {
-      error.value = extractError(err);
-      throw err;
-    } finally {
-      loading.value = false;
+ async function login(credentials: LoginRequest): Promise<void> {
+  const { post } = useApi();
+  loading.value = true;
+  error.value = null;
+  try {
+    const res = await post<any>("/v1/auth/login", credentials);
+    user.value = res.data?.user ?? res.data ?? null;
+    if (user.value?.role === "platform_admin") {
+      navigateTo("/admin");
+    } else if (user.value?.is_ambassador) {
+      navigateTo("/ambassadeur");
+    } else {
+      navigateTo("/mon-compte");
     }
+  } catch (err: unknown) {
+    error.value = extractError(err);
+    throw err;
+  } finally {
+    loading.value = false;
   }
+}
 
   async function register(payload: RegisterRequest): Promise<void> {
     const { post } = useApi();

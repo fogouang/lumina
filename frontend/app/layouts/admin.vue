@@ -218,6 +218,17 @@ const navGroups: {
       },
     ],
   },
+  {
+  label: "Parrainage",
+  items: [
+    {
+      to: "/admin/referrals",
+      label: "Ambassadeurs",
+      icon: "pi pi-star",
+      exact: false,
+    },
+  ],
+},
 ];
 
 const pageTitles: Record<string, string> = {
@@ -229,6 +240,7 @@ const pageTitles: Record<string, string> = {
   "/admin/payments": "Paiements",
   "/admin/partners": "Partners",
   "/admin/promo-code": "Codes Promo",
+  "/admin/referrals": "Ambassadeurs",
 };
 
 const currentPageTitle = computed(() => {

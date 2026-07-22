@@ -3,9 +3,10 @@ app/modules/payments/models.py
 """
 import enum
 from typing import TYPE_CHECKING
+from datetime import datetime
 
-from sqlalchemy import Enum, Float, ForeignKey, Numeric, String
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import DateTime, Enum, Float, ForeignKey, Numeric, String, UniqueConstraint
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.shared.database.base import BaseModel
@@ -32,101 +33,61 @@ class PaymentStatus(str, enum.Enum):
 class Payment(BaseModel):
     __tablename__ = "payments"
 
-    # Qui paie ?
+    __table_args__ = (
+        UniqueConstraint("pawapay_deposit_id", name="uq_payment_pawapay_deposit_id"),
+    )
+
     user_id: Mapped[UUID | None] = mapped_column(
-        UUID(as_uuid=True),
-        ForeignKey("users.id", ondelete="SET NULL"),
-        nullable=True,
-        index=True,
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True,
     )
     organization_id: Mapped[UUID | None] = mapped_column(
-        UUID(as_uuid=True),
-        ForeignKey("organizations.id", ondelete="SET NULL"),
-        nullable=True,
-        index=True,
+        UUID(as_uuid=True), ForeignKey("organizations.id", ondelete="SET NULL"), nullable=True, index=True,
     )
-
-    # Pour quoi ?
     subscription_id: Mapped[UUID | None] = mapped_column(
-        UUID(as_uuid=True),
-        ForeignKey("subscriptions.id", ondelete="SET NULL"),
-        nullable=True,
+        UUID(as_uuid=True), ForeignKey("subscriptions.id", ondelete="SET NULL"), nullable=True,
     )
     org_subscription_id: Mapped[UUID | None] = mapped_column(
-        UUID(as_uuid=True),
-        ForeignKey("organization_subscriptions.id", ondelete="SET NULL"),
-        nullable=True,
+        UUID(as_uuid=True), ForeignKey("organization_subscriptions.id", ondelete="SET NULL"), nullable=True,
     )
-
-    # ── Code promo appliqué ──────────────────────────────────
     promo_code_id: Mapped[UUID | None] = mapped_column(
-        UUID(as_uuid=True),
-        ForeignKey("promo_codes.id", ondelete="SET NULL"),
-        nullable=True,
-        index=True,
+        UUID(as_uuid=True), ForeignKey("promo_codes.id", ondelete="SET NULL"), nullable=True, index=True,
         doc="Code promo utilisé pour ce paiement (NULL si aucun)",
     )
 
-    # Montants
-    amount: Mapped[float] = mapped_column(
-        Numeric(10, 2),
-        nullable=False,
-        doc="Montant brut du plan en FCFA",
-    )
-    discount_amount: Mapped[float] = mapped_column(
-        Numeric(10, 2),
-        nullable=False,
-        default=0.0,
-        doc="Réduction appliquée (0 si pas de code promo)",
-    )
-    amount_paid: Mapped[float] = mapped_column(
-        Numeric(10, 2),
-        nullable=False,
-        doc="Montant réellement payé = amount - discount_amount",
-    )
+    amount: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False, doc="Montant brut du plan en FCFA")
+    discount_amount: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False, default=0.0)
+    amount_paid: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
+    commission_due: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
 
-    # ── Commission partenaire ────────────────────────────────
-    commission_due: Mapped[float] = mapped_column(
-        Float,
-        nullable=False,
-        default=0.0,
-        doc="Commission due au partenaire = amount_paid * commission_rate / 100",
-    )
-
-    # Paiement
     payment_method: Mapped[PaymentMethod] = mapped_column(
-        Enum(PaymentMethod, native_enum=False, length=50),
-        nullable=False,
+        Enum(PaymentMethod, native_enum=False, length=50), nullable=False,
     )
     payment_status: Mapped[PaymentStatus] = mapped_column(
-        Enum(PaymentStatus, native_enum=False, length=50),
-        nullable=False,
-        default=PaymentStatus.PENDING,
-        index=True,
+        Enum(PaymentStatus, native_enum=False, length=50), nullable=False, default=PaymentStatus.PENDING, index=True,
     )
     transaction_reference: Mapped[str | None] = mapped_column(
-        String(255),
-        unique=True,
-        nullable=True,
-        doc="Référence gateway paiement",
+        String(255), unique=True, nullable=True, doc="Référence gateway paiement",
     )
 
-    # Facture
-    invoice_number: Mapped[str] = mapped_column(
-        String(100),
-        unique=True,
-        nullable=False,
-        index=True,
-        doc="Ex: INV-2025-00001",
+    invoice_number: Mapped[str] = mapped_column(String(100), unique=True, nullable=False, index=True)
+    invoice_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+
+    # ── pawaPay ───────────────────────────────────────────────
+    operator: Mapped[str | None] = mapped_column(
+        String(20), nullable=True, doc="MTN ou ORANGE",
     )
-    invoice_url: Mapped[str | None] = mapped_column(
-        String(500),
-        nullable=True,
-        doc="Chemin PDF facture",
+    pawapay_deposit_id: Mapped[str | None] = mapped_column(
+        String(36), nullable=True, index=True, doc="ID du deposit pawaPay (= str(payment.id))",
+    )
+    webhook_payload: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    # Renseigné si confirmé manuellement (admin ou ambassadeur)
+    validated_manually_by: Mapped[UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True,
     )
 
-    # Relationships
-    user: Mapped["User | None"] = relationship("User")
+    user: Mapped["User | None"] = relationship("User", foreign_keys=[user_id])
     organization: Mapped["Organization | None"] = relationship("Organization")
     subscription: Mapped["Subscription | None"] = relationship("Subscription")
     org_subscription: Mapped["OrganizationSubscription | None"] = relationship("OrganizationSubscription")
