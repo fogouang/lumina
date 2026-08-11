@@ -43,7 +43,6 @@ backend/**/*.log
 backend/**/*.sqlite
 backend/**/*.sqlite3
 backend/**/*.db
-backend/alembic/versions/
 
 # Uploads
 backend/uploads/
