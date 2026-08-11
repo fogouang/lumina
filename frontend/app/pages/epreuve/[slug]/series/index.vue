@@ -19,19 +19,6 @@
           </span>
         </div>
       </div>
-      <div class="series-hero__wave">
-        <svg
-          viewBox="0 0 1440 80"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          preserveAspectRatio="none"
-        >
-          <path
-            d="M0 80L60 72C120 64 240 48 360 42.7C480 37 600 43 720 48C840 53 960 59 1080 58.7C1200 59 1320 53 1380 50.7L1440 48V80H0Z"
-            fill="var(--bg-ground)"
-          />
-        </svg>
-      </div>
     </section>
 
     <div class="container series-body">
@@ -196,12 +183,9 @@ const epreuve = computed(
 // ── Fetch ────────────────────────────────────────────────────
 
 onMounted(async () => {
-  await Promise.all([
-    seriesStore.fetchSeries(),
-    seriesStore.fetchMyAccess(),
-  ])
-  ready.value = true
-})
+  await Promise.all([seriesStore.fetchSeries(), seriesStore.fetchMyAccess()]);
+  ready.value = true;
+});
 
 // ── Filtres ──────────────────────────────────────────────────
 const activeFilter = ref<"all" | "accessible" | "locked">("all");

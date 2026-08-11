@@ -1,180 +1,281 @@
 <template>
   <div v-if="epreuve">
     <!-- ── Hero ─────────────────────────────────────────────── -->
-    <section class="epreuve-hero">
-      <div class="container epreuve-hero__inner">
-        <div class="epreuve-hero__icon" :style="{ background: epreuve.iconBg }">
-          <i :class="epreuve.icon" :style="{ color: epreuve.iconColor }" />
-        </div>
-
-        <h1 class="epreuve-hero__title">{{ epreuve.title }} TCF Canada</h1>
-        <p class="epreuve-hero__desc">{{ epreuve.description }}</p>
-
-        <div class="epreuve-hero__ctas">
-          <NuxtLink v-for="cta in epreuve.ctas" :key="cta.to" :to="cta.to">
-            <Button
-              :label="cta.label"
-              :icon="cta.icon"
-              :outlined="cta.outlined"
-              size="large"
-              :class="
-                cta.outlined
-                  ? 'epreuve-hero__btn--outline'
-                  : 'epreuve-hero__btn--primary'
-              "
-            />
-          </NuxtLink>
-        </div>
-      </div>
-
-      <!-- Wave -->
-      <div class="epreuve-hero__wave">
-        <svg
-          viewBox="0 0 1440 80"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          preserveAspectRatio="none"
+    <section class="relative bg-gradient-primary pb-24 pt-16 text-center">
+      <div class="container relative z-10 flex flex-col items-center gap-6">
+        <h1
+          class="m-0 text-[clamp(1.75rem,4vw,2.75rem)] font-extrabold leading-[1.2] text-white"
         >
-          <path
-            d="M0 80L60 72C120 64 240 48 360 42.7C480 37 600 43 720 48C840 53 960 59 1080 58.7C1200 59 1320 53 1380 50.7L1440 48V80H0Z"
-            fill="var(--bg-ground)"
-          />
-        </svg>
+          {{ epreuve.title }} TCF Canada
+        </h1>
+        <p class="m-0 max-w-155 text-[1.0625rem] leading-[1.75] text-white/82">
+          {{ epreuve.description }}
+        </p>
       </div>
     </section>
 
     <!-- ── Format ─────────────────────────────────────────────── -->
-    <section class="section section--light">
+    <section class="section bg-(--bg-ground) py-16">
       <div class="container">
-        <div class="format-grid">
-          <div
-            v-for="stat in epreuve.format"
-            :key="stat.label"
-            class="format-card"
-          >
-            <div class="format-card__icon">
-              <i :class="stat.icon" />
+        <div ref="formatRef">
+          <Transition name="p-collapsible">
+            <div v-if="formatVisible" class="grid">
+              <div
+                class="mx-auto grid max-w-160 grid-cols-3 gap-5 overflow-hidden"
+              >
+                <div
+                  v-for="stat in epreuve.format"
+                  :key="stat.label"
+                  class="flex flex-col items-center gap-2 rounded-2xl border border-(--border-color) bg-(--bg-card) px-4 py-7 text-center"
+                >
+                  <div
+                    class="mb-1 flex h-11 w-11 items-center justify-center rounded-xl bg-primary-50"
+                  >
+                    <i :class="stat.icon" class="text-lg text-primary-600" />
+                  </div>
+                  <span
+                    class="text-[1.625rem] font-extrabold leading-none text-(--text-primary)"
+                    >{{ stat.value }}</span
+                  >
+                  <span
+                    class="text-[0.8125rem] font-medium text-(--text-secondary)"
+                    >{{ stat.label }}</span
+                  >
+                </div>
+              </div>
             </div>
-            <span class="format-card__value">{{ stat.value }}</span>
-            <span class="format-card__label">{{ stat.label }}</span>
-          </div>
+          </Transition>
         </div>
       </div>
     </section>
 
     <!-- ── Ce que vous apprendrez ────────────────────────────── -->
-    <section class="section section--white">
+    <section class="section bg-(--bg-section) py-20">
       <div class="container">
-        <div class="section-header">
-          <Tag value="Objectifs" severity="success" />
-          <h2 class="section-title">Ce que vous apprendrez</h2>
-        </div>
-        <div class="apprentissage-grid">
-          <div
-            v-for="item in epreuve.apprentissages"
-            :key="item.title"
-            class="apprentissage-card"
+        <div
+          ref="apprHeaderRef"
+          class="mx-auto max-w-2xl text-center transition-all duration-700"
+          :class="
+            apprHeaderVisible
+              ? 'opacity-100 translate-y-0'
+              : 'opacity-0 translate-y-6'
+          "
+        >
+          <Tag value="Objectifs" severity="success" class="rounded-full!" />
+          <h2
+            class="mt-4 font-display text-3xl font-extrabold tracking-tight text-(--text-primary) sm:text-4xl"
           >
-            <div class="apprentissage-card__icon">
-              <i :class="item.icon" />
+            Ce que vous apprendrez
+          </h2>
+        </div>
+
+        <div ref="apprGridRef" class="mt-12">
+          <Transition name="p-collapsible">
+            <div v-if="apprGridVisible" class="grid">
+              <div
+                class="grid gap-5 overflow-hidden sm:grid-cols-2 lg:grid-cols-4"
+              >
+                <div
+                  v-for="item in epreuve.apprentissages"
+                  :key="item.title"
+                  class="rounded-2xl border border-(--border-color) bg-(--bg-card) p-6"
+                >
+                  <div
+                    class="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-primary-50"
+                  >
+                    <i :class="item.icon" class="text-lg text-primary-600" />
+                  </div>
+                  <h3
+                    class="m-0 mb-2 text-[0.9375rem] font-bold text-(--text-primary)"
+                  >
+                    {{ item.title }}
+                  </h3>
+                  <p class="m-0 text-sm leading-[1.6] text-(--text-secondary)">
+                    {{ item.desc }}
+                  </p>
+                </div>
+              </div>
             </div>
-            <h3>{{ item.title }}</h3>
-            <p>{{ item.desc }}</p>
-          </div>
+          </Transition>
         </div>
       </div>
     </section>
 
     <!-- ── Structure du programme ────────────────────────────── -->
-    <section class="section section--red">
+    <section class="section bg-(--bg-ground) py-20">
       <div class="container">
-        <div class="section-header">
-          <Tag value="Programme" severity="warning" />
-          <h2 class="section-title" style="color: #fff">
+        <div
+          ref="progHeaderRef"
+          class="mx-auto max-w-2xl text-center transition-all duration-700"
+          :class="
+            progHeaderVisible
+              ? 'opacity-100 translate-y-0'
+              : 'opacity-0 translate-y-6'
+          "
+        >
+          <Tag value="Programme" severity="warning" class="rounded-full!" />
+          <h2
+            class="mt-4 font-display text-3xl font-extrabold tracking-tight text-(--text-primary) sm:text-4xl"
+          >
             Structure du programme
           </h2>
-          <p class="section-subtitle" style="color: rgba(255, 255, 255, 0.75)">
-            Un programme complet pour vous préparer efficacement à l'épreuve.
+          <p class="mt-3 text-base leading-relaxed text-(--text-secondary)">
+            Un programme complet pour vous préparer efficacement à l’épreuve.
           </p>
         </div>
-        <div class="programme-grid">
-          <div
-            v-for="item in epreuve.programme"
-            :key="item.title"
-            class="programme-card"
-          >
-            <div class="programme-card__icon">
-              <i :class="item.icon" />
+
+        <div ref="progGridRef" class="mt-12">
+          <Transition name="p-collapsible">
+            <div v-if="progGridVisible" class="grid">
+              <div
+                class="grid gap-5 overflow-hidden sm:grid-cols-2 lg:grid-cols-4"
+              >
+                <div
+                  v-for="item in epreuve.programme"
+                  :key="item.title"
+                  class="rounded-2xl border border-(--border-color) bg-(--bg-card) p-6 transition-all duration-250 hover:-translate-y-1 hover:border-primary-300 hover:shadow-[0_12px_32px_-4px_rgba(0,0,0,0.1)]"
+                >
+                  <div
+                    class="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-primary-50"
+                  >
+                    <i :class="item.icon" class="text-lg text-primary-600" />
+                  </div>
+                  <h3
+                    class="m-0 mb-2 text-[0.9375rem] font-bold text-(--text-primary)"
+                  >
+                    {{ item.title }}
+                  </h3>
+                  <p class="m-0 text-sm leading-[1.6] text-(--text-secondary)">
+                    {{ item.desc }}
+                  </p>
+                </div>
+              </div>
             </div>
-            <h3>{{ item.title }}</h3>
-            <p>{{ item.desc }}</p>
-          </div>
+          </Transition>
         </div>
       </div>
     </section>
 
     <!-- ── Tâches détaillées (EE & EO) ──────────────────────── -->
-    <section v-if="epreuve.taches" class="section section--light">
+    <section v-if="epreuve.taches" class="section bg-(--bg-section) py-20">
       <div class="container">
-        <div class="section-header">
-          <Tag value="Détail" severity="success" />
-          <h2 class="section-title">
-            Les {{ epreuve.taches.length }} tâches de l'épreuve
+        <div
+          ref="tachesHeaderRef"
+          class="mx-auto max-w-2xl text-center transition-all duration-700"
+          :class="
+            tachesHeaderVisible
+              ? 'opacity-100 translate-y-0'
+              : 'opacity-0 translate-y-6'
+          "
+        >
+          <Tag value="Détail" severity="success" class="rounded-full!" />
+          <h2
+            class="mt-4 font-display text-3xl font-extrabold tracking-tight text-(--text-primary) sm:text-4xl"
+          >
+            Les {{ epreuve.taches.length }} tâches de l’épreuve
           </h2>
-          <p class="section-subtitle">
+          <p class="mt-3 text-base leading-relaxed text-(--text-secondary)">
             Découvrez en détail chaque tâche et ce qui est attendu.
           </p>
         </div>
 
-        <div class="taches-list">
-          <div
-            v-for="tache in epreuve.taches"
-            :key="tache.numero"
-            class="tache-card"
-          >
-            <div class="tache-card__numero">{{ tache.numero }}</div>
-            <div class="tache-card__body">
-              <div class="tache-card__header">
-                <h3 class="tache-card__title">{{ tache.title }}</h3>
-                <div class="tache-card__meta">
-                  <span><i class="pi pi-tag" /> {{ tache.niveau }}</span>
-                  <span
-                    ><i class="pi pi-align-left" /> {{ tache.longueur }}</span
+        <div ref="tachesGridRef" class="mt-12">
+          <Transition name="p-collapsible">
+            <div v-if="tachesGridVisible" class="grid">
+              <div class="flex flex-col gap-5 overflow-hidden">
+                <div
+                  v-for="tache in epreuve.taches"
+                  :key="tache.numero"
+                  class="flex gap-6 rounded-2xl border border-(--border-color) bg-(--bg-card) p-7 transition-all duration-250 hover:border-primary-300 hover:shadow-[0_8px_24px_rgba(0,0,0,0.07)]"
+                >
+                  <div
+                    class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-primary text-lg font-extrabold text-white"
                   >
-                  <span><i class="pi pi-clock" /> {{ tache.temps }}</span>
+                    {{ tache.numero }}
+                  </div>
+                  <div class="flex-1">
+                    <div
+                      class="mb-3 flex flex-wrap items-start justify-between gap-4"
+                    >
+                      <h3 class="m-0 text-base font-bold text-(--text-primary)">
+                        {{ tache.title }}
+                      </h3>
+                      <div
+                        class="flex flex-wrap gap-3.5 text-[0.8125rem] text-(--text-tertiary)"
+                      >
+                        <span
+                          ><i class="pi pi-tag mr-1 text-xs" />
+                          {{ tache.niveau }}</span
+                        >
+                        <span
+                          ><i class="pi pi-align-left mr-1 text-xs" />
+                          {{ tache.longueur }}</span
+                        >
+                        <span
+                          ><i class="pi pi-clock mr-1 text-xs" />
+                          {{ tache.temps }}</span
+                        >
+                      </div>
+                    </div>
+                    <p
+                      class="m-0 mb-4 text-[0.9375rem] leading-[1.7] text-(--text-secondary)"
+                    >
+                      {{ tache.desc }}
+                    </p>
+                    <div>
+                      <p
+                        class="m-0 mb-2 text-[0.8125rem] font-bold uppercase tracking-wide text-(--text-secondary)"
+                      >
+                        Exemples :
+                      </p>
+                      <ul class="m-0 flex list-none flex-col gap-1.5 p-0">
+                        <li
+                          v-for="ex in tache.exemples"
+                          :key="ex"
+                          class="relative pl-4 text-sm text-(--text-secondary)"
+                        >
+                          <span class="absolute left-0 text-primary-500"
+                            >→</span
+                          >
+                          {{ ex }}
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
                 </div>
               </div>
-              <p class="tache-card__desc">{{ tache.desc }}</p>
-              <div class="tache-card__exemples">
-                <p class="tache-card__exemples-label">Exemples :</p>
-                <ul>
-                  <li v-for="ex in tache.exemples" :key="ex">{{ ex }}</li>
-                </ul>
-              </div>
             </div>
-          </div>
+          </Transition>
         </div>
       </div>
     </section>
 
     <!-- ── CTA Final ─────────────────────────────────────────── -->
-    <section class="section section--white">
+    <section class="section bg-(--bg-ground) py-20">
       <div class="container">
-        <div class="cta-final">
-          <h2 class="cta-final__title">
-            Prêt à maîtriser l'{{ epreuve.title.toLowerCase() }} ?
+        <div
+          ref="ctaRef"
+          class="mx-auto max-w-160 rounded-3xl border border-(--border-color) bg-(--bg-card) px-6 py-12 text-center transition-all duration-700"
+          :class="
+            ctaVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
+          "
+        >
+          <h2
+            class="m-0 mb-3 text-[clamp(1.375rem,3vw,1.875rem)] font-extrabold text-(--text-primary)"
+          >
+            Prêt à maîtriser l’{{ epreuve.title.toLowerCase() }} ?
           </h2>
-          <p class="cta-final__sub">
+          <p class="m-0 mb-8 text-base leading-[1.6] text-(--text-secondary)">
             Rejoignez des milliers de candidats qui se préparent avec Lumina
             TCF.
           </p>
-          <div class="cta-final__actions">
+          <div class="flex flex-wrap justify-center gap-3.5">
             <NuxtLink :to="epreuve.ctaFinal.to">
               <Button
                 :label="epreuve.ctaFinal.label"
                 :icon="epreuve.ctaFinal.icon"
                 size="large"
-                class="cta-final__btn"
+                class="bg-gradient-primary! border-none! rounded-xl! font-bold!"
               />
             </NuxtLink>
             <NuxtLink to="/tarifs">
@@ -183,7 +284,7 @@
                 icon="pi pi-dollar"
                 size="large"
                 outlined
-                class="cta-final__btn--outline"
+                class="border-primary-600! text-primary-600! rounded-xl! font-semibold!"
               />
             </NuxtLink>
           </div>
@@ -193,19 +294,20 @@
   </div>
 
   <!-- 404 -->
-  <div
-    v-else
-    class="container"
-    style="padding: 5rem 1.5rem; text-align: center"
-  >
-    <h2>Épreuve introuvable.</h2>
-    <NuxtLink to="/"
-      ><Button label="Retour à l'accueil" icon="pi pi-home"
-    /></NuxtLink>
+  <div v-else class="container py-20 text-center">
+    <h2 class="text-(--text-primary)">Épreuve introuvable.</h2>
+    <NuxtLink to="/">
+      <Button
+        label="Retour à l’accueil"
+        icon="pi pi-home"
+        class="bg-gradient-primary! border-none! rounded-xl! font-semibold!"
+      />
+    </NuxtLink>
   </div>
 </template>
 
 <script setup>
+import { ref, onMounted, onUnmounted } from "vue";
 import { useEpreuve } from "~/composables/useEpreuve";
 
 const route = useRoute();
@@ -220,430 +322,57 @@ useHead({
     },
   ],
 });
+
+const formatRef = ref(null);
+const apprHeaderRef = ref(null);
+const apprGridRef = ref(null);
+const progHeaderRef = ref(null);
+const progGridRef = ref(null);
+const tachesHeaderRef = ref(null);
+const tachesGridRef = ref(null);
+const ctaRef = ref(null);
+
+const formatVisible = ref(false);
+const apprHeaderVisible = ref(false);
+const apprGridVisible = ref(false);
+const progHeaderVisible = ref(false);
+const progGridVisible = ref(false);
+const tachesHeaderVisible = ref(false);
+const tachesGridVisible = ref(false);
+const ctaVisible = ref(false);
+
+const visibilityMap = [
+  [formatRef, formatVisible],
+  [apprHeaderRef, apprHeaderVisible],
+  [apprGridRef, apprGridVisible],
+  [progHeaderRef, progHeaderVisible],
+  [progGridRef, progGridVisible],
+  [tachesHeaderRef, tachesHeaderVisible],
+  [tachesGridRef, tachesGridVisible],
+  [ctaRef, ctaVisible],
+];
+
+let observer;
+
+onMounted(() => {
+  observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        const match = visibilityMap.find(
+          ([elRef]) => elRef.value === entry.target,
+        );
+        if (match) match[1].value = true;
+        observer.unobserve(entry.target);
+      });
+    },
+    { threshold: 0.15 },
+  );
+
+  visibilityMap.forEach(([elRef]) => {
+    if (elRef.value) observer.observe(elRef.value);
+  });
+});
+
+onUnmounted(() => observer?.disconnect());
 </script>
-
-<style scoped>
-/* ── Hero ──────────────────────────────────────────────────── */
-.epreuve-hero {
-  position: relative;
-  background: var(--gradient-primary);
-  padding: 4rem 0 6rem;
-  text-align: center;
-}
-
-.epreuve-hero__inner {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1.5rem;
-}
-
-.epreuve-hero__icon {
-  width: 72px;
-  height: 72px;
-  border-radius: 1.25rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.programme-card h3 {
-  color: #ffffff !important;
-}
-
-.programme-card p {
-  color: rgba(255, 255, 255, 0.8) !important;
-}
-
-.programme-card__icon i {
-  color: #ffffff !important;
-}
-
-.epreuve-hero__icon i {
-  font-size: 2rem;
-}
-
-.epreuve-hero__title {
-  font-size: clamp(1.75rem, 4vw, 2.75rem);
-  font-weight: 800;
-  color: #ffffff;
-  margin: 0;
-  line-height: 1.2;
-}
-
-.epreuve-hero__desc {
-  font-size: 1.0625rem;
-  color: rgba(255, 255, 255, 0.82);
-  line-height: 1.75;
-  max-width: 620px;
-  margin: 0;
-}
-
-.epreuve-hero__ctas {
-  display: flex;
-  gap: 0.875rem;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-.epreuve-hero__btn--primary {
-  background: #ffffff !important;
-  color: var(--color-primary-800) !important;
-  border: none !important;
-  font-weight: 700 !important;
-  border-radius: 0.75rem !important;
-}
-
-.epreuve-hero__btn--primary:hover {
-  background: var(--color-primary-50) !important;
-}
-
-.epreuve-hero__btn--outline {
-  border: 2px solid rgba(255, 255, 255, 0.6) !important;
-  color: #ffffff !important;
-  border-radius: 0.75rem !important;
-  font-weight: 600 !important;
-}
-
-.epreuve-hero__btn--outline:hover {
-  background: rgba(255, 255, 255, 0.1) !important;
-}
-
-.epreuve-hero__wave {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  line-height: 0;
-}
-
-.epreuve-hero__wave svg {
-  width: 100%;
-  display: block;
-}
-
-/* ── Format stats ──────────────────────────────────────────── */
-.format-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1.25rem;
-  max-width: 640px;
-  margin: 0 auto;
-}
-
-.format-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 1rem;
-  padding: 1.75rem 1rem;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.format-card__icon {
-  width: 44px;
-  height: 44px;
-  background: var(--color-primary-50);
-  border-radius: 0.75rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 0.25rem;
-}
-
-.format-card__icon i {
-  font-size: 1.125rem;
-  color: var(--color-primary-600);
-}
-
-.format-card__value {
-  font-size: 1.625rem;
-  font-weight: 800;
-  color: var(--text-primary);
-  line-height: 1;
-}
-
-.format-card__label {
-  font-size: 0.8125rem;
-  color: var(--text-secondary);
-  font-weight: 500;
-}
-
-/* ── Apprentissages ────────────────────────────────────────── */
-.apprentissage-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1.25rem;
-}
-
-.apprentissage-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 1rem;
-  padding: 1.5rem;
-}
-
-.apprentissage-card__icon {
-  width: 44px;
-  height: 44px;
-  background: var(--color-primary-50);
-  border-radius: 0.75rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 1rem;
-}
-
-.apprentissage-card__icon i {
-  font-size: 1.125rem;
-  color: var(--color-primary-600);
-}
-
-.apprentissage-card h3 {
-  font-size: 0.9375rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin: 0 0 0.5rem;
-}
-
-.apprentissage-card p {
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-  line-height: 1.6;
-  margin: 0;
-}
-
-/* ── Programme ─────────────────────────────────────────────── */
-.programme-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1.25rem;
-}
-
-.programme-card {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 1rem;
-  padding: 1.5rem;
-  transition: background 0.25s ease;
-}
-
-.programme-card:hover {
-  background: rgba(255, 255, 255, 0.13);
-}
-
-.programme-card__icon {
-  width: 44px;
-  height: 44px;
-  background: rgba(255, 255, 255, 0.12);
-  border-radius: 0.75rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 1rem;
-}
-
-.programme-card__icon i {
-  font-size: 1.125rem;
-  color: var(--color-secondary-400);
-}
-
-.programme-card h3 {
-  font-size: 0.9375rem;
-  font-weight: 700;
-  color: #ffffff;
-  margin: 0 0 0.5rem;
-}
-
-.programme-card p {
-  font-size: 0.875rem;
-  color: rgba(255, 255, 255, 0.72);
-  line-height: 1.6;
-  margin: 0;
-}
-
-/* ── Tâches ────────────────────────────────────────────────── */
-.taches-list {
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-}
-
-.tache-card {
-  display: flex;
-  gap: 1.5rem;
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 1rem;
-  padding: 1.75rem;
-  transition: all 0.25s ease;
-}
-
-.tache-card:hover {
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.07);
-  border-color: var(--color-primary-300);
-}
-
-.tache-card__numero {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background: var(--gradient-primary);
-  color: #ffffff;
-  font-size: 1.125rem;
-  font-weight: 800;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.tache-card__body {
-  flex: 1;
-}
-
-.tache-card__header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 0.75rem;
-  flex-wrap: wrap;
-}
-
-.tache-card__title {
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin: 0;
-}
-
-.tache-card__meta {
-  display: flex;
-  gap: 0.875rem;
-  font-size: 0.8125rem;
-  color: var(--text-tertiary);
-  flex-wrap: wrap;
-}
-
-.tache-card__meta i {
-  margin-right: 0.25rem;
-  font-size: 0.75rem;
-}
-
-.tache-card__desc {
-  font-size: 0.9375rem;
-  color: var(--text-secondary);
-  line-height: 1.7;
-  margin: 0 0 1rem;
-}
-
-.tache-card__exemples-label {
-  font-size: 0.8125rem;
-  font-weight: 700;
-  color: var(--text-secondary);
-  margin: 0 0 0.5rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.tache-card__exemples ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.375rem;
-}
-
-.tache-card__exemples ul li {
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-  padding-left: 1rem;
-  position: relative;
-}
-
-.tache-card__exemples ul li::before {
-  content: "→";
-  position: absolute;
-  left: 0;
-  color: var(--color-primary-500);
-}
-
-/* ── CTA Final ─────────────────────────────────────────────── */
-.cta-final {
-  text-align: center;
-  padding: 3rem 1.5rem;
-  background: var(--bg-ground);
-  border: 1px solid var(--border-color);
-  border-radius: 1.5rem;
-  max-width: 640px;
-  margin: 0 auto;
-}
-
-.cta-final__title {
-  font-size: clamp(1.375rem, 3vw, 1.875rem);
-  font-weight: 800;
-  color: var(--text-primary);
-  margin: 0 0 0.75rem;
-}
-
-.cta-final__sub {
-  font-size: 1rem;
-  color: var(--text-secondary);
-  margin: 0 0 2rem;
-  line-height: 1.6;
-}
-
-.cta-final__actions {
-  display: flex;
-  gap: 0.875rem;
-  justify-content: center;
-  flex-wrap: wrap;
-}
-
-.cta-final__btn {
-  background: var(--gradient-primary) !important;
-  border: none !important;
-  border-radius: 0.75rem !important;
-  font-weight: 700 !important;
-}
-
-.cta-final__btn--outline {
-  border-color: var(--color-primary-600) !important;
-  color: var(--color-primary-600) !important;
-  border-radius: 0.75rem !important;
-  font-weight: 600 !important;
-}
-
-/* ── Responsive ────────────────────────────────────────────── */
-@media (max-width: 1024px) {
-  .apprentissage-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  .programme-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 640px) {
-  .apprentissage-grid {
-    grid-template-columns: 1fr;
-  }
-  .programme-grid {
-    grid-template-columns: 1fr;
-  }
-  .format-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-  .tache-card {
-    flex-direction: column;
-  }
-  .tache-card__header {
-    flex-direction: column;
-  }
-}
-</style>

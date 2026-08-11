@@ -1,62 +1,124 @@
 <template>
-  <section class="section section--white">
+  <section class="section bg-(--bg-section) py-20">
     <div class="container">
       <!-- Header -->
-      <div class="section-header">
-        <Tag value="Les épreuves" severity="success" />
-        <h2 class="section-title">Les 4 épreuves du TCF Canada</h2>
-        <p class="section-subtitle">
+      <div
+        ref="headerRef"
+        class="mx-auto max-w-2xl text-center transition-all duration-700"
+        :class="
+          headerVisible
+            ? 'opacity-100 translate-y-0'
+            : 'opacity-0 translate-y-6'
+        "
+      >
+        <Tag value="Les épreuves" severity="success" class="rounded-full!" />
+        <h2
+          class="mt-4 font-display text-3xl font-extrabold tracking-tight text-(--text-primary) sm:text-4xl"
+        >
+          Les 4 épreuves du TCF Canada
+        </h2>
+        <p class="mt-3 text-base leading-relaxed text-(--text-secondary)">
           Entraînez-vous module par module avec nos simulateurs spécialisés en
           conditions réelles.
         </p>
       </div>
 
       <!-- Grid -->
-      <div class="epreuves__grid">
-        <NuxtLink
-          v-for="epreuve in epreuves"
-          :key="epreuve.slug"
-          :to="epreuve.path"
-          class="epreuve-card"
-        >
-          <!-- Icône -->
-          <div
-            class="epreuve-card__icon"
-            :style="{ background: epreuve.iconBg }"
-          >
-            <i :class="epreuve.icon" :style="{ color: epreuve.iconColor }" />
-          </div>
+      <div ref="gridRef" class="mt-12">
+        <Transition name="p-collapsible">
+          <div v-if="gridVisible" class="grid">
+            <div
+              class="grid gap-5 overflow-hidden sm:grid-cols-2 lg:grid-cols-4"
+            >
+              <NuxtLink
+                v-for="epreuve in epreuves"
+                :key="epreuve.slug"
+                :to="epreuve.path"
+                class="group flex flex-col gap-4 rounded-2xl border border-(--border-color) bg-(--bg-card) p-6 no-underline text-inherit transition-all duration-250 hover:-translate-y-1 hover:border-primary-300 hover:shadow-[0_12px_32px_-4px_rgba(0,0,0,0.1)]"
+              >
+                <!-- Icône -->
+                <div
+                  class="flex h-13 w-13 shrink-0 items-center justify-center rounded-2xl"
+                  :style="{ background: epreuve.iconBg }"
+                >
+                  <i
+                    :class="epreuve.icon"
+                    class="text-[1.375rem]"
+                    :style="{ color: epreuve.iconColor }"
+                  />
+                </div>
 
-          <!-- Contenu -->
-          <div class="epreuve-card__body">
-            <h3 class="epreuve-card__title">{{ epreuve.title }}</h3>
-            <p class="epreuve-card__desc">{{ epreuve.desc }}</p>
-            <div class="epreuve-card__meta">
-              <span>
-                <i class="pi pi-list" />
-                {{ epreuve.questions }}
-              </span>
-              <span>
-                <i class="pi pi-clock" />
-                {{ epreuve.duration }}
-              </span>
+                <!-- Contenu -->
+                <div class="flex-1">
+                  <h3 class="text-base font-bold text-(--text-primary)">
+                    {{ epreuve.title }}
+                  </h3>
+                  <p
+                    class="mt-1.5 text-sm leading-relaxed text-(--text-secondary)"
+                  >
+                    {{ epreuve.desc }}
+                  </p>
+                  <div
+                    class="mt-3.5 flex gap-4 text-[0.8125rem] text-(--text-tertiary)"
+                  >
+                    <span class="flex items-center gap-1">
+                      <i class="pi pi-list text-xs" />
+                      {{ epreuve.questions }}
+                    </span>
+                    <span class="flex items-center gap-1">
+                      <i class="pi pi-clock text-xs" />
+                      {{ epreuve.duration }}
+                    </span>
+                  </div>
+                </div>
+
+                <!-- CTA -->
+                <div class="border-t border-(--border-color) pt-3.5">
+                  <span
+                    class="flex items-center gap-1.5 text-sm font-semibold text-primary-600 transition-[gap] duration-200 group-hover:gap-2.5"
+                  >
+                    Commencer
+                    <i class="pi pi-arrow-right text-xs" />
+                  </span>
+                </div>
+              </NuxtLink>
             </div>
           </div>
-
-          <!-- CTA -->
-          <div class="epreuve-card__footer">
-            <span class="epreuve-card__cta">
-              Commencer
-              <i class="pi pi-arrow-right" />
-            </span>
-          </div>
-        </NuxtLink>
+        </Transition>
       </div>
     </div>
   </section>
 </template>
 
 <script setup>
+import { ref, onMounted, onUnmounted } from "vue";
+
+const headerRef = ref(null);
+const gridRef = ref(null);
+const headerVisible = ref(false);
+const gridVisible = ref(false);
+
+let observer;
+
+onMounted(() => {
+  observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        if (entry.target === headerRef.value) headerVisible.value = true;
+        if (entry.target === gridRef.value) gridVisible.value = true;
+        observer.unobserve(entry.target);
+      });
+    },
+    { threshold: 0.15 },
+  );
+
+  if (headerRef.value) observer.observe(headerRef.value);
+  if (gridRef.value) observer.observe(gridRef.value);
+});
+
+onUnmounted(() => observer?.disconnect());
+
 const epreuves = [
   {
     slug: "co",
@@ -83,7 +145,7 @@ const epreuves = [
   {
     slug: "eo",
     title: "Expression orale",
-    desc: "Exprimez-vous oralement sur des sujets d'actualité avec nos sujets guidés.",
+    desc: "Exprimez-vous oralement sur des sujets d’actualité avec nos sujets guidés.",
     icon: "pi pi-microphone",
     iconColor: "#d97706",
     iconBg: "#fffbeb",
@@ -104,114 +166,3 @@ const epreuves = [
   },
 ];
 </script>
-
-<style scoped>
-.epreuves__grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1.25rem;
-}
-
-/* ── Card ──────────────────────────────────────────────────── */
-.epreuve-card {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  padding: 1.5rem;
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 1rem;
-  text-decoration: none;
-  color: inherit;
-  transition: all 0.25s ease;
-}
-
-.epreuve-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 32px -4px rgba(0, 0, 0, 0.1);
-  border-color: var(--color-primary-300);
-}
-
-/* ── Icône ─────────────────────────────────────────────────── */
-.epreuve-card__icon {
-  width: 52px;
-  height: 52px;
-  border-radius: 0.875rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.epreuve-card__icon i {
-  font-size: 1.375rem;
-}
-
-/* ── Body ──────────────────────────────────────────────────── */
-.epreuve-card__body {
-  flex: 1;
-}
-
-.epreuve-card__title {
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin: 0 0 0.375rem;
-}
-
-.epreuve-card__desc {
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-  line-height: 1.6;
-  margin: 0 0 0.875rem;
-}
-
-.epreuve-card__meta {
-  display: flex;
-  gap: 1rem;
-  font-size: 0.8125rem;
-  color: var(--text-tertiary);
-}
-
-.epreuve-card__meta i {
-  margin-right: 0.25rem;
-  font-size: 0.75rem;
-}
-
-/* ── Footer ────────────────────────────────────────────────── */
-.epreuve-card__footer {
-  padding-top: 0.875rem;
-  border-top: 1px solid var(--border-color);
-}
-
-.epreuve-card__cta {
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--color-primary-600);
-  transition: gap 0.2s ease;
-}
-
-.epreuve-card:hover .epreuve-card__cta {
-  gap: 0.625rem;
-}
-
-.epreuve-card__cta i {
-  font-size: 0.75rem;
-}
-
-/* ── Responsive ────────────────────────────────────────────── */
-@media (max-width: 1024px) {
-  .epreuves__grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 480px) {
-  .epreuves__grid {
-    grid-template-columns: 1fr;
-  }
-}
-</style>

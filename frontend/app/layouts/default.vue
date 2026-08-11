@@ -1,6 +1,5 @@
 <template>
   <div class="layout">
-    <LandingTopBar />
     <LandingNavBar />
     <main class="layout__main">
       <slot />
