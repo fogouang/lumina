@@ -3,141 +3,209 @@
     <h1 class="account-page-title">Programme de parrainage</h1>
     <ReferralIntro />
 
-    <div v-if="store.loading" class="parrainage-loading">
-      <ProgressSpinner style="width: 42px; height: 42px" />
+    <!-- Chargement -->
+    <div v-if="store.loading" class="space-y-4">
+      <div class="h-40 animate-pulse rounded-card bg-card" />
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div class="h-28 animate-pulse rounded-card bg-card" />
+        <div class="h-28 animate-pulse rounded-card bg-card" />
+      </div>
     </div>
 
+    <!-- Erreur -->
     <div v-else-if="store.error" class="account-section">
       <Message severity="error" :closable="false">{{ store.error }}</Message>
     </div>
 
-    <template v-else-if="store.dashboard">
+    <div v-else-if="store.dashboard" class="space-y-6">
       <!-- Lien de parrainage -->
-      <div class="account-section parrainage-link-section">
+      <section class="account-section">
         <h2 class="account-section__title">Votre lien de parrainage</h2>
-        <div class="parrainage-link-row">
-          <input
-            :value="store.referralLink"
-            readonly
-            class="parrainage-link-input"
-          />
-          <Button
-            :label="copied ? 'Copié' : 'Copier'"
-            :icon="copied ? 'pi pi-check' : 'pi pi-copy'"
-            :severity="copied ? 'success' : 'secondary'"
+
+        <div class="flex flex-col gap-2.5 sm:flex-row">
+          <div class="relative min-w-0 flex-1">
+            <i class="pi pi-link pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-faint" />
+            <input
+              :value="store.referralLink"
+              readonly
+              aria-label="Votre lien de parrainage"
+              class="w-full truncate rounded-xl border border-line bg-card-2 py-2.5 pl-10 pr-3 font-mono text-sm text-ink outline-none focus:border-primary"
+              @focus="($event.target as HTMLInputElement).select()"
+            />
+          </div>
+          <button
+            type="button"
+            class="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors"
+            :class="
+              copied
+                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300'
+                : 'border border-line bg-card text-ink hover:border-primary/40 hover:text-primary'
+            "
             @click="copyLink"
-          />
+          >
+            <i :class="copied ? 'pi pi-check' : 'pi pi-copy'" />
+            {{ copied ? "Copié" : "Copier" }}
+          </button>
         </div>
-        <a
-          :href="whatsappShareUrl"
+
+        
+        <a  :href="whatsappShareUrl"
           target="_blank"
           rel="noopener"
-          class="parrainage-whatsapp-btn"
+          class="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#25D366] px-4 py-2.5 text-sm font-bold text-white shadow-soft transition-all duration-300 ease-spring hover:-translate-y-0.5 hover:bg-[#1ebe5a] hover:shadow-lift sm:w-auto"
         >
           <i class="pi pi-whatsapp" />
           Partager sur WhatsApp
         </a>
-      </div>
+      </section>
 
       <!-- Stats -->
-      <div class="parrainage-stats-grid">
-        <div class="account-section parrainage-stat">
-          <p class="parrainage-stat__label">Personnes parrainées</p>
-          <p class="parrainage-stat__value">{{ store.referredCount }}</p>
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div class="flex items-center gap-4 rounded-card border border-line bg-card p-5 shadow-soft">
+          <span class="grid size-12 shrink-0 place-items-center rounded-leaf bg-primary/10 text-primary">
+            <i class="pi pi-users text-lg" />
+          </span>
+          <div class="min-w-0">
+            <p class="text-xs font-semibold uppercase tracking-wider text-faint">Personnes parrainées</p>
+            <p class="font-heading text-3xl font-extrabold tabular-nums text-ink">{{ store.referredCount }}</p>
+          </div>
         </div>
-        <div class="account-section parrainage-stat">
-          <p class="parrainage-stat__label">Gains cumulés</p>
-          <p class="parrainage-stat__value parrainage-stat__value--money">
-            {{ store.totalEarnings }} FCFA
-          </p>
+
+        <div class="flex items-center gap-4 rounded-card border border-line bg-card p-5 shadow-soft">
+          <span class="grid size-12 shrink-0 place-items-center rounded-leaf bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">
+            <i class="pi pi-wallet text-lg" />
+          </span>
+          <div class="min-w-0">
+            <p class="text-xs font-semibold uppercase tracking-wider text-faint">Gains cumulés</p>
+            <p class="font-heading text-3xl font-extrabold tabular-nums text-emerald-600 dark:text-emerald-400">
+              {{ Number(store.totalEarnings).toLocaleString("fr-FR") }}
+              <span class="text-base font-bold text-muted">FCFA</span>
+            </p>
+          </div>
         </div>
       </div>
 
       <!-- Filleuls -->
-      <div class="account-section">
+      <section class="account-section">
         <h2 class="account-section__title">Vos filleuls</h2>
 
-        <div v-if="!store.referredUsers.length" class="parrainage-empty">
-          <i class="pi pi-users" />
-          <p>Aucun filleul pour l'instant.</p>
+        <div
+          v-if="!store.referredUsers.length"
+          class="flex flex-col items-center rounded-2xl border border-dashed border-line bg-card-2/40 px-6 py-10 text-center"
+        >
+          <span class="mb-3 grid size-14 place-items-center rounded-leaf bg-card-2 text-faint">
+            <i class="pi pi-users text-2xl" />
+          </span>
+          <p class="text-sm font-medium text-muted">Aucun filleul pour l'instant.</p>
         </div>
 
-        <div v-else class="parrainage-referral-list">
-          <div
+        <ul v-else class="divide-y divide-line">
+          <li
             v-for="ru in store.referredUsers"
             :key="ru.user_id"
-            class="parrainage-referral-row"
+            class="flex flex-col gap-3 py-3.5 first:pt-0 last:pb-0 sm:flex-row sm:items-center"
           >
-            <div
-              class="parrainage-referral-avatar"
-              :class="{ 'parrainage-referral-avatar--paid': ru.has_paid }"
-            >
-              {{ ru.name.charAt(0).toUpperCase() }}
+            <div class="flex min-w-0 flex-1 items-center gap-3">
+              <span
+                class="grid size-10 shrink-0 place-items-center rounded-leaf font-heading text-sm font-bold"
+                :class="
+                  ru.has_paid
+                    ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300'
+                    : 'bg-card-2 text-muted'
+                "
+              >
+                {{ ru.name.charAt(0).toUpperCase() }}
+              </span>
+              <div class="min-w-0">
+                <p class="truncate text-sm font-semibold text-ink">{{ ru.name }}</p>
+                <p class="text-xs text-muted">{{ formatDate(ru.joined_at) }}</p>
+              </div>
             </div>
-            <div class="parrainage-referral-info">
-              <p class="parrainage-referral-name">{{ ru.name }}</p>
-              <p class="parrainage-referral-date">
-                {{ formatDate(ru.joined_at) }}
-              </p>
-            </div>
-            <div class="parrainage-referral-right">
-              <Tag
-                :value="ru.has_paid ? 'Payé' : 'Pas encore payé'"
-                :severity="ru.has_paid ? 'success' : 'warning'"
-              />
-              <p v-if="ru.has_paid" class="parrainage-referral-earned">
-                +{{ ru.total_earned_from_this_user }} FCFA
-              </p>
-              <Button
+
+            <div class="flex flex-wrap items-center gap-2.5 pl-13 sm:justify-end sm:pl-0">
+              <span
+                class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold"
+                :class="
+                  ru.has_paid
+                    ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300'
+                    : 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300'
+                "
+              >
+                <span class="size-1.5 rounded-full" :class="ru.has_paid ? 'bg-emerald-500' : 'bg-amber-500'" />
+                {{ ru.has_paid ? "Payé" : "Pas encore payé" }}
+              </span>
+
+              <span
+                v-if="ru.has_paid"
+                class="font-heading text-sm font-bold tabular-nums text-emerald-600 dark:text-emerald-400"
+              >
+                +{{ Number(ru.total_earned_from_this_user).toLocaleString("fr-FR") }} FCFA
+              </span>
+              <AppButton
                 v-else
                 label="Activer abonnement"
                 icon="pi pi-check-circle"
+                variant="secondary"
                 size="small"
-                severity="secondary"
                 @click="openActivateDialog(ru)"
               />
             </div>
-          </div>
-        </div>
-      </div>
-    </template>
+          </li>
+        </ul>
+      </section>
+    </div>
 
     <!-- Dialog activation -->
     <Dialog
       v-model:visible="activateDialogOpen"
-      :header="`Activer un abonnement pour ${selectedReferral?.name ?? ''}`"
-      :modal="true"
-      :style="{ width: '90vw', maxWidth: '440px' }"
+      modal
+      :draggable="false"
+      :style="{ width: '28rem' }"
+      :breakpoints="{ '640px': '94vw' }"
+      :pt="{ mask: { class: 'backdrop-blur-sm' } }"
     >
-      <div class="parrainage-dialog-body">
-        <div class="auth-form__field">
-          <label class="auth-form__label">Plan</label>
+      <template #header>
+        <div class="flex items-center gap-3">
+          <span class="grid size-10 place-items-center rounded-xl bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400">
+            <i class="pi pi-check-circle" />
+          </span>
+          <div class="min-w-0">
+            <h3 class="font-heading text-lg font-bold leading-tight text-ink">Activer un abonnement</h3>
+            <p class="truncate text-sm text-muted">{{ selectedReferral?.name ?? "" }}</p>
+          </div>
+        </div>
+      </template>
+
+      <div class="flex flex-col gap-4 pt-1">
+        <div class="flex flex-col gap-1.5">
+          <label for="referral-plan" class="text-sm font-semibold text-ink">Plan</label>
           <Select
             v-model="selectedPlanId"
+            input-id="referral-plan"
             :options="planOptions"
-            optionLabel="label"
-            optionValue="value"
+            option-label="label"
+            option-value="value"
             placeholder="Choisir un plan"
-            class="w-full"
+            fluid
           />
         </div>
-        <div class="auth-form__field">
-          <label class="auth-form__label">Code promo (optionnel)</label>
-          <InputText
-            v-model="promoCode"
-            placeholder="Ex: PARTNER10"
-            class="w-full"
-          />
+        <div class="flex flex-col gap-1.5">
+          <label for="referral-promo" class="text-sm font-semibold text-ink">
+            Code promo <span class="font-normal text-faint">(optionnel)</span>
+          </label>
+          <InputText id="referral-promo" v-model="promoCode" placeholder="Ex : PARTNER10" fluid />
         </div>
         <Message v-if="store.activateError" severity="error" :closable="false">
           {{ store.activateError }}
         </Message>
       </div>
+
       <template #footer>
-        <Button label="Annuler" text @click="activateDialogOpen = false" />
-        <Button
+        <AppButton label="Annuler" variant="ghost" @click="activateDialogOpen = false" />
+        <AppButton
           label="Confirmer"
           icon="pi pi-check"
+          variant="gradient"
           :loading="store.activating"
           :disabled="!selectedPlanId"
           @click="handleActivate"

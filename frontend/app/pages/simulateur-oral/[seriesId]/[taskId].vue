@@ -3,7 +3,6 @@ import type { ExpressionTaskResponse } from "#shared/api/models/ExpressionTaskRe
 import type { SuccessResponse_list_ExpressionTaskResponse__ } from "#shared/api/models/SuccessResponse_list_ExpressionTaskResponse__";
 definePageMeta({ layout: "account", middleware: "auth" });
 
-
 const route = useRoute();
 const seriesId = route.params.seriesId as string;
 const taskId = route.params.taskId as string;
@@ -19,10 +18,20 @@ const task = ref<ExpressionTaskResponse | null>(null);
 // cours (le chrono officiel ne démarre qu'après timer_start) | ended: session
 // terminée, correction en cours | graded: résultat reçu | error: connexion
 // perdue ou correction échouée
-type Phase = "idle" | "connecting" | "intro" | "prep" | "live" | "ended" | "graded" | "error";
+type Phase =
+  | "idle"
+  | "connecting"
+  | "intro"
+  | "prep"
+  | "live"
+  | "ended"
+  | "graded"
+  | "error";
 const phase = ref<Phase>("idle");
 
-const transcript = ref<{ speaker: "candidat" | "examinateur"; text: string }[]>([]);
+const transcript = ref<{ speaker: "candidat" | "examinateur"; text: string }[]>(
+  [],
+);
 const micError = ref<string | null>(null);
 const wsError = ref<string | null>(null);
 
@@ -89,7 +98,9 @@ onMounted(async () => {
     const res = await get<SuccessResponse_list_ExpressionTaskResponse__>(
       `/v1/expression-tasks/series/${seriesId}`,
     );
-    const found = (res.data ?? []).find((t) => t.id === taskId && t.type === "oral");
+    const found = (res.data ?? []).find(
+      (t) => t.id === taskId && t.type === "oral",
+    );
     if (!found) {
       taskError.value = "Ce sujet est introuvable.";
       return;
@@ -134,7 +145,8 @@ function connectWebSocket(): void {
 
     switch (data.type) {
       case "session_ready":
-        preparationTimeSeconds.value = (data.preparation_time_seconds as number) ?? 0;
+        preparationTimeSeconds.value =
+          (data.preparation_time_seconds as number) ?? 0;
         recordingTimeSeconds.value = data.recording_time_seconds as number;
         if (preparationTimeSeconds.value > 0) {
           phase.value = "intro"; // l'IA va lire la mise en situation
@@ -146,7 +158,8 @@ function connectWebSocket(): void {
 
       case "transcript_update":
         transcript.value.push({
-          speaker: (data.speaker as "candidat" | "examinateur") ?? "examinateur",
+          speaker:
+            (data.speaker as "candidat" | "examinateur") ?? "examinateur",
           text: data.text as string,
         });
         break;
@@ -196,7 +209,9 @@ function connectWebSocket(): void {
   ws.onclose = () => {
     stopStreamingMic();
     stopPlaybackAudio();
-    const stillActive = ["connecting", "intro", "prep", "live"].includes(phase.value);
+    const stillActive = ["connecting", "intro", "prep", "live"].includes(
+      phase.value,
+    );
     if (stillActive) {
       wsError.value = "La connexion à l'examinateur virtuel a été interrompue.";
       phase.value = "error";
@@ -233,7 +248,12 @@ function sendControlMessage(payload: Record<string, unknown>): void {
 }
 
 function confirmLeave(): void {
-  if (phase.value === "live" && !window.confirm("Quitter maintenant abandonnera cette tentative. Continuer ?")) {
+  if (
+    phase.value === "live" &&
+    !window.confirm(
+      "Quitter maintenant abandonnera cette tentative. Continuer ?",
+    )
+  ) {
     return;
   }
   sendControlMessage({ type: "abandon_session" });
@@ -261,7 +281,8 @@ async function startStreamingMic(): Promise<void> {
   // à remplacer par un AudioWorkletProcessor dédié si la latence devient sensible.
   processor = audioContext.createScriptProcessor(4096, 1, 1);
   processor.onaudioprocess = (e) => {
-    if (phase.value !== "live" || !ws || ws.readyState !== WebSocket.OPEN) return;
+    if (phase.value !== "live" || !ws || ws.readyState !== WebSocket.OPEN)
+      return;
     const input = e.inputBuffer.getChannelData(0);
     const pcm16 = new Int16Array(input.length);
     for (let i = 0; i < input.length; i++) {
@@ -295,7 +316,9 @@ let nextPlayTime = 0;
 
 function ensurePlaybackContext(): AudioContext {
   if (!playbackContext) {
-    playbackContext = new AudioContext({ sampleRate: GEMINI_OUTPUT_SAMPLE_RATE });
+    playbackContext = new AudioContext({
+      sampleRate: GEMINI_OUTPUT_SAMPLE_RATE,
+    });
     nextPlayTime = playbackContext.currentTime;
   }
   if (playbackContext.state === "suspended") {
@@ -347,137 +370,274 @@ onBeforeUnmount(() => {
 
 <template>
   <div
-    class="min-h-screen flex flex-col transition-colors duration-500"
-    :class="isCallTheme
-      ? 'bg-[radial-gradient(ellipse_at_50%_-10%,#10534a_0%,#0b2b26_50%,#061412_100%)] text-white'
-      : 'bg-slate-50 text-gray-900'"
+    class="flex min-h-screen flex-col transition-colors duration-500"
+    :class="
+      isCallTheme
+        ? 'bg-[radial-gradient(ellipse_at_50%_-10%,var(--p-primary-700)_0%,var(--p-primary-900)_50%,var(--p-primary-950)_100%)] text-white'
+        : 'bg-canvas text-ink'
+    "
   >
-    <div v-if="loadingTask" class="flex-1 flex items-center justify-center">
-      <ProgressSpinner style="width: 40px; height: 40px" />
+    <!-- Chargement -->
+    <div v-if="loadingTask" class="flex flex-1 items-center justify-center">
+      <span
+        class="grid size-14 place-items-center rounded-leaf brand-gradient text-white shadow-brand"
+      >
+        <i class="pi pi-spin pi-spinner text-xl" />
+      </span>
     </div>
-    <div v-else-if="taskError" class="flex-1 flex items-center justify-center px-6 text-center">
-      <Message severity="error">{{ taskError }}</Message>
+
+    <!-- Erreur de chargement -->
+    <div
+      v-else-if="taskError"
+      class="flex flex-1 items-center justify-center px-6"
+    >
+      <div
+        class="flex max-w-md items-start gap-3 rounded-card border border-red-200 bg-red-50 p-5 dark:border-red-500/25 dark:bg-red-500/10"
+      >
+        <i class="pi pi-times-circle mt-0.5 text-red-600 dark:text-red-400" />
+        <p class="text-sm font-medium text-red-700 dark:text-red-300">
+          {{ taskError }}
+        </p>
+      </div>
     </div>
 
     <template v-else-if="task">
-      <!-- Barre d'appel sticky -->
+      <!-- Barre d'appel -->
       <div
-        class="shrink-0 backdrop-blur border-b px-4 py-3 flex items-center gap-3"
-        :class="isCallTheme ? 'bg-white/5 border-white/10' : 'bg-white/95 border-gray-200'"
+        class="flex shrink-0 items-center gap-3 border-b px-4 py-3 backdrop-blur-md"
+        :class="
+          isCallTheme ? 'border-white/10 bg-white/5' : 'border-line bg-card/90'
+        "
       >
-        <Button icon="pi pi-arrow-left" text rounded :class="isCallTheme ? 'text-white!' : ''" @click="confirmLeave" />
-        <div class="flex items-center gap-2.5 min-w-0 flex-1">
+        <button
+          type="button"
+          aria-label="Quitter la simulation"
+          class="grid size-9 shrink-0 place-items-center rounded-xl transition-colors"
+          :class="
+            isCallTheme
+              ? 'text-white/80 hover:bg-white/10 hover:text-white'
+              : 'text-muted hover:bg-card-2 hover:text-primary'
+          "
+          @click="confirmLeave"
+        >
+          <i class="pi pi-arrow-left text-sm" />
+        </button>
+        <div class="flex min-w-0 flex-1 items-center gap-2.5">
           <span
-            class="w-2 h-2 rounded-full shrink-0"
-            :class="phase === 'live' ? 'bg-red-500 animate-pulse' : 'bg-gray-400'"
+            class="size-2 shrink-0 rounded-full"
+            :class="
+              phase === 'live'
+                ? 'animate-pulse bg-red-500 shadow-[0_0_0_4px_rgb(239_68_68/0.25)]'
+                : 'bg-white/30'
+            "
           />
-          <h1 class="text-sm font-semibold truncate" :class="isCallTheme ? 'text-white/90' : 'text-gray-800'">
+          <h1
+            class="truncate font-heading text-sm font-bold"
+            :class="isCallTheme ? 'text-white/90' : 'text-ink'"
+          >
             {{ task.title ?? `Tâche ${task.task_number}` }}
           </h1>
         </div>
         <span
           v-if="['intro', 'prep', 'live'].includes(phase)"
-          class="ml-auto text-xs font-medium shrink-0 rounded-full px-2.5 py-1"
-          :class="isCallTheme ? 'bg-white/10 text-white/70' : 'bg-gray-100 text-gray-400'"
+          class="ml-auto inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold"
+          :class="
+            isCallTheme ? 'bg-white/10 text-white/70' : 'bg-card-2 text-muted'
+          "
         >
+          <i class="pi pi-shield text-[0.65rem]" />
           Mode Examen
         </span>
       </div>
 
       <!-- Connexion -->
-      <div v-if="phase === 'connecting'" class="flex-1 flex items-center justify-center">
+      <div
+        v-if="phase === 'connecting'"
+        class="flex flex-1 items-center justify-center"
+      >
         <div class="flex flex-col items-center gap-5">
-          <div class="relative w-28 h-28 flex items-center justify-center">
-            <span class="absolute inset-0 rounded-full bg-teal-400/10 blur-xl animate-pulse" />
-            <div class="relative w-16 h-16 rounded-full bg-white/10 border border-white/15 backdrop-blur flex items-center justify-center">
-              <ProgressSpinner style="width: 26px; height: 26px" strokeWidth="4" />
-            </div>
+          <div class="relative grid size-28 place-items-center">
+            <span
+              class="absolute inset-0 animate-pulse rounded-full bg-accent-400/15 blur-xl"
+            />
+            <span
+              class="relative grid size-16 place-items-center rounded-full border border-white/15 bg-white/10 backdrop-blur"
+            >
+              <i class="pi pi-spin pi-spinner text-xl text-accent-300" />
+            </span>
           </div>
-          <p class="text-sm font-medium text-white/60 tracking-wide">Connexion à l'examinateur virtuel…</p>
+          <p class="text-sm font-medium tracking-wide text-white/60">
+            Connexion à l'examinateur virtuel…
+          </p>
         </div>
       </div>
 
-      <!-- Erreur -->
-      <div v-else-if="phase === 'error'" class="flex-1 flex items-center justify-center">
-        <div class="max-w-lg px-6 text-center space-y-4">
-          <div class="w-14 h-14 mx-auto rounded-full bg-red-500/10 border border-red-400/20 flex items-center justify-center">
-            <i class="pi pi-exclamation-circle text-red-300 text-2xl" />
-          </div>
-          <p class="text-red-200 font-medium">{{ wsError ?? "Une erreur est survenue pendant la session." }}</p>
-          <Button label="Retour aux sujets" outlined class="border-white/25! text-white!" @click="goToList" />
+      <!-- Erreur de session -->
+      <div
+        v-else-if="phase === 'error'"
+        class="flex flex-1 items-center justify-center"
+      >
+        <div class="max-w-lg space-y-4 px-6 text-center">
+          <span
+            class="mx-auto grid size-14 place-items-center rounded-full border border-red-400/25 bg-red-500/10"
+          >
+            <i class="pi pi-exclamation-circle text-2xl text-red-300" />
+          </span>
+          <p class="font-medium text-red-200">
+            {{ wsError ?? "Une erreur est survenue pendant la session." }}
+          </p>
+          <button
+            type="button"
+            class="inline-flex items-center gap-2 rounded-xl border border-white/25 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-white/10"
+            @click="goToList"
+          >
+            <i class="pi pi-arrow-left text-xs" />
+            Retour aux sujets
+          </button>
         </div>
       </div>
 
       <!-- Intro / Prep / Live : interface d'appel -->
-      <div v-else-if="['intro', 'prep', 'live'].includes(phase)" class="flex-1 overflow-y-auto">
-        <div class="max-w-2xl mx-auto w-full px-4 py-8 space-y-6">
-          <!-- Portraits examinateur / candidat -->
-          <div v-if="phase !== 'prep'" class="flex items-center justify-center gap-6 sm:gap-10 pb-2">
+      <div
+        v-else-if="['intro', 'prep', 'live'].includes(phase)"
+        class="flex-1 overflow-y-auto"
+      >
+        <div class="mx-auto w-full max-w-2xl space-y-6 px-4 py-8">
+          <!-- Portraits -->
+          <div
+            v-if="phase !== 'prep'"
+            class="flex items-center justify-center gap-8 pb-2 sm:gap-14"
+          >
+            <!-- Examinateur -->
             <div
               class="flex flex-col items-center gap-2 transition-opacity duration-300"
-              :class="micState === 'student_turn' ? 'opacity-40' : 'opacity-100'"
+              :class="
+                micState === 'student_turn' ? 'opacity-40' : 'opacity-100'
+              "
             >
-              <div class="relative w-24 h-24 sm:w-28 sm:h-28 flex items-center justify-center">
+              <div class="relative grid size-24 place-items-center sm:size-28">
                 <span
-                  class="absolute inset-0 rounded-full bg-teal-400/40 blur-md transition-opacity duration-300"
-                  :class="micState === 'agent_speaking' ? 'opacity-100 animate-pulse' : 'opacity-0'"
+                  class="absolute inset-0 rounded-full bg-accent-400/35 blur-md transition-opacity duration-300"
+                  :class="
+                    micState === 'agent_speaking'
+                      ? 'animate-pulse opacity-100'
+                      : 'opacity-0'
+                  "
                 />
                 <span
                   class="absolute inset-0 rounded-full border-2 transition-colors duration-300"
-                  :class="micState === 'agent_speaking' ? 'border-teal-300/70' : 'border-white/10'"
+                  :class="
+                    micState === 'agent_speaking'
+                      ? 'border-accent-300/80'
+                      : 'border-white/10'
+                  "
                 />
-                <div class="relative w-[88%] h-[88%] rounded-full bg-linear-to-b from-[#173a35] to-[#0c211d] flex items-center justify-center">
-                  <i class="pi pi-user text-3xl text-white/70" />
-                </div>
+                <span
+                  class="relative grid size-[88%] place-items-center rounded-full bg-linear-to-b from-primary-700 to-primary-900 shadow-[inset_0_2px_0_rgb(255_255_255/0.1)]"
+                >
+                  <i class="pi pi-user text-3xl text-white/75" />
+                </span>
               </div>
-              <p class="text-xs font-medium text-white/60 tracking-wide">Examinateur</p>
+              <p class="text-xs font-semibold tracking-wide text-white/60">
+                Examinateur
+              </p>
             </div>
 
+            <!-- Candidat -->
             <div
               class="flex flex-col items-center gap-2 transition-opacity duration-300"
-              :class="micState === 'agent_speaking' ? 'opacity-40' : 'opacity-100'"
+              :class="
+                micState === 'agent_speaking' ? 'opacity-40' : 'opacity-100'
+              "
             >
-              <div class="relative w-24 h-24 sm:w-28 sm:h-28 flex items-center justify-center">
+              <div class="relative grid size-24 place-items-center sm:size-28">
                 <span
                   class="absolute inset-0 rounded-full bg-emerald-300/35 blur-md transition-opacity duration-300"
-                  :class="micState === 'student_turn' ? 'opacity-100 animate-pulse' : 'opacity-0'"
+                  :class="
+                    micState === 'student_turn'
+                      ? 'animate-pulse opacity-100'
+                      : 'opacity-0'
+                  "
                 />
                 <span
                   class="absolute inset-0 rounded-full border-2 transition-colors duration-300"
-                  :class="micState === 'student_turn' ? 'border-emerald-300/70' : 'border-white/10'"
+                  :class="
+                    micState === 'student_turn'
+                      ? 'border-emerald-300/80'
+                      : 'border-white/10'
+                  "
                 />
-                <div class="relative w-[88%] h-[88%] rounded-full bg-linear-to-b from-[#173a35] to-[#0c211d] flex items-center justify-center">
-                  <i class="pi pi-microphone text-3xl text-white/70" />
-                </div>
+                <span
+                  class="relative grid size-[88%] place-items-center rounded-full bg-linear-to-b from-primary-700 to-primary-900 shadow-[inset_0_2px_0_rgb(255_255_255/0.1)]"
+                >
+                  <i class="pi pi-microphone text-3xl text-white/75" />
+                </span>
               </div>
-              <p class="text-xs font-medium text-white/60 tracking-wide">Vous</p>
+              <p class="text-xs font-semibold tracking-wide text-white/60">
+                Vous
+              </p>
             </div>
           </div>
-          <p v-if="phase !== 'prep'" class="text-center text-xs text-white/40 uppercase tracking-widest -mt-3">
+          <p
+            v-if="phase !== 'prep'"
+            class="-mt-3 text-center text-xs uppercase tracking-widest text-white/45"
+          >
             {{ micLabel }}
           </p>
 
-          <!-- Chrono officiel : n'apparaît qu'après timer_start -->
-          <div v-if="phase === 'live' && timerStarted" class="flex items-center justify-center gap-3">
-            <ExamTimer :total-seconds="recordingTimeSeconds" @expired="onLiveExpired" />
-            <Button label="Terminer" severity="secondary" outlined class="border-white/25! text-white!" @click="endSessionNow" />
+          <!-- Chrono officiel -->
+          <div
+            v-if="phase === 'live' && timerStarted"
+            class="flex items-center justify-center gap-3"
+          >
+            <ExamTimer
+              :total-seconds="recordingTimeSeconds"
+              @expired="onLiveExpired"
+            />
+            <button
+              type="button"
+              class="inline-flex items-center gap-2 rounded-xl border border-white/25 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-white/10"
+              @click="endSessionNow"
+            >
+              <i class="pi pi-stop-circle text-xs" />
+              Terminer
+            </button>
           </div>
-          <p v-else-if="phase === 'live'" class="text-center text-xs text-white/40">
+          <p
+            v-else-if="phase === 'live'"
+            class="text-center text-xs text-white/45"
+          >
             Le chronomètre démarre après la présentation de l'examinateur…
           </p>
 
-          <!-- Pause de préparation -->
-          <div v-if="phase === 'prep'" class="flex flex-col items-center gap-4 py-6">
-            <ExamTimer :total-seconds="preparationTimeSeconds" @expired="onPrepExpired" />
-            <span class="inline-flex items-center gap-2 text-xs font-semibold px-3 py-1 rounded-full bg-white/10 text-white/70 border border-white/10">
-              <i class="pi pi-pause-circle" /> Pause — pas d'enregistrement
+          <!-- Préparation -->
+          <div
+            v-if="phase === 'prep'"
+            class="flex flex-col items-center gap-4 py-6"
+          >
+            <ExamTimer
+              :total-seconds="preparationTimeSeconds"
+              @expired="onPrepExpired"
+            />
+            <span
+              class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-semibold text-white/75"
+            >
+              <i class="pi pi-pause-circle" /> Pause · pas d'enregistrement
             </span>
-            <p class="text-sm text-white/60 text-center max-w-md">
-              Préparez-vous en silence. L'échange démarrera automatiquement à la fin du minuteur.
+            <p class="max-w-md text-center text-sm text-white/60">
+              Préparez-vous en silence. L'échange démarrera automatiquement à la
+              fin du minuteur.
             </p>
           </div>
 
-          <Message v-if="micError" severity="warn">{{ micError }}</Message>
+          <!-- Erreur micro -->
+          <div
+            v-if="micError"
+            class="flex items-start gap-2.5 rounded-2xl border border-accent-400/30 bg-accent-400/10 p-3.5 text-sm text-accent-100"
+          >
+            <i class="pi pi-exclamation-triangle mt-0.5 text-accent-300" />
+            {{ micError }}
+          </div>
 
           <!-- Fil de discussion -->
           <div class="space-y-3 py-2">
@@ -485,19 +645,34 @@ onBeforeUnmount(() => {
               v-for="(line, i) in groupedTranscript"
               :key="i"
               class="flex items-end gap-2"
-              :class="line.speaker === 'candidat' ? 'flex-row-reverse' : 'flex-row'"
+              :class="
+                line.speaker === 'candidat' ? 'flex-row-reverse' : 'flex-row'
+              "
             >
-              <div
-                class="w-7 h-7 rounded-full flex items-center justify-center shrink-0 border"
-                :class="line.speaker === 'candidat' ? 'border-emerald-300/30 bg-emerald-900/30' : 'border-white/15 bg-white/5'"
+              <span
+                class="grid size-7 shrink-0 place-items-center rounded-full border"
+                :class="
+                  line.speaker === 'candidat'
+                    ? 'border-emerald-300/30 bg-emerald-500/15'
+                    : 'border-white/15 bg-white/5'
+                "
               >
-                <i :class="line.speaker === 'candidat' ? 'pi pi-microphone' : 'pi pi-user'" class="text-xs text-white/70" />
-              </div>
+                <i
+                  :class="
+                    line.speaker === 'candidat'
+                      ? 'pi pi-microphone'
+                      : 'pi pi-user'
+                  "
+                  class="text-xs text-white/75"
+                />
+              </span>
               <div
                 class="max-w-[75%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed"
-                :class="line.speaker === 'candidat'
-                  ? 'bg-linear-to-br from-[#eafaf5] to-[#d3f1e8] text-[#0b2420] rounded-br-sm shadow-md shadow-black/20'
-                  : 'bg-white/10 border border-white/10 backdrop-blur text-white/85 rounded-bl-sm'"
+                :class="
+                  line.speaker === 'candidat'
+                    ? 'rounded-br-sm bg-white text-primary-950 shadow-md shadow-black/25'
+                    : 'rounded-bl-sm border border-white/10 bg-white/10 text-white/85 backdrop-blur'
+                "
               >
                 {{ line.text }}
               </div>
@@ -507,110 +682,185 @@ onBeforeUnmount(() => {
       </div>
 
       <!-- Correction en cours -->
-      <div v-else-if="phase === 'ended'" class="flex-1 flex flex-col items-center justify-center gap-4">
+      <div
+        v-else-if="phase === 'ended'"
+        class="flex flex-1 flex-col items-center justify-center gap-4"
+      >
         <div class="flex items-center gap-2.5">
-          <div class="w-8 h-8 rounded-full flex items-center justify-center border border-white/15 bg-white/5">
-            <i class="pi pi-user text-xs text-white/70" />
-          </div>
-          <div class="bg-white/8 border border-white/10 backdrop-blur rounded-2xl rounded-bl-sm px-4 py-3 flex items-center gap-1.5">
-            <span class="typing-dot" />
-            <span class="typing-dot" style="animation-delay: 0.15s" />
-            <span class="typing-dot" style="animation-delay: 0.3s" />
+          <span
+            class="grid size-8 place-items-center rounded-full border border-white/15 bg-white/5"
+          >
+            <i class="pi pi-user text-xs text-white/75" />
+          </span>
+          <div
+            class="flex items-center gap-1.5 rounded-2xl rounded-bl-sm border border-white/10 bg-white/10 px-4 py-3.5 backdrop-blur"
+          >
+            <span class="size-2 animate-bounce rounded-full bg-white/70" />
+            <span
+              class="size-2 animate-bounce rounded-full bg-white/70 [animation-delay:0.15s]"
+            />
+            <span
+              class="size-2 animate-bounce rounded-full bg-white/70 [animation-delay:0.3s]"
+            />
           </div>
         </div>
-        <p class="text-sm font-medium text-teal-300/80">Correction en cours…</p>
+        <p class="text-sm font-medium text-accent-300">Correction en cours…</p>
       </div>
 
       <!-- Résultat -->
-      <div v-else-if="phase === 'graded' && gradingResult" class="flex-1 overflow-y-auto">
-        <div class="max-w-2xl mx-auto px-4 py-8 space-y-5">
-          <div class="rounded-2xl overflow-hidden shadow-sm" :class="gradingResult.capped ? 'bg-orange-500' : 'bg-green-600'">
-            <div class="px-6 pt-6 pb-4 flex items-start justify-between gap-4">
+      <div
+        v-else-if="phase === 'graded' && gradingResult"
+        class="flex-1 overflow-y-auto"
+      >
+        <div class="mx-auto max-w-2xl space-y-5 px-4 py-8">
+          <!-- Score -->
+          <div
+            class="relative overflow-hidden rounded-card text-white shadow-brand"
+            :class="
+              gradingResult.capped
+                ? 'bg-linear-to-br from-amber-500 to-orange-600'
+                : 'featured-panel'
+            "
+          >
+            <div
+              class="relative z-10 flex items-start justify-between gap-4 px-6 pb-5 pt-6"
+            >
               <div>
-                <p class="text-xs text-white/70 font-semibold uppercase tracking-widest mb-1">
+                <p
+                  class="mb-1 text-xs font-semibold uppercase tracking-widest text-white/70"
+                >
                   TCF Canada · Tâche {{ gradingResult.task_number }}
                 </p>
-                <h1 class="text-2xl font-bold text-white">
+                <h2 class="font-heading text-2xl font-extrabold">
                   {{ gradingResult.capped ? "Plafonné" : "Épreuve terminée" }}
-                </h1>
+                </h2>
               </div>
-              <div class="text-white text-right shrink-0">
-                <p class="text-2xl font-bold leading-none">{{ gradingResult.total_score }}/20</p>
-              </div>
+              <p
+                class="shrink-0 font-heading text-4xl font-extrabold leading-none tabular-nums"
+              >
+                {{ gradingResult.total_score
+                }}<span class="text-lg opacity-60">/20</span>
+              </p>
             </div>
-            <div v-if="gradingResult.capped" class="px-6 py-4 bg-black/10 border-t border-white/10">
-              <p class="text-sm text-white/90">{{ gradingResult.cap_reason }}</p>
+            <div
+              v-if="gradingResult.capped"
+              class="relative z-10 border-t border-white/15 bg-black/10 px-6 py-4"
+            >
+              <p class="flex items-start gap-2 text-sm text-white/90">
+                <i class="pi pi-info-circle mt-0.5 shrink-0" />
+                {{ gradingResult.cap_reason }}
+              </p>
             </div>
           </div>
 
-          <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
-            <div class="px-5 py-4 border-b border-gray-100">
-              <h2 class="font-semibold text-gray-800 text-sm">Détail par critère</h2>
-            </div>
-            <div class="divide-y divide-gray-100">
-              <div v-for="c in gradingResult.criteria" :key="c.name" class="px-5 py-4">
-                <div class="flex items-center justify-between mb-1">
-                  <span class="text-sm font-medium text-gray-700">{{ c.name }}</span>
-                  <span class="text-xs text-gray-400">{{ c.score }}/4</span>
+          <!-- Critères -->
+          <section
+            class="overflow-hidden rounded-card border border-line bg-card shadow-soft"
+          >
+            <h3
+              class="flex items-center gap-2 border-b border-line px-5 py-4 font-heading text-sm font-bold text-ink"
+            >
+              <i class="pi pi-chart-bar text-primary" /> Détail par critère
+            </h3>
+            <div class="divide-y divide-line">
+              <div
+                v-for="c in gradingResult.criteria"
+                :key="c.name"
+                class="px-5 py-4"
+              >
+                <div class="mb-1.5 flex items-center justify-between gap-3">
+                  <span class="text-sm font-semibold text-ink">{{
+                    c.name
+                  }}</span>
+                  <span
+                    class="font-heading text-sm font-bold tabular-nums text-primary"
+                  >
+                    {{ c.score
+                    }}<span class="text-xs font-semibold text-faint">/4</span>
+                  </span>
                 </div>
-                <p v-if="c.comment" class="text-xs text-gray-500">{{ c.comment }}</p>
+                <div class="mb-2 h-1.5 overflow-hidden rounded-full bg-line">
+                  <div
+                    class="h-full rounded-full bg-linear-to-r from-primary-400 to-primary-700"
+                    :style="{ width: `${Math.min(100, (c.score / 4) * 100)}%` }"
+                  />
+                </div>
+                <p v-if="c.comment" class="text-xs leading-relaxed text-muted">
+                  {{ c.comment }}
+                </p>
               </div>
             </div>
-          </div>
+          </section>
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <!-- Points forts / axes -->
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div v-if="gradingResult.strengths.length">
-              <p class="text-xs font-semibold text-green-700 uppercase tracking-wide mb-2 flex items-center gap-1">
+              <p
+                class="mb-2 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400"
+              >
                 <i class="pi pi-check-circle" /> Points forts
               </p>
               <ul class="space-y-1.5">
-                <li v-for="(s, i) in gradingResult.strengths" :key="i" class="flex items-start gap-2 text-sm text-gray-700 bg-green-50 rounded-lg px-3 py-2">
-                  <i class="pi pi-check text-green-500 mt-0.5 shrink-0 text-xs" />
+                <li
+                  v-for="(s, i) in gradingResult.strengths"
+                  :key="i"
+                  class="flex items-start gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-ink dark:border-emerald-500/20 dark:bg-emerald-500/10"
+                >
+                  <i
+                    class="pi pi-check mt-0.5 shrink-0 text-xs text-emerald-600 dark:text-emerald-400"
+                  />
                   <span>{{ s }}</span>
                 </li>
               </ul>
             </div>
             <div v-if="gradingResult.improvement_areas.length">
-              <p class="text-xs font-semibold text-orange-700 uppercase tracking-wide mb-2 flex items-center gap-1">
+              <p
+                class="mb-2 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400"
+              >
                 <i class="pi pi-exclamation-circle" /> Axes d'amélioration
               </p>
               <ul class="space-y-1.5">
-                <li v-for="(a, i) in gradingResult.improvement_areas" :key="i" class="flex items-start gap-2 text-sm text-gray-700 bg-orange-50 rounded-lg px-3 py-2">
-                  <i class="pi pi-times text-orange-400 mt-0.5 shrink-0 text-xs" />
+                <li
+                  v-for="(a, i) in gradingResult.improvement_areas"
+                  :key="i"
+                  class="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-ink dark:border-amber-500/20 dark:bg-amber-500/10"
+                >
+                  <i
+                    class="pi pi-arrow-up-right mt-0.5 shrink-0 text-xs text-amber-600 dark:text-amber-400"
+                  />
                   <span>{{ a }}</span>
                 </li>
               </ul>
             </div>
           </div>
 
-          <p v-if="gradingResult.summary" class="text-sm text-gray-600 italic">{{ gradingResult.summary }}</p>
+          <!-- Synthèse -->
+          <p
+            v-if="gradingResult.summary"
+            class="rounded-2xl border-l-4 border-primary bg-card-2 px-4 py-3 text-sm italic leading-relaxed text-muted"
+          >
+            {{ gradingResult.summary }}
+          </p>
 
-          <div class="flex gap-3 pb-8">
-            <Button label="Refaire" icon="pi pi-refresh" outlined class="flex-1" @click="redo" />
-            <Button label="Choisir une autre tâche" icon="pi pi-list" class="flex-1" @click="goToList" />
+          <!-- Actions -->
+          <div class="flex flex-col gap-3 pb-8 sm:flex-row">
+            <AppButton
+              label="Refaire"
+              icon="pi pi-refresh"
+              variant="secondary"
+              class="flex-1"
+              @click="redo"
+            />
+            <AppButton
+              label="Choisir une autre tâche"
+              icon="pi pi-list"
+              variant="gradient"
+              class="flex-1"
+              @click="goToList"
+            />
           </div>
         </div>
       </div>
     </template>
   </div>
 </template>
-
-<style scoped>
-.typing-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 9999px;
-  background-color: rgba(255, 255, 255, 0.5);
-  display: inline-block;
-  animation: typing-bounce 1s infinite ease-in-out;
-}
-@keyframes typing-bounce {
-  0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
-  30% { transform: translateY(-4px); opacity: 1; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .typing-dot {
-    animation: none !important;
-  }
-}
-</style>

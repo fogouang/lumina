@@ -1,213 +1,219 @@
 <template>
   <div>
-    <!-- Header -->
-    <div class="flex items-start justify-between mb-6">
+    <!-- En-tête -->
+    <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
       <div>
         <NuxtLink
           :to="`/admin/series/${seriesId}`"
-          class="flex items-center gap-1 text-sm text-(--text-tertiary) hover:text-primary-600 mb-2 transition-colors"
+          class="mb-3 inline-flex items-center gap-1.5 text-sm font-medium text-muted transition-colors hover:text-primary"
         >
           <i class="pi pi-arrow-left text-xs" /> Retour à la série
         </NuxtLink>
-        <h1 class="text-xl font-bold text-(--text-primary)">
-          Gestion des questions
-        </h1>
-        <p class="text-sm text-(--text-tertiary) mt-0.5">
-          Série #{{ seriesId.slice(0, 8) }}...
-        </p>
+        <h1 class="font-heading text-2xl font-extrabold tracking-tight text-ink">Gestion des questions</h1>
+        <p class="mt-0.5 font-mono text-xs text-faint">Série #{{ seriesId.slice(0, 8) }}...</p>
       </div>
-      <div class="flex gap-2 flex-wrap justify-end">
-        <NuxtLink :to="`/admin/series/${seriesId}/questions/import`">
-          <Button
-            label="Importer JSON"
-            icon="pi pi-upload"
-            outlined
-            size="small"
-          />
+      <div class="flex flex-wrap gap-2">
+        <NuxtLink
+          :to="`/admin/series/${seriesId}/questions/import`"
+          class="inline-flex items-center justify-center gap-2 rounded-xl border border-line bg-card px-3.5 py-2 text-sm font-semibold text-ink transition-colors hover:border-primary/40 hover:text-primary"
+        >
+          <i class="pi pi-upload text-xs" />
+          Importer JSON
         </NuxtLink>
-        <Button
+        <AppButton
           label="Nouvelle question"
           icon="pi pi-plus"
+          variant="gradient"
           size="small"
-          class="bg-gradient-primary border-none font-bold"
           @click="openCreate"
         />
       </div>
     </div>
 
     <!-- Stats -->
-    <div class="stats-grid">
+    <div class="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
       <div
-        class="bg-(--bg-card) border border-(--border-color) rounded-xl p-4 text-center"
+        v-for="stat in [
+          { label: 'Total questions', icon: 'pi pi-list', value: questions.length, max: 78 },
+          { label: 'Questions orales', icon: 'pi pi-headphones', value: oralCount, max: 39 },
+          { label: 'Questions écrites', icon: 'pi pi-book', value: writtenCount, max: 39 },
+        ]"
+        :key="stat.label"
+        class="rounded-card border border-line bg-card p-4 shadow-soft"
       >
-        <p class="text-xs text-(--text-tertiary)">Total questions</p>
-        <p class="text-2xl font-bold text-(--text-primary)">
-          {{ questions.length }}/78
-        </p>
-      </div>
-      <div
-        class="bg-(--bg-card) border border-(--border-color) rounded-xl p-4 text-center"
-      >
-        <p class="text-xs text-(--text-tertiary)">Questions orales</p>
-        <p class="text-2xl font-bold text-(--text-primary)">
-          {{ oralCount }}/39
-        </p>
-      </div>
-      <div
-        class="bg-(--bg-card) border border-(--border-color) rounded-xl p-4 text-center"
-      >
-        <p class="text-xs text-(--text-tertiary)">Questions écrites</p>
-        <p class="text-2xl font-bold text-(--text-primary)">
-          {{ writtenCount }}/39
-        </p>
+        <div class="flex items-center gap-3">
+          <span class="grid size-10 shrink-0 place-items-center rounded-leaf bg-primary/10 text-primary">
+            <i :class="stat.icon" />
+          </span>
+          <div class="min-w-0">
+            <p class="truncate text-xs font-semibold uppercase tracking-wider text-faint">{{ stat.label }}</p>
+            <p class="font-heading text-2xl font-extrabold tabular-nums text-ink">
+              {{ stat.value }}<span class="text-base font-semibold text-faint">/{{ stat.max }}</span>
+            </p>
+          </div>
+        </div>
+        <div class="mt-3 h-1.5 overflow-hidden rounded-full bg-line">
+          <div
+            class="h-full rounded-full transition-all duration-500"
+            :class="
+              stat.value >= stat.max
+                ? 'bg-linear-to-r from-emerald-400 to-emerald-600'
+                : 'bg-linear-to-r from-primary-400 to-primary-700'
+            "
+            :style="{ width: `${percent(stat.value, stat.max)}%` }"
+          />
+        </div>
       </div>
     </div>
 
     <!-- Filtre type -->
-    <div class="flex gap-2 mb-4">
-      <Button
+    <div
+      role="tablist"
+      aria-label="Filtrer par type"
+      class="mb-5 inline-flex rounded-xl border border-line bg-card p-1 shadow-soft"
+    >
+      <button
         v-for="f in typeFilters"
         :key="f.value"
-        :label="f.label"
-        :outlined="activeFilter !== f.value"
-        size="small"
+        type="button"
+        role="tab"
+        :aria-selected="activeFilter === f.value"
+        class="rounded-lg px-4 py-1.5 text-sm font-semibold transition-colors"
         :class="
           activeFilter === f.value
-            ? 'bg-gradient-primary border-none font-bold'
-            : ''
+            ? 'bg-primary text-primary-contrast shadow-sm'
+            : 'text-muted hover:bg-card-2 hover:text-ink'
         "
         @click="activeFilter = f.value as 'all' | 'oral' | 'written'"
-      />
+      >
+        {{ f.label }}
+      </button>
     </div>
 
-    <!-- Loading -->
-    <div v-if="loading" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <Skeleton v-for="i in 6" :key="i" height="200px" border-radius="12px" />
+    <!-- Chargement -->
+    <div v-if="loading" class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      <Skeleton v-for="i in 6" :key="i" height="220px" border-radius="1.25rem" />
     </div>
 
-    <!-- Grid questions -->
-    <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div
+    <!-- Grille -->
+    <div v-else-if="filteredQuestions.length" class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      <article
         v-for="q in filteredQuestions"
         :key="q.id"
-        class="bg-(--bg-card) border border-(--border-color) rounded-xl p-4 flex flex-col gap-3"
+        class="flex flex-col gap-3.5 rounded-card border border-line bg-card p-4 shadow-soft transition-shadow hover:shadow-lift"
       >
-        <!-- Header -->
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-2">
-            <span class="text-sm font-bold text-(--text-primary)"
-              >Question #{{ q.question_number }}</span
+        <!-- En-tête carte -->
+        <div class="flex items-center justify-between gap-3">
+          <div class="flex min-w-0 flex-wrap items-center gap-2">
+            <span
+              class="grid size-9 shrink-0 place-items-center rounded-leaf font-heading text-xs font-extrabold tabular-nums"
+              :class="
+                q.type === 'oral'
+                  ? 'bg-primary/10 text-primary'
+                  : 'bg-accent-100 text-accent-800 dark:bg-accent-500/15 dark:text-accent-300'
+              "
             >
-            <Tag
-              :value="q.type === 'oral' ? 'Oral' : 'Écrit'"
-              :severity="q.type === 'oral' ? 'info' : 'warning'"
-            />
-            <span class="text-xs text-(--text-tertiary)"
-              >{{ q.points }} pts</span
-            >
+              {{ q.question_number }}
+            </span>
+            <span class="inline-flex items-center gap-1 rounded-full bg-card-2 px-2.5 py-0.5 text-xs font-semibold text-muted">
+              <i class="pi text-[0.65rem]" :class="q.type === 'oral' ? 'pi-headphones' : 'pi-book'" />
+              {{ q.type === "oral" ? "Oral" : "Écrit" }}
+            </span>
+            <span class="rounded-full bg-accent-100 px-2 py-0.5 text-xs font-bold text-accent-800 dark:bg-accent-500/15 dark:text-accent-300">
+              {{ q.points }} pts
+            </span>
+            <span v-if="q.audio_url" class="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">
+              <i class="pi pi-volume-up text-[0.65rem]" /> Audio
+            </span>
+            <span v-if="q.image_url" class="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
+              <i class="pi pi-image text-[0.65rem]" /> Image
+            </span>
           </div>
-          <div class="flex gap-1">
-            <Button
-              icon="pi pi-pencil"
-              text
-              rounded
-              size="small"
-              severity="secondary"
-              @click="openEdit(q)"
-            />
-            <Button
-              icon="pi pi-trash"
-              text
-              rounded
-              size="small"
-              severity="danger"
-              @click="openDelete(q)"
-            />
+          <div class="flex shrink-0 gap-1">
+            <Button icon="pi pi-pencil" text rounded size="small" severity="secondary" aria-label="Modifier" @click="openEdit(q)" />
+            <Button icon="pi pi-trash" text rounded size="small" severity="danger" aria-label="Supprimer" @click="openDelete(q)" />
           </div>
         </div>
 
-        <!-- Médias -->
-        <div class="flex gap-2">
-          <Tag
-            v-if="q.audio_url"
-            value="Audio"
-            icon="pi pi-volume-up"
-            severity="success"
-          />
-          <Tag
-            v-if="q.image_url"
-            value="Image"
-            icon="pi pi-image"
-            severity="info"
-          />
-        </div>
+        <!-- Question posée -->
+        <p v-if="q.asked_question" class="text-sm font-semibold leading-snug text-ink">
+          {{ q.asked_question }}
+        </p>
 
         <!-- Options -->
-        <div class="flex flex-col gap-1">
-          <div
+        <ul class="flex flex-col gap-1.5">
+          <li
             v-for="opt in getOptions(q)"
             :key="opt.key"
-            class="text-sm px-3 py-1.5 rounded-lg"
+            class="flex items-center gap-2.5 rounded-xl border px-3 py-2 text-sm"
             :class="
               opt.key === q.correct_answer
-                ? 'bg-green-50 text-green-700 font-semibold border border-green-200'
-                : 'text-(--text-secondary)'
+                ? 'border-emerald-300 bg-emerald-50 font-semibold text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-200'
+                : 'border-line text-muted'
             "
           >
-            {{ opt.key.toUpperCase() }}. {{ opt.text }}
-          </div>
-        </div>
-
-        <p class="text-xs text-(--text-tertiary)">
-          Réponse correcte:
-          <strong>{{ q.correct_answer?.toUpperCase() }}</strong>
-        </p>
-      </div>
+            <span
+              class="grid size-6 shrink-0 place-items-center rounded-md text-xs font-bold"
+              :class="opt.key === q.correct_answer ? 'bg-emerald-500 text-white' : 'bg-card-2 text-muted'"
+            >
+              {{ opt.key.toUpperCase() }}
+            </span>
+            <span class="flex-1">{{ opt.text }}</span>
+            <i v-if="opt.key === q.correct_answer" class="pi pi-check-circle shrink-0 text-emerald-600 dark:text-emerald-400" />
+          </li>
+        </ul>
+      </article>
     </div>
 
-    <!-- Empty -->
+    <!-- Vide -->
     <div
-      v-if="!loading && filteredQuestions.length === 0"
-      class="text-center py-16 text-(--text-tertiary)"
+      v-else
+      class="flex flex-col items-center rounded-card border border-dashed border-line bg-card px-6 py-14 text-center"
     >
-      <i class="pi pi-list text-4xl mb-3 block opacity-30" />
-      <p>Aucune question trouvée.</p>
-      <Button
-        label="Importer des questions"
-        icon="pi pi-upload"
-        outlined
-        class="mt-4"
-        @click="navigateTo(`/admin/series/${seriesId}/questions/import`)"
-      />
+      <span class="mb-3 grid size-14 place-items-center rounded-leaf bg-card-2 text-faint">
+        <i class="pi pi-list text-2xl" />
+      </span>
+      <p class="mb-4 text-sm font-medium text-muted">Aucune question trouvée.</p>
+      <NuxtLink
+        :to="`/admin/series/${seriesId}/questions/import`"
+        class="inline-flex items-center gap-2 rounded-xl border border-line bg-card px-4 py-2 text-sm font-semibold text-ink transition-colors hover:border-primary/40 hover:text-primary"
+      >
+        <i class="pi pi-upload text-xs" />
+        Importer des questions
+      </NuxtLink>
     </div>
 
-    <!-- Dialog créer/modifier -->
+    <!-- Dialog créer / modifier -->
     <Dialog
       v-model:visible="formVisible"
-      :header="editingQ ? 'Modifier la question' : 'Nouvelle question'"
       modal
-      :style="{ width: '580px' }"
       :draggable="false"
+      :style="{ width: '36rem' }"
+      :breakpoints="{ '640px': '96vw' }"
+      :pt="{ mask: { class: 'backdrop-blur-sm' } }"
     >
-      <div class="flex flex-col gap-4 pt-2">
+      <template #header>
+        <div class="flex items-center gap-3">
+          <span class="grid size-10 place-items-center rounded-leaf bg-primary/10 text-primary">
+            <i :class="editingQ ? 'pi pi-pencil' : 'pi pi-plus'" />
+          </span>
+          <h3 class="font-heading text-lg font-bold text-ink">
+            {{ editingQ ? "Modifier la question" : "Nouvelle question" }}
+          </h3>
+        </div>
+      </template>
+
+      <div class="flex flex-col gap-4 pt-1">
         <div class="grid grid-cols-2 gap-3">
           <div class="flex flex-col gap-1.5">
-            <label class="text-sm font-semibold text-(--text-secondary)"
-              >Numéro</label
-            >
-            <InputNumber
-              v-model="form.question_number"
-              :min="1"
-              :max="78"
-              fluid
-            />
+            <label for="q-number" class="text-sm font-semibold text-ink">Numéro</label>
+            <InputNumber v-model="form.question_number" input-id="q-number" :min="1" :max="78" fluid />
           </div>
           <div class="flex flex-col gap-1.5">
-            <label class="text-sm font-semibold text-(--text-secondary)"
-              >Type</label
-            >
+            <label for="q-type" class="text-sm font-semibold text-ink">Type</label>
             <Select
               v-model="form.type"
+              input-id="q-type"
               :options="typeOptions"
               option-label="label"
               option-value="value"
@@ -217,85 +223,56 @@
         </div>
 
         <div class="flex flex-col gap-1.5">
-          <label class="text-sm font-semibold text-(--text-secondary)"
-            >Texte question (optionnel)</label
-          >
-          <Textarea
-            v-model="form.question_text"
-            rows="3"
-            fluid
-            placeholder="Texte du document..."
-          />
+          <label for="q-text" class="text-sm font-semibold text-ink">
+            Texte question <span class="font-normal text-faint">(optionnel)</span>
+          </label>
+          <Textarea id="q-text" v-model="form.question_text" :rows="3" auto-resize fluid placeholder="Texte du document..." />
         </div>
 
         <div class="flex flex-col gap-1.5">
-          <label class="text-sm font-semibold text-(--text-secondary)"
-            >Question posée</label
-          >
-          <InputText
-            v-model="form.asked_question"
-            fluid
-            placeholder="Qu'est-ce que..."
-          />
+          <label for="q-asked" class="text-sm font-semibold text-ink">Question posée</label>
+          <InputText id="q-asked" v-model="form.asked_question" fluid placeholder="Qu'est-ce que..." />
         </div>
 
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div class="flex flex-col gap-1.5">
-            <label class="text-sm font-semibold text-(--text-secondary)"
-              >URL Audio</label
-            >
-            <InputText
-              v-model="form.audio_url"
-              fluid
-              placeholder="/uploads/audio/..."
-            />
+            <label for="q-audio" class="text-sm font-semibold text-ink">URL Audio</label>
+            <InputText id="q-audio" v-model="form.audio_url" class="font-mono text-sm" fluid placeholder="/uploads/audio/..." />
           </div>
           <div class="flex flex-col gap-1.5">
-            <label class="text-sm font-semibold text-(--text-secondary)"
-              >URL Image</label
-            >
-            <InputText
-              v-model="form.image_url"
-              fluid
-              placeholder="/uploads/images/..."
-            />
+            <label for="q-image" class="text-sm font-semibold text-ink">URL Image</label>
+            <InputText id="q-image" v-model="form.image_url" class="font-mono text-sm" fluid placeholder="/uploads/images/..." />
           </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-3">
-          <div class="flex flex-col gap-1.5">
-            <label class="text-sm font-semibold text-(--text-secondary)"
-              >Option A</label
-            >
-            <InputText v-model="form.option_a" fluid />
-          </div>
-          <div class="flex flex-col gap-1.5">
-            <label class="text-sm font-semibold text-(--text-secondary)"
-              >Option B</label
-            >
-            <InputText v-model="form.option_b" fluid />
-          </div>
-          <div class="flex flex-col gap-1.5">
-            <label class="text-sm font-semibold text-(--text-secondary)"
-              >Option C</label
-            >
-            <InputText v-model="form.option_c" fluid />
-          </div>
-          <div class="flex flex-col gap-1.5">
-            <label class="text-sm font-semibold text-(--text-secondary)"
-              >Option D</label
-            >
-            <InputText v-model="form.option_d" fluid />
+        <div class="rounded-2xl border border-line bg-card-2/40 p-3.5">
+          <p class="mb-3 text-xs font-semibold uppercase tracking-wider text-faint">Options de réponse</p>
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div class="flex flex-col gap-1.5">
+              <label for="q-opt-a" class="text-sm font-semibold text-ink">Option A</label>
+              <InputText id="q-opt-a" v-model="form.option_a" fluid />
+            </div>
+            <div class="flex flex-col gap-1.5">
+              <label for="q-opt-b" class="text-sm font-semibold text-ink">Option B</label>
+              <InputText id="q-opt-b" v-model="form.option_b" fluid />
+            </div>
+            <div class="flex flex-col gap-1.5">
+              <label for="q-opt-c" class="text-sm font-semibold text-ink">Option C</label>
+              <InputText id="q-opt-c" v-model="form.option_c" fluid />
+            </div>
+            <div class="flex flex-col gap-1.5">
+              <label for="q-opt-d" class="text-sm font-semibold text-ink">Option D</label>
+              <InputText id="q-opt-d" v-model="form.option_d" fluid />
+            </div>
           </div>
         </div>
 
         <div class="grid grid-cols-2 gap-3">
           <div class="flex flex-col gap-1.5">
-            <label class="text-sm font-semibold text-(--text-secondary)"
-              >Bonne réponse</label
-            >
+            <label for="q-correct" class="text-sm font-semibold text-ink">Bonne réponse</label>
             <Select
               v-model="form.correct_answer"
+              input-id="q-correct"
               :options="answerOptions"
               option-label="label"
               option-value="value"
@@ -303,31 +280,26 @@
             />
           </div>
           <div class="flex flex-col gap-1.5">
-            <label class="text-sm font-semibold text-(--text-secondary)"
-              >Points</label
-            >
-            <Select
-              v-model="form.points"
-              :options="[3, 9, 15, 21, 26, 33]"
-              fluid
-            />
+            <label for="q-points" class="text-sm font-semibold text-ink">Points</label>
+            <Select v-model="form.points" input-id="q-points" :options="[3, 9, 15, 21, 26, 33]" fluid />
           </div>
         </div>
 
         <div class="flex flex-col gap-1.5">
-          <label class="text-sm font-semibold text-(--text-secondary)"
-            >Explication (optionnel)</label
-          >
-          <Textarea v-model="form.explanation" rows="2" fluid />
+          <label for="q-explanation" class="text-sm font-semibold text-ink">
+            Explication <span class="font-normal text-faint">(optionnel)</span>
+          </label>
+          <Textarea id="q-explanation" v-model="form.explanation" :rows="2" auto-resize fluid />
         </div>
       </div>
 
       <template #footer>
-        <Button label="Annuler" text @click="formVisible = false" />
-        <Button
+        <AppButton label="Annuler" variant="ghost" @click="formVisible = false" />
+        <AppButton
           :label="editingQ ? 'Enregistrer' : 'Créer'"
+          icon="pi pi-check"
+          variant="gradient"
           :loading="saving"
-          class="bg-gradient-primary border-none font-bold"
           @click="onSave"
         />
       </template>
@@ -336,25 +308,29 @@
     <!-- Dialog supprimer -->
     <Dialog
       v-model:visible="deleteVisible"
-      header="Supprimer la question"
       modal
-      :style="{ width: '380px' }"
       :draggable="false"
+      :style="{ width: '26rem' }"
+      :breakpoints="{ '640px': '94vw' }"
+      :pt="{ mask: { class: 'backdrop-blur-sm' } }"
     >
-      <p class="text-(--text-secondary)">
-        Supprimer la
-        <strong>Question #{{ deletingQ?.question_number }}</strong> ? Cette
-        action est irréversible.
+      <template #header>
+        <div class="flex items-center gap-3">
+          <span class="grid size-10 place-items-center rounded-xl bg-red-100 text-red-600 dark:bg-red-950 dark:text-red-400">
+            <i class="pi pi-trash" />
+          </span>
+          <h3 class="font-heading text-lg font-bold text-ink">Supprimer la question</h3>
+        </div>
+      </template>
+
+      <p class="leading-relaxed text-muted">
+        Supprimer la <strong class="text-ink">Question #{{ deletingQ?.question_number }}</strong> ?
+        Cette action est irréversible.
       </p>
+
       <template #footer>
-        <Button label="Annuler" text @click="deleteVisible = false" />
-        <Button
-          label="Supprimer"
-          severity="danger"
-          icon="pi pi-trash"
-          :loading="saving"
-          @click="onDelete"
-        />
+        <AppButton label="Annuler" variant="ghost" @click="deleteVisible = false" />
+        <AppButton label="Supprimer" icon="pi pi-trash" variant="danger" :loading="saving" @click="onDelete" />
       </template>
     </Dialog>
   </div>
@@ -404,6 +380,10 @@ const filteredQuestions = computed(() => {
   if (activeFilter.value === "all") return questions.value;
   return questions.value.filter((q) => q.type === activeFilter.value);
 });
+
+function percent(value: number, max: number) {
+  return max ? Math.min(100, Math.round((value / max) * 100)) : 0
+}
 
 async function fetchQuestions() {
   loading.value = true;
@@ -577,23 +557,3 @@ async function onDelete() {
 
 useHead({ title: "Questions | Admin Lumina" });
 </script>
-
-<style scoped>
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-}
-
-.questions-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
-}
-
-@media (max-width: 768px) {
-  .stats-grid    { grid-template-columns: 1fr; }
-  .questions-grid { grid-template-columns: 1fr; }
-}
-</style>

@@ -1,202 +1,208 @@
 <template>
   <div>
-    <!-- Header -->
-    <div class="flex items-center justify-between mb-6">
+    <!-- En-tête -->
+    <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div>
-        <h1 class="text-xl font-bold text-(--text-primary)">Utilisateurs</h1>
-        <p class="text-sm text-(--text-tertiary) mt-0.5">
-          {{ total }} utilisateurs au total
+        <h1 class="font-heading text-2xl font-extrabold tracking-tight text-ink">Utilisateurs</h1>
+        <p class="mt-0.5 text-sm text-muted">
+          <span class="font-semibold tabular-nums text-ink">{{ total }}</span> utilisateurs au total
         </p>
       </div>
-      <Button
+      <AppButton
         label="Nouvel utilisateur"
         icon="pi pi-plus"
-        class="border-none font-bold bg-gradient-primary"
+        variant="gradient"
         @click="openCreate"
       />
     </div>
 
-    <!-- DataTable -->
-    <DataTable
-      :value="users"
-      :loading="loading"
-      paginator
-      :rows="20"
-      :rows-per-page-options="[10, 20, 50]"
-      v-model:filters="filters"
-      filter-display="row"
-      :global-filter-fields="['first_name', 'last_name', 'email', 'role']"
-      removable-sort
-      striped-rows
-      class="p-datatable-sm"
-    >
-      <template #header>
-        <div class="flex justify-between items-center gap-3">
-          <IconField>
-            <InputIcon class="pi pi-search" />
-            <InputText
-              v-model="filters['global'].value"
-              placeholder="Rechercher..."
-              class="w-64"
-            />
-          </IconField>
-          <Button
-            icon="pi pi-refresh"
-            outlined
-            size="small"
-            :loading="loading"
-            @click="fetchUsers"
-          />
-        </div>
-      </template>
-
-      <template #empty>
-        <div class="text-center py-10 text-(--text-tertiary)">
-          <i class="pi pi-users text-4xl mb-3 block opacity-30" />
-          <p>Aucun utilisateur trouvé.</p>
-        </div>
-      </template>
-
-      <!-- Nom -->
-      <Column
-        field="first_name"
-        header="Utilisateur"
-        sortable
-        style="min-width: 200px"
+    <!-- Tableau -->
+    <div class="overflow-hidden rounded-card border border-line bg-card shadow-soft">
+      <DataTable
+        v-model:filters="filters"
+        :value="users"
+        :loading="loading"
+        paginator
+        :rows="20"
+        :rows-per-page-options="[10, 20, 50]"
+        filter-display="row"
+        :global-filter-fields="['first_name', 'last_name', 'email', 'role']"
+        removable-sort
+        striped-rows
+        class="p-datatable-sm"
       >
-        <template #body="{ data }">
-          <div class="flex items-center gap-3">
-            <div
-              class="w-9 h-9 rounded-full bg-primary-50 flex items-center justify-center shrink-0"
-            >
-              <span class="text-xs font-bold text-primary-600">
+        <template #header>
+          <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <IconField class="w-full sm:w-72">
+              <InputIcon class="pi pi-search" />
+              <InputText
+                v-model="filters['global'].value"
+                placeholder="Rechercher un utilisateur..."
+                aria-label="Rechercher un utilisateur"
+                fluid
+              />
+            </IconField>
+            <Button
+              icon="pi pi-refresh"
+              outlined
+              rounded
+              aria-label="Actualiser"
+              :loading="loading"
+              @click="fetchUsers"
+            />
+          </div>
+        </template>
+
+        <template #empty>
+          <div class="flex flex-col items-center py-12 text-center">
+            <span class="mb-3 grid size-14 place-items-center rounded-leaf bg-card-2 text-faint">
+              <i class="pi pi-users text-2xl" />
+            </span>
+            <p class="text-sm font-medium text-muted">Aucun utilisateur trouvé.</p>
+          </div>
+        </template>
+
+        <!-- Utilisateur -->
+        <Column field="first_name" header="Utilisateur" sortable style="min-width: 220px">
+          <template #body="{ data }">
+            <div class="flex items-center gap-3">
+              <span
+                class="grid size-9 shrink-0 place-items-center rounded-leaf bg-primary/10 font-heading text-xs font-bold text-primary"
+              >
                 {{ initials(data) }}
               </span>
+              <div class="min-w-0">
+                <p class="truncate text-sm font-semibold leading-tight text-ink">
+                  {{ data.first_name }} {{ data.last_name }}
+                </p>
+                <p class="truncate text-xs text-muted">{{ data.email }}</p>
+              </div>
             </div>
-            <div>
-              <p
-                class="text-sm font-semibold text-(--text-primary) leading-tight"
-              >
-                {{ data.first_name }} {{ data.last_name }}
-              </p>
-              <p class="text-xs text-(--text-tertiary)">{{ data.email }}</p>
-            </div>
-          </div>
-        </template>
-      </Column>
+          </template>
+        </Column>
 
-      <!-- Rôle -->
-      <Column field="role" header="Rôle" sortable style="min-width: 130px">
-        <template #body="{ data }">
-          <Tag
-            :value="roleLabel(data.role)"
-            :severity="roleSeverity(data.role)"
-          />
-        </template>
-      </Column>
+        <!-- Rôle -->
+        <Column field="role" header="Rôle" sortable style="min-width: 130px">
+          <template #body="{ data }">
+            <Tag :value="roleLabel(data.role)" :severity="roleSeverity(data.role)" rounded />
+          </template>
+        </Column>
 
-      <!-- Statut -->
-      <Column
-        field="is_active"
-        header="Statut"
-        sortable
-        style="min-width: 100px"
-      >
-        <template #body="{ data }">
-          <Tag
-            :value="data.is_active ? 'Actif' : 'Inactif'"
-            :severity="data.is_active ? 'success' : 'danger'"
-          />
-        </template>
-      </Column>
-
-      <!-- Phone -->
-      <Column field="phone" header="Téléphone" style="min-width: 140px">
-        <template #body="{ data }">
-          <span class="text-sm text-(--text-secondary)">{{
-            data.phone ?? "—"
-          }}</span>
-        </template>
-      </Column>
-
-      <!-- Actions -->
-      <Column header="Actions" style="min-width: 170px" :exportable="false">
-        <template #body="{ data }">
-          <div class="flex items-center gap-1">
-            <Button
-              :icon="data.is_ambassador ? 'pi pi-star-fill' : 'pi pi-star'"
-              size="small"
-              text
-              rounded
-              :severity="data.is_ambassador ? 'warning' : 'secondary'"
-              v-tooltip.top="
-                data.is_ambassador
-                  ? 'Retirer le statut ambassadeur'
-                  : 'Faire ambassadeur'
+        <!-- Statut -->
+        <Column field="is_active" header="Statut" sortable style="min-width: 110px">
+          <template #body="{ data }">
+            <span
+              class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold"
+              :class="
+                data.is_active
+                  ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300'
+                  : 'bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-300'
               "
-              @click="toggleAmbassador(data)"
-            />
-            <Button
-              icon="pi pi-credit-card"
-              size="small"
-              text
-              rounded
-              severity="success"
-              v-tooltip.top="'Activer abonnement'"
-              @click="openActivate(data)"
-            />
-            <Button
-              icon="pi pi-pencil"
-              size="small"
-              text
-              rounded
-              severity="secondary"
-              v-tooltip.top="'Modifier'"
-              @click="openEdit(data)"
-            />
-            <Button
-              icon="pi pi-trash"
-              size="small"
-              text
-              rounded
-              severity="danger"
-              v-tooltip.top="'Supprimer'"
-              @click="openDelete(data)"
-            />
-          </div>
-        </template>
-      </Column>
-    </DataTable>
+            >
+              <span
+                class="size-1.5 rounded-full"
+                :class="data.is_active ? 'bg-emerald-500' : 'bg-red-500'"
+              />
+              {{ data.is_active ? "Actif" : "Inactif" }}
+            </span>
+          </template>
+        </Column>
 
-    <!-- Dialog créer/modifier -->
+        <!-- Téléphone -->
+        <Column field="phone" header="Téléphone" style="min-width: 140px">
+          <template #body="{ data }">
+            <span class="text-sm tabular-nums" :class="data.phone ? 'text-ink' : 'text-faint'">
+              {{ data.phone ?? "—" }}
+            </span>
+          </template>
+        </Column>
+
+        <!-- Actions -->
+        <Column header="Actions" style="min-width: 170px" :exportable="false">
+          <template #body="{ data }">
+            <div class="flex items-center gap-1">
+              <Button
+                v-tooltip.top="data.is_ambassador ? 'Retirer le statut ambassadeur' : 'Faire ambassadeur'"
+                :icon="data.is_ambassador ? 'pi pi-star-fill' : 'pi pi-star'"
+                size="small"
+                text
+                rounded
+                :severity="data.is_ambassador ? 'warning' : 'secondary'"
+                :aria-label="data.is_ambassador ? 'Retirer le statut ambassadeur' : 'Faire ambassadeur'"
+                @click="toggleAmbassador(data)"
+              />
+              <Button
+                v-tooltip.top="'Activer abonnement'"
+                icon="pi pi-credit-card"
+                size="small"
+                text
+                rounded
+                severity="success"
+                aria-label="Activer abonnement"
+                @click="openActivate(data)"
+              />
+              <Button
+                v-tooltip.top="'Modifier'"
+                icon="pi pi-pencil"
+                size="small"
+                text
+                rounded
+                severity="secondary"
+                aria-label="Modifier"
+                @click="openEdit(data)"
+              />
+              <Button
+                v-tooltip.top="'Supprimer'"
+                icon="pi pi-trash"
+                size="small"
+                text
+                rounded
+                severity="danger"
+                aria-label="Supprimer"
+                @click="openDelete(data)"
+              />
+            </div>
+          </template>
+        </Column>
+      </DataTable>
+    </div>
+
+    <!-- Dialog créer / modifier -->
     <Dialog
       v-model:visible="dialogVisible"
-      :header="editingUser ? 'Modifier l\'utilisateur' : 'Nouvel utilisateur'"
       modal
-      :style="{ width: '480px' }"
       :draggable="false"
+      :style="{ width: '30rem' }"
+      :breakpoints="{ '640px': '94vw' }"
+      :pt="{ mask: { class: 'backdrop-blur-sm' } }"
     >
-      <div class="flex flex-col gap-4 pt-2">
-        <div class="grid grid-cols-2 gap-3">
+      <template #header>
+        <div class="flex items-center gap-3">
+          <span class="grid size-10 place-items-center rounded-leaf bg-primary/10 text-primary">
+            <i :class="editingUser ? 'pi pi-user-edit' : 'pi pi-user-plus'" />
+          </span>
+          <h3 class="font-heading text-lg font-bold text-ink">
+            {{ editingUser ? "Modifier l'utilisateur" : "Nouvel utilisateur" }}
+          </h3>
+        </div>
+      </template>
+
+      <div class="flex flex-col gap-4 pt-1">
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div class="flex flex-col gap-1.5">
-            <label class="text-sm font-semibold text-(--text-secondary)"
-              >Prénom</label
-            >
-            <InputText v-model="form.first_name" placeholder="Prénom" fluid />
+            <label for="user-first-name" class="text-sm font-semibold text-ink">Prénom</label>
+            <InputText id="user-first-name" v-model="form.first_name" placeholder="Prénom" fluid />
           </div>
           <div class="flex flex-col gap-1.5">
-            <label class="text-sm font-semibold text-(--text-secondary)"
-              >Nom</label
-            >
-            <InputText v-model="form.last_name" placeholder="Nom" fluid />
+            <label for="user-last-name" class="text-sm font-semibold text-ink">Nom</label>
+            <InputText id="user-last-name" v-model="form.last_name" placeholder="Nom" fluid />
           </div>
         </div>
 
         <div class="flex flex-col gap-1.5">
-          <label class="text-sm font-semibold text-(--text-secondary)"
-            >Email</label
-          >
+          <label for="user-email" class="text-sm font-semibold text-ink">Email</label>
           <InputText
+            id="user-email"
             v-model="form.email"
             type="email"
             placeholder="email@exemple.com"
@@ -205,32 +211,28 @@
           />
         </div>
 
-        <div class="flex flex-col gap-1.5" v-if="!editingUser">
-          <label class="text-sm font-semibold text-(--text-secondary)"
-            >Mot de passe</label
-          >
+        <div v-if="!editingUser" class="flex flex-col gap-1.5">
+          <label for="user-password" class="text-sm font-semibold text-ink">Mot de passe</label>
           <Password
             v-model="form.password"
+            input-id="user-password"
             placeholder="Mot de passe"
             fluid
             :feedback="false"
-            toggleMask
+            toggle-mask
           />
         </div>
 
         <div class="flex flex-col gap-1.5">
-          <label class="text-sm font-semibold text-(--text-secondary)"
-            >Téléphone</label
-          >
-          <InputText v-model="form.phone" placeholder="+237..." fluid />
+          <label for="user-phone" class="text-sm font-semibold text-ink">Téléphone</label>
+          <InputText id="user-phone" v-model="form.phone" placeholder="+237..." fluid />
         </div>
 
         <div class="flex flex-col gap-1.5">
-          <label class="text-sm font-semibold text-(--text-secondary)"
-            >Rôle</label
-          >
+          <label for="user-role" class="text-sm font-semibold text-ink">Rôle</label>
           <Select
             v-model="form.role"
+            input-id="user-role"
             :options="roleOptions"
             option-label="label"
             option-value="value"
@@ -241,11 +243,12 @@
       </div>
 
       <template #footer>
-        <Button label="Annuler" text @click="dialogVisible = false" />
-        <Button
+        <AppButton label="Annuler" variant="ghost" @click="dialogVisible = false" />
+        <AppButton
           :label="editingUser ? 'Enregistrer' : 'Créer'"
+          icon="pi pi-check"
+          variant="gradient"
           :loading="saving"
-          class="bg-gradient-primary border-none font-bold"
           @click="onSave"
         />
       </template>
@@ -254,23 +257,33 @@
     <!-- Dialog suppression -->
     <Dialog
       v-model:visible="deleteVisible"
-      header="Supprimer l'utilisateur"
       modal
-      :style="{ width: '400px' }"
+      :draggable="false"
+      :style="{ width: '26rem' }"
+      :breakpoints="{ '640px': '94vw' }"
+      :pt="{ mask: { class: 'backdrop-blur-sm' } }"
     >
-      <p class="text-(--text-secondary) leading-relaxed">
+      <template #header>
+        <div class="flex items-center gap-3">
+          <span class="grid size-10 place-items-center rounded-xl bg-red-100 text-red-600 dark:bg-red-950 dark:text-red-400">
+            <i class="pi pi-trash" />
+          </span>
+          <h3 class="font-heading text-lg font-bold text-ink">Supprimer l'utilisateur</h3>
+        </div>
+      </template>
+
+      <p class="leading-relaxed text-muted">
         Êtes-vous sûr de vouloir supprimer
-        <strong
-          >{{ deletingUser?.first_name }} {{ deletingUser?.last_name }}</strong
-        >
+        <strong class="text-ink">{{ deletingUser?.first_name }} {{ deletingUser?.last_name }}</strong>
         ? Cette action est irréversible.
       </p>
+
       <template #footer>
-        <Button label="Annuler" text @click="deleteVisible = false" />
-        <Button
+        <AppButton label="Annuler" variant="ghost" @click="deleteVisible = false" />
+        <AppButton
           label="Supprimer"
-          severity="danger"
           icon="pi pi-trash"
+          variant="danger"
           :loading="saving"
           @click="onDelete"
         />
@@ -280,18 +293,32 @@
     <!-- Dialog activation abonnement -->
     <Dialog
       v-model:visible="activateVisible"
-      :header="`Activer un abonnement — ${activatingUser?.first_name ?? ''} ${activatingUser?.last_name ?? ''}`"
       modal
-      :style="{ width: '440px' }"
       :draggable="false"
+      :style="{ width: '28rem' }"
+      :breakpoints="{ '640px': '94vw' }"
+      :pt="{ mask: { class: 'backdrop-blur-sm' } }"
     >
-      <div class="flex flex-col gap-4 pt-2">
+      <template #header>
+        <div class="flex items-center gap-3">
+          <span class="grid size-10 place-items-center rounded-xl bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400">
+            <i class="pi pi-credit-card" />
+          </span>
+          <div class="min-w-0">
+            <h3 class="font-heading text-lg font-bold leading-tight text-ink">Activer un abonnement</h3>
+            <p class="truncate text-sm text-muted">
+              {{ activatingUser?.first_name ?? "" }} {{ activatingUser?.last_name ?? "" }}
+            </p>
+          </div>
+        </div>
+      </template>
+
+      <div class="flex flex-col gap-4 pt-1">
         <div class="flex flex-col gap-1.5">
-          <label class="text-sm font-semibold text-(--text-secondary)"
-            >Plan</label
-          >
+          <label for="activate-plan" class="text-sm font-semibold text-ink">Plan</label>
           <Select
             v-model="activateForm.plan_id"
+            input-id="activate-plan"
             :options="planOptions"
             option-label="label"
             option-value="value"
@@ -300,12 +327,13 @@
           />
         </div>
         <div class="flex flex-col gap-1.5">
-          <label class="text-sm font-semibold text-(--text-secondary)"
-            >Code promo (optionnel)</label
-          >
+          <label for="activate-promo" class="text-sm font-semibold text-ink">
+            Code promo <span class="font-normal text-faint">(optionnel)</span>
+          </label>
           <InputText
+            id="activate-promo"
             v-model="activateForm.promo_code"
-            placeholder="Ex: PARTNER10"
+            placeholder="Ex : PARTNER10"
             fluid
           />
         </div>
@@ -313,14 +341,15 @@
           {{ activateError }}
         </Message>
       </div>
+
       <template #footer>
-        <Button label="Annuler" text @click="activateVisible = false" />
-        <Button
+        <AppButton label="Annuler" variant="ghost" @click="activateVisible = false" />
+        <AppButton
           label="Activer"
           icon="pi pi-check"
+          variant="gradient"
           :loading="activating"
           :disabled="!activateForm.plan_id"
-          class="bg-gradient-primary border-none font-bold"
           @click="onActivate"
         />
       </template>

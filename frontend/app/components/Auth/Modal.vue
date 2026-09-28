@@ -1,145 +1,80 @@
 <template>
   <Dialog
     v-model:visible="isOpen"
-    :modal="true"
-    :closable="true"
+    modal
+    dismissable-mask
     :draggable="false"
-    :style="{ width: '480px' }"
-    class="auth-modal"
+    :style="{ width: '30rem' }"
+    :breakpoints="{ '640px': '94vw' }"
+    :pt="{ mask: { class: 'backdrop-blur-sm' } }"
     @hide="auth.clearError()"
   >
-    <!-- Header -->
+    <!-- En-tête -->
     <template #header>
-      <div class="auth-modal__header">
-        <div class="auth-modal__logo">
-          <img src="/images/logo.png" alt="Lumina TCF" class="auth-modal__logo-img" />
+      <div class="flex w-full flex-col items-center gap-3 pt-2 text-center">
+        <span class="brand-gradient grid size-12 place-items-center rounded-leaf font-heading text-lg font-bold text-white shadow-brand">
+          {{ site.name.charAt(0) }}
+        </span>
+        <div>
+          <h2 class="font-heading text-2xl font-extrabold tracking-tight text-ink">
+            {{ activeTab === "login" ? "Bon retour parmi nous" : "Créer un compte" }}
+          </h2>
+          <p class="mt-1.5 text-sm leading-relaxed text-muted">
+            {{
+              activeTab === "login"
+                ? "Connectez-vous pour accéder à votre espace."
+                : "Rejoignez des milliers de candidats qui préparent leur TCF Canada."
+            }}
+          </p>
         </div>
-        <h2 class="auth-modal__title">
-          {{ activeTab === 'login' ? 'Bon retour 👋' : 'Créer un compte' }}
-        </h2>
-        <p class="auth-modal__subtitle">
-          {{ activeTab === 'login'
-            ? 'Connectez-vous pour accéder à votre espace.'
-            : 'Rejoignez des milliers de candidats qui préparent leur TCF Canada.'
-          }}
-        </p>
       </div>
     </template>
 
-    <!-- Tabs -->
-    <div class="auth-modal__tabs">
+    <!-- Onglets -->
+    <div role="tablist" class="mb-6 grid grid-cols-2 gap-1 rounded-2xl bg-card-2 p-1">
       <button
-        class="auth-modal__tab"
-        :class="{ 'auth-modal__tab--active': activeTab === 'login' }"
-        @click="switchTab('login')"
+        v-for="tab in tabs"
+        :key="tab.value"
+        type="button"
+        role="tab"
+        :aria-selected="activeTab === tab.value"
+        class="flex items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all duration-300 ease-spring"
+        :class="
+          activeTab === tab.value
+            ? 'bg-card text-primary shadow-soft'
+            : 'text-muted hover:text-ink'
+        "
+        @click="switchTab(tab.value)"
       >
-        <i class="pi pi-sign-in" />
-        Connexion
-      </button>
-      <button
-        class="auth-modal__tab"
-        :class="{ 'auth-modal__tab--active': activeTab === 'register' }"
-        @click="switchTab('register')"
-      >
-        <i class="pi pi-user-plus" />
-        Inscription
+        <i :class="[tab.icon, 'text-sm']" />
+        {{ tab.label }}
       </button>
     </div>
 
     <!-- Formulaires -->
-    <div class="auth-modal__body">
-      <Transition name="auth-modal__fade" mode="out-in">
-        <AuthLoginForm    v-if="activeTab === 'login'"    key="login"    />
-        <AuthRegisterForm v-else                          key="register" />
+    <div class="min-h-52">
+      <Transition
+        mode="out-in"
+        enter-active-class="transition-all duration-300 ease-spring"
+        leave-active-class="transition-all duration-150 ease-out"
+        enter-from-class="opacity-0 translate-y-2"
+        leave-to-class="opacity-0 -translate-y-1"
+      >
+        <AuthLoginForm v-if="activeTab === 'login'" key="login" />
+        <AuthRegisterForm v-else key="register" />
       </Transition>
     </div>
   </Dialog>
 </template>
 
 <script setup lang="ts">
-const { isOpen, activeTab, switchTab } = useAuthModal()
-const auth = useAuthStore()
+import { site } from "~/config/site";
+
+const { isOpen, activeTab, switchTab } = useAuthModal();
+const auth = useAuthStore();
+
+const tabs = [
+  { value: "login", label: "Connexion", icon: "pi pi-sign-in" },
+  { value: "register", label: "Inscription", icon: "pi pi-user-plus" },
+] as const;
 </script>
-
-<style scoped>
-/* ── Header ────────────────────────────────────────────────── */
-.auth-modal__header {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  gap: 0.5rem;
-  padding-bottom: 0.5rem;
-}
-
-.auth-modal__logo-img {
-  height: 36px;
-  object-fit: contain;
-  margin-bottom: 0.25rem;
-}
-
-.auth-modal__title {
-  font-size: 1.375rem;
-  font-weight: 800;
-  color: var(--text-primary);
-  margin: 0;
-}
-
-.auth-modal__subtitle {
-  font-size: 0.9rem;
-  color: var(--text-secondary);
-  margin: 0;
-  line-height: 1.5;
-}
-
-/* ── Tabs ──────────────────────────────────────────────────── */
-.auth-modal__tabs {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.5rem;
-  background: var(--bg-ground);
-  border-radius: 0.75rem;
-  padding: 0.25rem;
-  margin-bottom: 1.5rem;
-}
-
-.auth-modal__tab {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 0.625rem;
-  border: none;
-  border-radius: 0.625rem;
-  background: transparent;
-  color: var(--text-secondary);
-  font-size: 0.875rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.auth-modal__tab i { font-size: 0.875rem; }
-
-.auth-modal__tab--active {
-  background: var(--bg-card);
-  color: var(--color-primary-600);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
-}
-
-/* ── Body ──────────────────────────────────────────────────── */
-.auth-modal__body {
-  min-height: 200px;
-}
-
-/* ── Transition ────────────────────────────────────────────── */
-.auth-modal__fade-enter-active,
-.auth-modal__fade-leave-active {
-  transition: all 0.2s ease;
-}
-.auth-modal__fade-enter-from,
-.auth-modal__fade-leave-to {
-  opacity: 0;
-  transform: translateY(6px);
-}
-</style>

@@ -137,12 +137,28 @@ const allSuggestions = computed(
 </script>
 
 <template>
-  <div class="ee-serie-resultats">
-    <div v-if="loading" class="ee-serie-resultats__loading">
-      <ProgressSpinner style="width: 40px; height: 40px" />
+  <div class="mx-auto w-full max-w-4xl">
+    <!-- Chargement -->
+    <div v-if="loading" class="space-y-4">
+      <div class="h-56 animate-pulse rounded-card bg-card" />
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div v-for="n in 3" :key="n" class="h-28 animate-pulse rounded-card bg-card" />
+      </div>
+      <div class="h-64 animate-pulse rounded-card bg-card" />
     </div>
-    <Message v-else-if="error" severity="error">{{ error }}</Message>
 
+    <!-- Erreur -->
+    <div
+      v-else-if="error"
+      class="flex items-start gap-3 rounded-card border border-red-200 bg-red-50 p-5 dark:border-red-500/25 dark:bg-red-500/10"
+    >
+      <span class="grid size-10 shrink-0 place-items-center rounded-leaf bg-red-100 text-red-600 dark:bg-red-500/15 dark:text-red-400">
+        <i class="pi pi-times-circle" />
+      </span>
+      <p class="pt-2 text-sm font-medium text-red-700 dark:text-red-300">{{ error }}</p>
+    </div>
+
+    <!-- Résultat -->
     <WrittenExpressionResult
       v-else-if="reference"
       :overall-score="reference.overall_score ?? 0"
@@ -155,16 +171,3 @@ const allSuggestions = computed(
     />
   </div>
 </template>
-
-<style scoped>
-.ee-serie-resultats {
-  max-width: 720px;
-  margin: 0 auto;
-  padding: 1.5rem;
-}
-.ee-serie-resultats__loading {
-  display: flex;
-  justify-content: center;
-  padding: 3rem 0;
-}
-</style>

@@ -1,114 +1,88 @@
 <template>
-  <div class="ce">
+  <div class="flex flex-col gap-10">
+    <MethodologyHero
+      title="Compréhension écrite au TCF Canada"
+      lead="Cette épreuve évalue votre capacité à comprendre des textes écrits de difficulté progressive, tirés de situations de la vie quotidienne, professionnelle et académique. Une méthodologie rigoureuse vous permettra de gagner un temps précieux."
+      :stats="[
+        { icon: 'pi pi-clock', value: '60 min', label: 'Durée' },
+        { icon: 'pi pi-list', value: '39 questions', label: 'QCM' },
+        { icon: 'pi pi-sort-amount-up', value: 'Progressive', label: 'Difficulté' },
+        { icon: 'pi pi-check-circle', value: '0 pénalité', label: 'Mauvaise réponse' },
+      ]"
+    />
 
-    <!-- Intro -->
-    <div class="ce__intro">
-      <h2 class="ce__title">Compréhension Écrite  TCF Canada</h2>
-      <p class="ce__lead">
-        Cette épreuve évalue votre capacité à comprendre des textes écrits de difficulté progressive, tirés de situations de la vie quotidienne, professionnelle et académique. Une méthodologie rigoureuse vous permettra de gagner un temps précieux.
-      </p>
-      <div class="ce__overview">
-        <div class="ce__stat">
-          <i class="pi pi-clock" />
-          <div>
-            <p class="ce__stat-val">60 min</p>
-            <p class="ce__stat-lab">Durée</p>
-          </div>
-        </div>
-        <div class="ce__stat">
-          <i class="pi pi-list" />
-          <div>
-            <p class="ce__stat-val">39 questions</p>
-            <p class="ce__stat-lab">QCM</p>
-          </div>
-        </div>
-        <div class="ce__stat">
-          <i class="pi pi-sort-amount-up" />
-          <div>
-            <p class="ce__stat-val">Progressive</p>
-            <p class="ce__stat-lab">Difficulté</p>
-          </div>
-        </div>
-        <div class="ce__stat">
-          <i class="pi pi-check-circle" />
-          <div>
-            <p class="ce__stat-val">0 pénalité</p>
-            <p class="ce__stat-lab">Mauvaise réponse</p>
+    <MethodologyBlock title="Types de textes rencontrés" icon="pi pi-folder-open">
+      <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div
+          v-for="t in textTypes"
+          :key="t.level"
+          class="flex flex-col rounded-2xl border border-line bg-canvas p-5 transition-all duration-300 ease-spring hover:-translate-y-1 hover:bg-card hover:shadow-lift"
+        >
+          <span class="brand-gradient w-fit rounded-full px-3 py-0.5 text-xs font-bold text-white">{{ t.level }}</span>
+          <p class="mt-3 font-heading font-bold text-ink">{{ t.title }}</p>
+          <p class="mt-1.5 flex-1 text-sm leading-relaxed text-muted">{{ t.desc }}</p>
+          <div class="mt-4 flex flex-wrap gap-1.5">
+            <span v-for="tag in t.tags" :key="tag" class="rounded-full bg-card-2 px-2.5 py-0.5 text-xs text-muted">
+              {{ tag }}
+            </span>
           </div>
         </div>
       </div>
-    </div>
+    </MethodologyBlock>
 
-    <!-- Types de textes -->
-    <div class="ce__block">
-      <h3 class="ce__block-title"><i class="pi pi-folder-open" /> Types de textes rencontrés</h3>
-      <div class="ce__types-grid">
-        <div v-for="t in textTypes" :key="t.level" class="ce__type-card">
-          <div class="ce__type-level">{{ t.level }}</div>
-          <p class="ce__type-title">{{ t.title }}</p>
-          <p class="ce__type-desc">{{ t.desc }}</p>
-          <div class="ce__type-tags">
-            <span v-for="tag in t.tags" :key="tag" class="ce__type-tag">{{ tag }}</span>
-          </div>
-        </div>
+    <MethodologyBlock title="Stratégies essentielles" icon="pi pi-star">
+      <div class="flex flex-col gap-6">
+        <MethodologyStep
+          v-for="step in strategies"
+          :key="step.num"
+          :num="step.num"
+          :title="step.title"
+          :desc="step.desc"
+          :tip="step.tip"
+        />
       </div>
-    </div>
+    </MethodologyBlock>
 
-    <!-- Stratégies -->
-    <div class="ce__block">
-      <h3 class="ce__block-title"><i class="pi pi-star" /> Stratégies essentielles</h3>
-      <div class="ce__steps">
-        <div v-for="step in strategies" :key="step.num" class="ce__step">
-          <div class="ce__step-num">{{ step.num }}</div>
+    <MethodologyBlock title="Pièges fréquents à éviter" icon="pi pi-exclamation-triangle">
+      <div class="grid gap-3 md:grid-cols-2">
+        <div
+          v-for="trap in traps"
+          :key="trap.title"
+          class="flex items-start gap-3 rounded-2xl border border-red-100 bg-red-50/60 p-4 dark:border-red-950 dark:bg-red-950/40"
+        >
+          <span class="grid size-8 shrink-0 place-items-center rounded-full bg-red-100 text-red-600 dark:bg-red-950 dark:text-red-400">
+            <i class="pi pi-times text-xs" />
+          </span>
           <div>
-            <p class="ce__step-title">{{ step.title }}</p>
-            <p class="ce__step-desc">{{ step.desc }}</p>
-            <div v-if="step.tip" class="ce__step-tip">
-              <i class="pi pi-lightbulb" />
-              <p>{{ step.tip }}</p>
-            </div>
+            <p class="font-semibold text-ink">{{ trap.title }}</p>
+            <p class="mt-1 text-sm leading-relaxed text-muted">{{ trap.desc }}</p>
           </div>
         </div>
       </div>
-    </div>
+    </MethodologyBlock>
 
-    <!-- Pièges à éviter -->
-    <div class="ce__block">
-      <h3 class="ce__block-title"><i class="pi pi-exclamation-triangle" /> Pièges fréquents à éviter</h3>
-      <div class="ce__traps">
-        <div v-for="trap in traps" :key="trap.title" class="ce__trap">
-          <div class="ce__trap-icon">
-            <i class="pi pi-times" />
-          </div>
-          <div>
-            <p class="ce__trap-title">{{ trap.title }}</p>
-            <p class="ce__trap-desc">{{ trap.desc }}</p>
-          </div>
+    <MethodologyBlock title="Gestion du temps" icon="pi pi-clock">
+      <div class="grid grid-cols-2 gap-3 md:grid-cols-[repeat(auto-fit,minmax(10rem,1fr))]">
+        <div
+          v-for="t in timeManagement"
+          :key="t.label"
+          class="rounded-2xl border border-line bg-canvas p-4 text-center"
+        >
+          <p class="font-heading text-2xl font-extrabold text-gradient">{{ t.time }}</p>
+          <p class="mt-1 text-xs text-muted">{{ t.label }}</p>
         </div>
       </div>
-    </div>
+      <MethodologyCallout class="mt-4">
+        Soit environ <strong>1 minute 30 par question</strong>. Si vous bloquez, passez à la suivante et
+        revenez à la fin. <strong>Ne laissez aucune réponse vide</strong> : une mauvaise réponse ne retire
+        aucun point.
+      </MethodologyCallout>
+    </MethodologyBlock>
 
-    <!-- Gestion du temps -->
-    <div class="ce__block">
-      <h3 class="ce__block-title"><i class="pi pi-clock" /> Gestion du temps</h3>
-      <div class="ce__time-grid">
-        <div v-for="t in timeManagement" :key="t.label" class="ce__time-card">
-          <p class="ce__time-val">{{ t.time }}</p>
-          <p class="ce__time-label">{{ t.label }}</p>
-        </div>
-      </div>
-      <div class="ce__tip-box">
-        <i class="pi pi-info-circle" />
-        <p>Soit environ <strong>1 minute 30 par question</strong>. Si vous bloquez, passez à la suivante et revenez à la fin. <strong>Ne laissez aucune réponse vide</strong>  une mauvaise réponse ne retire aucun point.</p>
-      </div>
-    </div>
-
-    <!-- Règle d'or -->
-    <div class="ce__gold-rule">
-      <i class="pi pi-sparkles" />
-      <p><strong>Règle d'or :</strong> répondez à toutes les questions sans exception. Une réponse incorrecte ne retire aucun point  une réponse manquante rapporte zéro garanti.</p>
-    </div>
-
+    <MethodologyCallout variant="gold">
+      <strong>Règle d'or :</strong> répondez à toutes les questions sans exception. Une réponse incorrecte
+      ne retire aucun point, alors qu'une réponse manquante rapporte zéro à coup sûr.
+    </MethodologyCallout>
   </div>
 </template>
 
@@ -192,110 +166,3 @@ const timeManagement = [
   { time: '15 min', label: 'Révision finale' },
 ]
 </script>
-
-<style scoped>
-.ce { display: flex; flex-direction: column; gap: 2rem; padding: 1.5rem 0; }
-
-.ce__title { font-size: 1.375rem; font-weight: 800; color: var(--text-primary); margin: 0 0 0.75rem; }
-.ce__lead  { font-size: 0.9375rem; color: var(--text-secondary); line-height: 1.75; margin: 0 0 1.5rem; }
-
-.ce__overview { display: flex; gap: 1rem; flex-wrap: wrap; }
-.ce__stat {
-  display: flex; align-items: center; gap: 0.75rem;
-  background: var(--bg-ground); border: 1px solid var(--border-color);
-  border-radius: 0.875rem; padding: 0.875rem 1.25rem; flex: 1; min-width: 130px;
-}
-.ce__stat i { font-size: 1.25rem; color: var(--color-primary-500); flex-shrink: 0; }
-.ce__stat-val { font-size: 1.125rem; font-weight: 800; color: var(--text-primary); margin: 0; }
-.ce__stat-lab { font-size: 0.75rem; color: var(--text-tertiary); margin: 0; }
-
-.ce__block-title {
-  display: flex; align-items: center; gap: 0.5rem;
-  font-size: 1rem; font-weight: 700; color: var(--text-primary); margin: 0 0 1rem;
-}
-.ce__block-title i { color: var(--color-primary-500); }
-
-/* Types grid */
-.ce__types-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; }
-.ce__type-card {
-  background: var(--bg-card); border: 1px solid var(--border-color);
-  border-radius: 0.875rem; padding: 1.25rem;
-}
-.ce__type-level {
-  display: inline-block; background: var(--gradient-primary); color: #fff;
-  border-radius: 9999px; padding: 0.25rem 0.75rem; font-size: 0.75rem;
-  font-weight: 700; margin-bottom: 0.625rem;
-}
-.ce__type-title { font-size: 0.9375rem; font-weight: 700; color: var(--text-primary); margin: 0 0 0.375rem; }
-.ce__type-desc  { font-size: 0.8125rem; color: var(--text-secondary); line-height: 1.5; margin: 0 0 0.75rem; }
-.ce__type-tags  { display: flex; flex-wrap: wrap; gap: 0.375rem; }
-.ce__type-tag {
-  background: var(--bg-ground); border: 1px solid var(--border-color);
-  border-radius: 0.375rem; padding: 0.25rem 0.5rem; font-size: 0.75rem; color: var(--text-tertiary);
-}
-
-/* Steps */
-.ce__steps { display: flex; flex-direction: column; gap: 1.25rem; }
-.ce__step  { display: flex; gap: 1rem; align-items: flex-start; }
-.ce__step-num {
-  width: 32px; height: 32px; border-radius: 50%;
-  background: var(--gradient-primary); color: #fff;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 0.875rem; font-weight: 800; flex-shrink: 0;
-}
-.ce__step-title { font-size: 0.9375rem; font-weight: 700; color: var(--text-primary); margin: 0 0 0.25rem; }
-.ce__step-desc  { font-size: 0.875rem; color: var(--text-secondary); line-height: 1.6; margin: 0; }
-.ce__step-tip {
-  display: flex; align-items: flex-start; gap: 0.5rem; margin-top: 0.5rem;
-  background: #fefce8; border: 1px solid #fde68a; border-radius: 0.5rem; padding: 0.5rem 0.75rem;
-}
-.ce__step-tip i { color: #d97706; font-size: 0.875rem; flex-shrink: 0; margin-top: 0.1rem; }
-.ce__step-tip p { font-size: 0.8125rem; color: #92400e; margin: 0; line-height: 1.5; }
-
-/* Traps */
-.ce__traps { display: flex; flex-direction: column; gap: 0.75rem; }
-.ce__trap  {
-  display: flex; gap: 1rem; align-items: flex-start;
-  background: var(--bg-card); border: 1px solid var(--border-color);
-  border-radius: 0.75rem; padding: 1rem;
-}
-.ce__trap-icon {
-  width: 30px; height: 30px; border-radius: 50%; background: #fef2f2;
-  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-}
-.ce__trap-icon i { color: #dc2626; font-size: 0.75rem; }
-.ce__trap-title { font-size: 0.9rem; font-weight: 700; color: var(--text-primary); margin: 0 0 0.25rem; }
-.ce__trap-desc  { font-size: 0.8125rem; color: var(--text-secondary); line-height: 1.5; margin: 0; }
-
-/* Time */
-.ce__time-grid {
-  display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1rem;
-}
-.ce__time-card {
-  background: var(--bg-card); border: 1px solid var(--border-color);
-  border-radius: 0.875rem; padding: 1rem; text-align: center;
-}
-.ce__time-val   { font-size: 1.375rem; font-weight: 800; color: var(--color-primary-600); margin: 0 0 0.25rem; }
-.ce__time-label { font-size: 0.8125rem; color: var(--text-tertiary); margin: 0; }
-
-.ce__tip-box {
-  display: flex; align-items: flex-start; gap: 0.75rem;
-  background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 0.75rem; padding: 1rem;
-}
-.ce__tip-box i { color: #3b82f6; flex-shrink: 0; margin-top: 0.1rem; }
-.ce__tip-box p { font-size: 0.9rem; color: #1e40af; line-height: 1.6; margin: 0; }
-
-.ce__gold-rule {
-  display: flex; align-items: flex-start; gap: 0.75rem;
-  background: var(--color-primary-50); border: 1px solid var(--color-primary-100);
-  border-radius: 0.875rem; padding: 1rem;
-}
-.ce__gold-rule i { color: var(--color-primary-500); font-size: 1rem; flex-shrink: 0; margin-top: 0.1rem; }
-.ce__gold-rule p { font-size: 0.9rem; font-style: italic; color: var(--color-primary-700); margin: 0; line-height: 1.6; }
-
-@media (max-width: 640px) {
-  .ce__overview   { flex-direction: column; }
-  .ce__time-grid  { grid-template-columns: 1fr; }
-  .ce__types-grid { grid-template-columns: 1fr; }
-}
-</style>

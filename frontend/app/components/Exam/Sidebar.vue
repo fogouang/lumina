@@ -1,14 +1,12 @@
 <template>
-  <aside class="exam-sidebar">
+  <aside
+    class="flex h-full flex-col gap-3 rounded-card border border-line bg-card p-3 shadow-soft"
+  >
+    <ExamTimer :total-seconds="totalSeconds" @expired="emit('expired')" />
 
-    <!-- Timer -->
-    <ExamTimer
-      :total-seconds="totalSeconds"
-      @expired="emit('expired')"
-    />
-
-    <!-- Navigation -->
-    <div class="exam-sidebar__nav">
+    <div
+      class="flex-1 overflow-y-auto rounded-2xl border border-line/60 bg-linear-to-b from-card-2 to-canvas p-4"
+    >
       <ExamQuestionNav
         :questions="questions"
         :current-index="currentIndex"
@@ -17,12 +15,14 @@
       />
     </div>
 
-    <!-- Quitter -->
-    <button class="exam-sidebar__quit" @click="emit('quit')">
+    <button
+      type="button"
+      class="flex items-center justify-center gap-2 rounded-xl border border-red-200 bg-red-50/60 px-4 py-3 text-sm font-semibold text-red-600 transition-colors hover:bg-red-100 dark:border-red-900 dark:bg-red-950/40 dark:text-red-400 dark:hover:bg-red-950"
+      @click="emit('quit')"
+    >
       <i class="pi pi-sign-out" />
       Quitter l'examen
     </button>
-
   </aside>
 </template>
 
@@ -42,65 +42,3 @@ const emit = defineEmits<{
   expired: []
 }>()
 </script>
-
-<style scoped>
-.exam-sidebar {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  width: 280px;
-  flex-shrink: 0;
-  position: sticky;
-  top: 1rem;
-  height: fit-content;
-}
-
-.exam-sidebar__nav {
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 0.875rem;
-  padding: 1.25rem;
-}
-
-.exam-sidebar__quit {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  width: 100%;
-  padding: 0.75rem;
-  background: none;
-  border: 1px solid var(--color-danger-200);
-  border-radius: 0.75rem;
-  color: var(--color-danger-600);
-  font-size: 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.exam-sidebar__quit:hover {
-  background: var(--color-danger-50);
-  border-color: var(--color-danger-400);
-}
-
-@media (max-width: 1024px) {
-  .exam-sidebar {
-    width: 100%;
-    position: static;
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: stretch;
-  }
-
-  .exam-sidebar__nav {
-    flex: 1;
-    min-width: 200px;
-  }
-
-  .exam-sidebar__quit {
-    width: auto;
-    flex-shrink: 0;
-  }
-}
-</style>

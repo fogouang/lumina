@@ -1,5 +1,4 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
-import Aura from "@primeuix/themes/aura";
 import tailwindcss from "@tailwindcss/vite";
 
 export default defineNuxtConfig({
@@ -8,29 +7,10 @@ export default defineNuxtConfig({
   modules: ["@primevue/nuxt-module", "@pinia/nuxt"],
   css: ["~/assets/css/main.css", "primeicons/primeicons.css"],
   primevue: {
-    options: {
-      theme: {
-        preset: Aura,
-      },
-    },
+    importTheme: { from: "@/theme/app-theme.ts" },
     autoImport: true,
   },
-  // nitro: {
-  //   devProxy:
-  //     process.env.NODE_ENV === "development"
-  //       ? {
-  //           "/api": {
-  //             target: "https://lumina-tcf.online/api",
-  //             changeOrigin: true,
-  //           },
-  //         }
-  //       : {},
-  // },
-  // runtimeConfig: {
-  //   public: {
-  //     apiBaseUrl: process.env.NUXT_PUBLIC_API_BASE_URL ?? "",
-  //   },
-  // },
+  components: [{ path: "~/components/ui", pathPrefix: false }, "~/components"],
   routeRules: {
     "/**": {
       headers: {
@@ -60,7 +40,8 @@ export default defineNuxtConfig({
     public: {
       apiBaseUrl: process.env.NUXT_PUBLIC_API_BASE_URL ?? "",
       expressionOraleWsBaseUrl:
-        process.env.NUXT_PUBLIC_EXPRESSION_ORALE_WS_BASE_URL ?? "ws://localhost:8002",
+        process.env.NUXT_PUBLIC_EXPRESSION_ORALE_WS_BASE_URL ??
+        "ws://localhost:8002",
     },
   },
 

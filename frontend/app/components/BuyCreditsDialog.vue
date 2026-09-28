@@ -3,28 +3,62 @@
     v-model:visible="isOpen"
     modal
     :draggable="false"
-    :style="{ width: '480px' }"
-    header="Acheter des crédits IA"
+    :style="{ width: '32rem' }"
+    :breakpoints="{ '640px': '94vw' }"
+    :pt="{ mask: { class: 'backdrop-blur-sm' } }"
     @hide="onHide"
   >
-    <div class="flex flex-col gap-5 pt-2">
-      <!-- Step 1 : Choix quantité + opérateur -->
-      <div v-if="step === 1" class="flex flex-col gap-4">
-        <div
-          class="bg-purple-50 border border-purple-200 rounded-xl p-4 flex items-start gap-3"
-        >
-          <p class="text-sm text-green-700">
-            <strong>50 FCFA</strong> par crédit. 1 crédit = 1 correction
-            complète des 3 tâches EE. Min 10 - Max 1000 crédits par achat.
+    <!-- En-tête -->
+    <template #header>
+      <div class="flex w-full flex-col gap-4">
+        <div class="flex items-center gap-3">
+          <span class="brand-gradient grid size-11 place-items-center rounded-leaf text-white shadow-brand">
+            <i class="pi pi-sparkles" />
+          </span>
+          <div>
+            <h3 class="font-heading text-lg font-bold text-ink">Acheter des crédits IA</h3>
+            <p class="text-xs text-faint">Paiement sécurisé par Mobile Money</p>
+          </div>
+        </div>
+
+        <!-- Étapes -->
+        <ol class="flex items-center gap-2">
+          <li
+            v-for="(s, i) in stepsList"
+            :key="s.label"
+            class="flex flex-1 items-center gap-2"
+          >
+            <span
+              class="grid size-6 shrink-0 place-items-center rounded-full text-[0.7rem] font-bold transition-all duration-300"
+              :class="stepClass(i + 1)"
+            >
+              <i v-if="stepDone(i + 1)" class="pi pi-check text-[0.6rem]" />
+              <template v-else>{{ i + 1 }}</template>
+            </span>
+            <span class="hidden text-xs font-medium text-muted sm:inline">{{ s.label }}</span>
+            <span v-if="i < stepsList.length - 1" class="h-px flex-1 bg-line" />
+          </li>
+        </ol>
+      </div>
+    </template>
+
+    <div class="flex flex-col gap-5 pt-1">
+      <!-- Étape 1 : quantité + opérateur -->
+      <div v-if="step === 1" class="flex flex-col gap-5">
+        <div class="flex items-start gap-3 rounded-2xl border border-accent-200 bg-accent-50 p-4 dark:border-accent-900 dark:bg-accent-950">
+          <i class="pi pi-info-circle mt-0.5 text-accent-700 dark:text-accent-300" />
+          <p class="text-sm leading-relaxed text-accent-900 dark:text-accent-200">
+            <strong class="font-bold">50 FCFA</strong> par crédit. 1 crédit = 1 correction complète des 3 tâches
+            EE. Minimum 10, maximum 1000 crédits par achat.
           </p>
         </div>
 
-        <div class="flex flex-col gap-1.5">
-          <label class="text-sm font-semibold text-(--text-secondary)"
-            >Nombre de crédits</label
-          >
+        <!-- Quantité -->
+        <div class="flex flex-col gap-2">
+          <label for="credits-qty" class="text-sm font-semibold text-ink">Nombre de crédits</label>
           <InputNumber
             v-model="credits"
+            input-id="credits-qty"
             :min="10"
             :max="1000"
             fluid
@@ -35,170 +69,163 @@
             <template #decrementbuttonicon><i class="pi pi-minus" /></template>
             <template #incrementbuttonicon><i class="pi pi-plus" /></template>
           </InputNumber>
-        </div>
 
-        <div class="flex gap-2 flex-wrap">
-          <button
-            v-for="qty in [10, 20, 50, 100]"
-            :key="qty"
-            class="px-3 py-1.5 rounded-lg text-sm font-semibold border transition-all cursor-pointer"
-            :class="
-              credits === qty
-                ? 'bg-gradient-primary text-white border-transparent'
-                : 'bg-(--bg-ground) border-(--border-color) text-(--text-secondary) hover:border-primary-400'
-            "
-            @click="credits = qty"
-          >
-            {{ qty }} crédits
-          </button>
-        </div>
-
-        <div
-          class="bg-(--bg-ground) rounded-xl p-4 flex items-center justify-between"
-        >
-          <div>
-            <p class="text-sm text-(--text-secondary)">Total à payer</p>
-            <p class="text-2xl font-extrabold text-primary-600">
-              {{ totalAmount.toLocaleString("fr-FR") }} FCFA
-            </p>
-          </div>
-          <div class="text-right">
-            <p class="text-xs text-(--text-tertiary)">
-              {{ credits }} crédit{{ credits > 1 ? "s" : "" }}
-            </p>
-            <p class="text-xs text-(--text-tertiary)">50 FCFA/crédit</p>
-          </div>
-        </div>
-
-        <div class="flex flex-col gap-1.5">
-          <label class="text-sm font-semibold text-(--text-secondary)"
-            >Opérateur Mobile Money</label
-          >
-          <div class="grid grid-cols-2 gap-2">
+          <div class="flex flex-wrap gap-2 pt-1">
             <button
-              v-for="op in operators"
-              :key="op.value"
-              class="flex items-center gap-2 p-3 rounded-xl border-2 transition-all cursor-pointer font-inherit text-left"
+              v-for="qty in [10, 20, 50, 100]"
+              :key="qty"
+              type="button"
+              class="rounded-full border px-3.5 py-1.5 text-sm font-semibold transition-all duration-200"
               :class="
-                operator === op.value
-                  ? 'border-primary-500 bg-primary-50'
-                  : 'border-(--border-color) bg-(--bg-card) hover:border-primary-300'
+                credits === qty
+                  ? 'border-transparent brand-gradient text-white shadow-brand'
+                  : 'border-line bg-card text-muted hover:border-primary-200 hover:text-ink'
               "
-              @click="operator = op.value"
+              @click="credits = qty"
             >
-              <img
-                :src="op.logo"
-                :alt="op.label"
-                class="h-7 w-7 object-contain rounded"
-              />
-              <div>
-                <p
-                  class="text-sm font-semibold"
-                  :class="
-                    operator === op.value
-                      ? 'text-primary-700'
-                      : 'text-(--text-primary)'
-                  "
-                >
-                  {{ op.label }}
-                </p>
-                <p class="text-xs text-(--text-tertiary)">{{ op.desc }}</p>
-              </div>
+              {{ qty }} crédits
             </button>
           </div>
         </div>
 
-        <div class="flex flex-col gap-1.5">
-          <label class="text-sm font-semibold text-(--text-secondary)"
-            >Numéro de téléphone</label
-          >
-          <InputText v-model="phone" placeholder="ex: 691850913" fluid />
+        <!-- Total -->
+        <div class="featured-panel flex items-center justify-between rounded-[1.5rem_0.4rem] p-5 text-white">
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-widest text-white/60">Total à payer</p>
+            <p class="mt-1 font-heading text-3xl font-extrabold">
+              {{ totalAmount.toLocaleString("fr-FR") }}
+              <span class="text-base font-semibold text-white/80">FCFA</span>
+            </p>
+          </div>
+          <div class="text-right text-xs text-white/70">
+            <p class="font-semibold text-white">{{ credits }} crédit{{ credits > 1 ? "s" : "" }}</p>
+            <p>50 FCFA / crédit</p>
+          </div>
+        </div>
+
+        <!-- Opérateur -->
+        <div class="flex flex-col gap-2">
+          <span class="text-sm font-semibold text-ink">Opérateur Mobile Money</span>
+          <div class="grid grid-cols-2 gap-3">
+            <button
+              v-for="op in operators"
+              :key="op.value"
+              type="button"
+              :aria-pressed="operator === op.value"
+              class="relative flex items-center gap-3 rounded-2xl border-2 p-3 text-left transition-all duration-200"
+              :class="
+                operator === op.value
+                  ? 'border-primary bg-primary-50 dark:bg-primary-950'
+                  : 'border-line bg-card hover:border-primary-200'
+              "
+              @click="operator = op.value"
+            >
+              <img :src="op.logo" :alt="op.label" class="size-9 rounded-lg object-contain" />
+              <div class="min-w-0">
+                <p class="truncate text-sm font-semibold text-ink">{{ op.label }}</p>
+                <p class="truncate text-xs text-faint">{{ op.desc }}</p>
+              </div>
+              <span
+                v-if="operator === op.value"
+                class="absolute -right-1.5 -top-1.5 grid size-5 place-items-center rounded-full bg-primary text-white"
+              >
+                <i class="pi pi-check text-[0.55rem]" />
+              </span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Téléphone -->
+        <div class="flex flex-col gap-2">
+          <label for="credits-phone" class="text-sm font-semibold text-ink">Numéro de téléphone</label>
+          <IconField>
+            <InputIcon class="pi pi-phone" />
+            <InputText
+              id="credits-phone"
+              v-model="phone"
+              type="tel"
+              inputmode="numeric"
+              autocomplete="tel"
+              placeholder="6XX XX XX XX"
+              fluid
+            />
+          </IconField>
+          <p class="text-xs text-faint">Le numéro qui recevra la demande de paiement.</p>
         </div>
       </div>
 
-      <!-- Step 2 : Confirmation sur téléphone (polling) -->
-      <div v-else-if="step === 2" class="flex flex-col gap-4">
-        <div
-          class="bg-blue-50 border border-blue-200 rounded-xl p-4 text-center"
-        >
-          <i class="pi pi-mobile text-3xl text-blue-500 mb-2 block" />
-          <p class="font-bold text-blue-800 mb-1">
-            Confirmez sur votre téléphone
-          </p>
-          <p class="text-sm text-blue-700">
-            Une demande a été envoyée au {{ phone }} pour
-            <strong
-              >{{
-                purchaseResult?.total_amount.toLocaleString("fr-FR")
-              }}
-              FCFA</strong
-            >.
+      <!-- Étape 2 : confirmation sur le téléphone -->
+      <div v-else-if="step === 2" class="flex flex-col items-center gap-5 py-6 text-center">
+        <span class="relative grid size-20 place-items-center">
+          <span class="absolute inset-0 animate-ping rounded-full bg-primary-200/60 dark:bg-primary-800/40" />
+          <span class="brand-gradient relative grid size-20 place-items-center rounded-full text-white shadow-brand">
+            <i class="pi pi-mobile text-3xl" />
+          </span>
+        </span>
+        <div>
+          <p class="font-heading text-lg font-bold text-ink">Confirmez sur votre téléphone</p>
+          <p class="mt-2 text-sm leading-relaxed text-muted">
+            Une demande a été envoyée au <strong class="font-semibold text-ink">{{ phone }}</strong> pour
+            <strong class="font-semibold text-ink">{{ purchaseResult?.total_amount.toLocaleString("fr-FR") }} FCFA</strong>.
           </p>
         </div>
-        <div
-          class="flex items-center justify-center gap-2 text-sm text-(--text-tertiary) py-2"
-        >
-          <ProgressSpinner style="width: 18px; height: 18px" stroke-width="6" />
+        <div class="inline-flex items-center gap-2 rounded-full bg-card-2 px-4 py-2 text-sm text-muted">
+          <i class="pi pi-spin pi-spinner text-primary" />
           En attente de confirmation...
         </div>
       </div>
 
-      <!-- Step 3 : Succès -->
-      <div
-        v-else-if="step === 3"
-        class="flex flex-col items-center gap-3 py-4 text-center"
-      >
-        <div
-          class="w-16 h-16 rounded-full bg-green-50 flex items-center justify-center"
-        >
-          <i class="pi pi-check-circle text-green-500 text-3xl" />
+      <!-- Étape 3 : succès -->
+      <div v-else-if="step === 3" class="flex flex-col items-center gap-4 py-6 text-center">
+        <span class="grid size-20 place-items-center rounded-full bg-green-100 text-green-600 dark:bg-green-950 dark:text-green-400">
+          <i class="pi pi-check-circle text-4xl" />
+        </span>
+        <div>
+          <p class="font-heading text-xl font-bold text-ink">Crédits ajoutés !</p>
+          <p class="mt-1 text-sm text-muted">
+            <strong class="font-semibold text-ink">{{ purchaseResult?.credits }} crédits</strong>
+            ont été ajoutés à votre compte.
+          </p>
         </div>
-        <p class="font-bold text-lg text-(--text-primary)">Crédits ajoutés !</p>
-        <p class="text-sm text-(--text-tertiary)">
-          {{ purchaseResult?.credits }} crédits ont été ajoutés à votre compte.
-        </p>
       </div>
 
-      <!-- Step erreur -->
-      <div
-        v-else-if="step === 'error'"
-        class="flex flex-col items-center gap-3 py-4 text-center"
-      >
-        <div
-          class="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center"
-        >
-          <i class="pi pi-times-circle text-red-500 text-2xl" />
+      <!-- Erreur -->
+      <div v-else-if="step === 'error'" class="flex flex-col items-center gap-4 py-6 text-center">
+        <span class="grid size-20 place-items-center rounded-full bg-red-100 text-red-600 dark:bg-red-950 dark:text-red-400">
+          <i class="pi pi-times-circle text-4xl" />
+        </span>
+        <div>
+          <p class="font-heading text-xl font-bold text-ink">Erreur de paiement</p>
+          <p class="mt-1 max-w-sm text-sm leading-relaxed text-muted">{{ errorMessage }}</p>
         </div>
-        <p class="font-bold text-(--text-primary)">Erreur de paiement</p>
-        <p class="text-sm text-(--text-tertiary)">{{ errorMessage }}</p>
       </div>
     </div>
 
     <template #footer>
-      <div class="flex justify-end gap-2">
-        <Button v-if="step !== 2" label="Fermer" text @click="close" />
-        <Button
+      <div class="flex w-full justify-end gap-2">
+        <AppButton v-if="step !== 2" label="Fermer" variant="ghost" @click="close" />
+        <AppButton
           v-if="step === 1"
           label="Payer"
           icon="pi pi-arrow-right"
           icon-pos="right"
+          variant="gradient"
           :loading="purchasing"
           :disabled="!canProceed"
-          class="bg-gradient-primary border-none font-bold"
           @click="purchase"
         />
-        <Button
+        <AppButton
           v-else-if="step === 3"
           label="Terminé"
           icon="pi pi-check"
-          severity="success"
+          variant="gradient"
           @click="close"
         />
-        <Button
+        <AppButton
           v-else-if="step === 'error'"
           label="Réessayer"
           icon="pi pi-refresh"
-          outlined
+          variant="secondary"
           @click="step = 1"
         />
       </div>
@@ -241,6 +268,20 @@ const operators = [
     logo: "/images/orange.jpg",
   },
 ] as const;
+
+// Indicateur d'étapes (affichage uniquement)
+const stepsList = [{ label: "Choix" }, { label: "Confirmation" }, { label: "Terminé" }];
+
+function stepDone(n: number) {
+  return typeof step.value === "number" && step.value > n;
+}
+
+function stepClass(n: number) {
+  if (step.value === "error" && n === 3) return "bg-red-100 text-red-600 dark:bg-red-950 dark:text-red-400";
+  if (stepDone(n)) return "bg-green-500 text-white";
+  if (step.value === n) return "brand-gradient text-white shadow-brand";
+  return "bg-card-2 text-faint";
+}
 
 const totalAmount = computed(() => PRICE_PER_CREDIT * credits.value);
 

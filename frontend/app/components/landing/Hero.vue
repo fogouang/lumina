@@ -1,90 +1,157 @@
+<script setup lang="ts">
+import { site } from "~/config/site";
+
+const { openLogin } = useAuthModal();
+
+const stats = [
+  { value: "3K+", label: "Candidats" },
+  { value: "4", label: "Modules" },
+  { value: "10K+", label: "Tests réalisés" },
+];
+
+// Versions claires des variables du design system, pour le fond sombre du hero
+const darkSurfaceVars = {
+  "--app-text-gradient":
+    "linear-gradient(120deg, var(--p-brand-200) 0%, var(--p-brand-400) 55%, var(--p-accent-400) 100%)",
+};
+</script>
+
 <template>
-  <section class="relative overflow-hidden">
+  <section
+    class="relative isolate flex min-h-[92vh] items-center overflow-hidden"
+    :style="darkSurfaceVars"
+  >
     <!-- Image de fond -->
     <div class="absolute inset-0 -z-10">
       <img
         src="/images/hero.jpg"
         alt=""
-        class="h-full w-full object-cover object-[center_20%]"
+        class="hero-zoom h-full w-full object-cover object-[70%_20%]"
       />
-      <!-- Overlay sombre uniforme, simple -->
-      <div class="absolute inset-0 bg-black/60" />
+      <!-- Voile de marque : dense à gauche pour le texte, léger à droite pour la photo -->
+      <div
+        class="absolute inset-0 bg-linear-to-r from-primary-950/95 via-primary-950/75 to-primary-950/25"
+      />
+      <div
+        class="absolute inset-0 bg-linear-to-t from-primary-950/60 via-transparent to-primary-950/40"
+      />
+      <!-- Grille blanche très discrète -->
+      <div
+        class="bg-grid animate-grid-drift absolute inset-0"
+        style="--app-line: rgba(255, 255, 255, 0.06)"
+      />
+      <!-- Halo jaune -->
+      <div
+        class="animate-float absolute -left-24 bottom-0 size-104 rounded-full bg-accent-400/15 blur-3xl"
+      />
+      <!-- Fondu vers la section suivante -->
+      <div
+        class="absolute inset-x-0 bottom-0 h-32 bg-linear-to-b from-transparent to-canvas"
+      />
     </div>
 
     <div
-  class="container relative mx-auto flex aspect-4/5 max-w-400 items-center py-16 sm:aspect-16/10 lg:aspect-auto lg:min-h-screen lg:py-24"
+      class="mx-auto grid w-full max-w-7xl items-center gap-12 px-4 pb-28 pt-32 sm:px-6 lg:grid-cols-[1.15fr_1fr] lg:px-8 lg:pt-40"
     >
-      <div class="w-full max-w-md lg:max-w-lg">
-        <!-- Titre -->
+      <!-- Texte -->
+      <div>
         <h1
-          class="animate-in fade-in slide-in-from-bottom-4 duration-700 delay-150 fill-mode-both font-display text-4xl font-extrabold leading-[1.1] tracking-tight text-white sm:text-5xl lg:text-[2.75rem] xl:text-5xl"
+          v-reveal="{ delay: 100 }"
+          class="mt-6 max-w-2xl font-heading text-4xl font-extrabold leading-[1.08] tracking-tight text-white sm:text-5xl lg:text-6xl"
         >
-          Ici, on ne passe pas le
-          <span class="text-primary-400">TCF Canada</span>
-          deux fois.
+          Visez le score qui vous ouvre les portes du
+          <span class="text-accent-400">Canada</span>.
         </h1>
 
-        <!-- Description -->
         <p
-          class="animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200 fill-mode-both mt-5 text-sm leading-relaxed text-white/80"
+          v-reveal="{ delay: 200 }"
+          class="mt-6 max-w-xl text-lg leading-relaxed text-white/80"
         >
-          Simulations en conditions réelles, correction IA instantanée des
-          expressions écrites, enregistrement et évaluation de vos expressions
-          orales directement sur la plateforme, et suivi de progression
-          personnalisé — tout ce qu’il faut pour obtenir votre score du premier
-          coup, à moindre coût.
+          Des sujets récents mis à jour chaque mois, un simulateur fidèle à
+          l'examen pour les quatre épreuves et une correction IA qui vous dit
+          exactement quoi améliorer. Le jour J, vous saurez déjà à quoi vous
+          attendre.
         </p>
 
-        <!-- CTAs -->
         <div
-          class="animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300 fill-mode-both mt-8 flex flex-col gap-3 sm:flex-row"
+          v-reveal="{ delay: 300 }"
+          class="mt-10 flex flex-col gap-3 sm:flex-row"
         >
-          <NuxtLink to="/tarifs">
-            <Button
-              label="Voir les prix"
-              icon="pi pi-arrow-right"
-              icon-pos="right"
-              size="large"
-              class="rounded-xl! bg-white! border-none! px-6! py-3.5! text-base! font-bold! text-primary-800! shadow-lg! transition-all hover:bg-primary-50! hover:shadow-xl! hover:-translate-y-0.5!"
-            />
-          </NuxtLink>
-          <Button
+          <AppCta
+            to="/tarifs"
+            label="Voir les prix"
+            icon="pi pi-arrow-right"
+            variant="light"
+          />
+          <AppCta
             label="Pratiquer"
             icon="pi pi-sign-in"
-            size="large"
-            outlined
-            class="rounded-xl! border-2! border-white/70! bg-transparent! px-6! py-3.5! text-base! font-semibold! text-white! transition-all hover:bg-white/10! hover:-translate-y-0.5!"
+            icon-pos="left"
+            variant="glass"
             @click="openLogin()"
           />
         </div>
 
-        <!-- Stats -->
         <div
-          class="animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300 fill-mode-both mt-10 border-t border-white/20 pt-6"
+          v-reveal="{ delay: 400 }"
+          class="mt-12 max-w-md border-t border-white/20 pt-8"
         >
           <p
             class="text-xs font-semibold uppercase tracking-widest text-white/60"
           >
             Utilisé par des milliers de candidats
           </p>
-          <div class="mt-4 grid grid-cols-3 gap-4">
-            <div class="flex flex-col gap-0.5">
-              <span class="font-display text-2xl font-extrabold text-white"
-                >3K+</span
-              >
-              <span class="text-sm text-white/65">Candidats</span>
+          <dl class="mt-4 grid grid-cols-3 gap-6">
+            <div
+              v-for="stat in stats"
+              :key="stat.label"
+              class="flex flex-col-reverse"
+            >
+              <dt class="mt-1 text-sm text-white/65">{{ stat.label }}</dt>
+              <dd class="font-heading text-3xl font-extrabold text-white">
+                {{ stat.value }}
+              </dd>
             </div>
-            <div class="flex flex-col gap-0.5">
-              <span class="font-display text-2xl font-extrabold text-white"
-                >4</span
-              >
-              <span class="text-sm text-white/65">Modules</span>
+          </dl>
+        </div>
+      </div>
+
+      <!-- Cartes en verre (desktop) -->
+      <div class="relative hidden h-full min-h-104 lg:block">
+        <div
+          v-reveal="{ from: 'right', delay: 500 }"
+          class="absolute right-0 top-8"
+        >
+          <div
+            class="animate-float flex items-center gap-3 rounded-2xl border border-white/20 bg-white/10 px-5 py-4 shadow-lift backdrop-blur-md"
+          >
+            <span
+              class="flex size-10 items-center justify-center rounded-[0.95rem_0.3rem] bg-accent-400 text-accent-950"
+            >
+              <i class="pi pi-bolt" />
+            </span>
+            <div>
+              <p class="text-xs text-white/70">Correction IA</p>
+              <p class="text-sm font-semibold text-white">Instantanée</p>
             </div>
-            <div class="flex flex-col gap-0.5">
-              <span class="font-display text-2xl font-extrabold text-white"
-                >10K+</span
-              >
-              <span class="text-sm text-white/65">Tests réalisés</span>
+          </div>
+        </div>
+
+        <div
+          v-reveal="{ from: 'right', delay: 650 }"
+          class="absolute bottom-8 right-16"
+        >
+          <div
+            class="animate-float flex items-center gap-3 rounded-2xl border border-white/20 bg-white/10 px-5 py-4 shadow-lift backdrop-blur-md [animation-delay:-2.5s]"
+          >
+            <span
+              class="flex size-10 items-center justify-center rounded-[0.95rem_0.3rem] bg-white text-primary-800"
+            >
+              <i class="pi pi-microphone" />
+            </span>
+            <div>
+              <p class="text-xs text-white/70">Expression orale</p>
+              <p class="text-sm font-semibold text-white">Évaluée en direct</p>
             </div>
           </div>
         </div>
@@ -93,6 +160,24 @@
   </section>
 </template>
 
-<script setup>
-const { openLogin } = useAuthModal();
-</script>
+<style scoped>
+/* Léger zoom arrière de l'image au chargement */
+.hero-zoom {
+  animation: hero-zoom 1.8s var(--ease-spring) both;
+}
+
+@keyframes hero-zoom {
+  from {
+    transform: scale(1.08);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-zoom {
+    animation: none;
+  }
+}
+</style>

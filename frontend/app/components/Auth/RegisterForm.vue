@@ -3,120 +3,131 @@
     v-slot="$form"
     :initial-values="initialValues"
     :resolver="resolver"
-    class="auth-form"
+    class="flex flex-col gap-5"
     @submit="onSubmit"
   >
-    <div v-if="referralCode" class="auth-form__referral-banner">
-      Vous avez été invité·e à rejoindre Lumina TCF 🎉
+    <!-- Parrainage -->
+    <div
+      v-if="referralCode"
+      class="flex items-center gap-3 rounded-2xl border border-accent-200 bg-accent-50 p-3.5 dark:border-accent-900 dark:bg-accent-950"
+    >
+      <span class="grid size-9 shrink-0 place-items-center rounded-[0.8rem_0.25rem] bg-accent-400 text-accent-950">
+        <i class="pi pi-gift text-sm" />
+      </span>
+      <p class="text-sm font-semibold text-accent-900 dark:text-accent-200">
+        Vous avez été invité·e à rejoindre {{ site.name }}.
+      </p>
     </div>
 
     <!-- Prénom + Nom -->
-    <div class="auth-form__row">
-      <div class="auth-form__field">
-        <label class="auth-form__label">Prénom</label>
+    <div class="grid gap-5 sm:grid-cols-2">
+      <div class="flex flex-col gap-2">
+        <label for="register-first-name" class="text-sm font-semibold text-ink">Prénom</label>
         <InputText
+          id="register-first-name"
           name="first_name"
           placeholder="Jean"
+          autocomplete="given-name"
           fluid
           :invalid="$form.first_name?.invalid"
         />
-        <Message
-          v-if="$form.first_name?.invalid"
-          severity="error"
-          size="small"
-          variant="simple"
-        >
+        <Message v-if="$form.first_name?.invalid" severity="error" size="small" variant="simple">
           {{ $form.first_name.error.message }}
         </Message>
       </div>
 
-      <div class="auth-form__field">
-        <label class="auth-form__label">Nom</label>
+      <div class="flex flex-col gap-2">
+        <label for="register-last-name" class="text-sm font-semibold text-ink">Nom</label>
         <InputText
+          id="register-last-name"
           name="last_name"
           placeholder="Dupont"
+          autocomplete="family-name"
           fluid
           :invalid="$form.last_name?.invalid"
         />
-        <Message
-          v-if="$form.last_name?.invalid"
-          severity="error"
-          size="small"
-          variant="simple"
-        >
+        <Message v-if="$form.last_name?.invalid" severity="error" size="small" variant="simple">
           {{ $form.last_name.error.message }}
         </Message>
       </div>
     </div>
 
     <!-- Email -->
-    <div class="auth-form__field">
-      <label class="auth-form__label">Email</label>
+    <div class="flex flex-col gap-2">
+      <label for="register-email" class="text-sm font-semibold text-ink">Email</label>
       <InputText
+        id="register-email"
         name="email"
         type="email"
         placeholder="votre@email.com"
+        autocomplete="email"
         fluid
         :invalid="$form.email?.invalid"
       />
-      <Message
-        v-if="$form.email?.invalid"
-        severity="error"
-        size="small"
-        variant="simple"
-      >
+      <Message v-if="$form.email?.invalid" severity="error" size="small" variant="simple">
         {{ $form.email.error.message }}
       </Message>
     </div>
 
     <!-- Téléphone -->
-    <div class="auth-form__field">
-      <label class="auth-form__label"
-        >Téléphone <span class="auth-form__optional">(optionnel)</span></label
-      >
-      <InputText name="phone" type="tel" placeholder="+237 6XX XXX XXX" fluid />
+    <div class="flex flex-col gap-2">
+      <label for="register-phone" class="text-sm font-semibold text-ink">
+        Téléphone <span class="font-normal text-faint">(optionnel)</span>
+      </label>
+      <InputText
+        id="register-phone"
+        name="phone"
+        type="tel"
+        placeholder="+237 6XX XXX XXX"
+        autocomplete="tel"
+        fluid
+      />
     </div>
 
     <!-- Mot de passe -->
-    <div class="auth-form__field">
-      <label class="auth-form__label">Mot de passe</label>
+    <div class="flex flex-col gap-2">
+      <label for="register-password" class="text-sm font-semibold text-ink">Mot de passe</label>
       <Password
+        input-id="register-password"
         name="password"
         placeholder="••••••••"
+        autocomplete="new-password"
         toggle-mask
         fluid
         :invalid="$form.password?.invalid"
       />
-      <Message
-        v-if="$form.password?.invalid"
-        severity="error"
-        size="small"
-        variant="simple"
-      >
+      <Message v-if="$form.password?.invalid" severity="error" size="small" variant="simple">
         {{ $form.password.error.message }}
       </Message>
     </div>
 
     <!-- Erreur API -->
-    <Message v-if="auth.error" severity="error" size="small">
-      {{ auth.error }}
-    </Message>
+    <div
+      v-if="auth.error"
+      class="flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-3.5 dark:border-red-900 dark:bg-red-950"
+    >
+      <i class="pi pi-exclamation-circle mt-0.5 text-red-600 dark:text-red-400" />
+      <p class="text-sm font-medium text-red-700 dark:text-red-300">{{ auth.error }}</p>
+    </div>
 
-    <!-- Submit -->
-    <Button
+    <!-- Envoi -->
+    <AppButton
       type="submit"
       label="Créer mon compte"
       icon="pi pi-user-plus"
+      variant="gradient"
+      size="large"
       :loading="auth.loading"
-      class="auth-form__submit bg-gradient-primary w-full"
+      block
+      class="mt-1"
     />
 
-    <!-- Switch -->
-    <p v-if="showSwitch" class="auth-form__switch">
+    <!-- Bascule -->
+    <p v-if="showSwitch" class="text-center text-sm text-muted">
       Déjà un compte ?
       <button
         type="button"
-        class="auth-form__switch-btn"
+        class="font-semibold text-primary underline-offset-4 hover:underline"
         @click="handleSwitchToLogin"
       >
         Se connecter
@@ -128,6 +139,7 @@
 <script setup lang="ts">
 import { z } from "zod";
 import { zodResolver } from "@primevue/forms/resolvers/zod";
+import { site } from "~/config/site";
 
 const props = defineProps<{
   referralCode?: string | null;
@@ -202,7 +214,7 @@ async function onSubmit({
     toast.add({
       severity: "success",
       summary: "Compte créé !",
-      detail: "Bienvenue sur Lumina TCF.",
+      detail: `Bienvenue sur ${site.name}.`,
       life: 3000,
     });
     close();
@@ -212,79 +224,3 @@ async function onSubmit({
   }
 }
 </script>
-
-<style scoped>
-.auth-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.auth-form__referral-banner {
-  text-align: center;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--color-primary-700);
-  background: var(--color-primary-50);
-  border-radius: 0.625rem;
-  padding: 0.625rem 0.875rem;
-}
-
-.auth-form__row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.875rem;
-}
-
-.auth-form__field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.375rem;
-}
-
-.auth-form__label {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-}
-
-.auth-form__optional {
-  font-weight: 400;
-  color: var(--text-tertiary);
-  font-size: 0.8125rem;
-}
-
-.auth-form__submit {
-  border: none !important;
-  border-radius: 0.75rem !important;
-  font-weight: 700 !important;
-  margin-top: 0.25rem;
-}
-
-.auth-form__switch {
-  text-align: center;
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-  margin: 0;
-}
-
-.auth-form__switch-btn {
-  background: none;
-  border: none;
-  color: var(--color-primary-600);
-  font-weight: 600;
-  cursor: pointer;
-  padding: 0;
-  font-size: inherit;
-}
-
-.auth-form__switch-btn:hover {
-  text-decoration: underline;
-}
-
-@media (max-width: 480px) {
-  .auth-form__row {
-    grid-template-columns: 1fr;
-  }
-}
-</style>

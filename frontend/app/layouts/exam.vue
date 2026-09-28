@@ -1,13 +1,5 @@
-<!-- layouts/exam.vue -->
 <template>
-  <div class="exam-wrapper">
+  <div class="min-h-screen bg-canvas text-ink">
     <slot />
   </div>
 </template>
-
-<style>
-.exam-wrapper {
-  min-height: 100vh;
-  background: var(--bg-ground);
-}
-</style>

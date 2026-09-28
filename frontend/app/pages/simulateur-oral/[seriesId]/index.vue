@@ -65,130 +65,85 @@ function goToConversation(task: ExpressionTaskResponse): void {
   <div>
     <h1 class="account-page-title">Simulateur Expression Orale</h1>
 
-    <div class="account-section">
-      <div v-if="loading" style="display: flex; justify-content: center; padding: 3rem">
-        <ProgressSpinner style="width: 40px; height: 40px" />
-      </div>
-      <Message v-else-if="error" severity="error">{{ error }}</Message>
+    <!-- Chargement -->
+    <div v-if="loading" class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+      <div v-for="n in 3" :key="n" class="h-28 animate-pulse rounded-card border border-line bg-card" />
+    </div>
 
-      <div v-else class="eo-task-grid">
-        <div
-          v-for="task in oralTasks"
-          :key="task.id"
-          class="eo-task-card"
-          @click="goToConversation(task)"
+    <!-- Erreur -->
+    <div
+      v-else-if="error"
+      class="flex items-start gap-3 rounded-card border border-red-200 bg-red-50 p-5 dark:border-red-500/25 dark:bg-red-500/10"
+    >
+      <span class="grid size-10 shrink-0 place-items-center rounded-leaf bg-red-100 text-red-600 dark:bg-red-500/15 dark:text-red-400">
+        <i class="pi pi-times-circle" />
+      </span>
+      <p class="pt-2 text-sm font-medium text-red-700 dark:text-red-300">{{ error }}</p>
+    </div>
+
+    <!-- Aucun sujet -->
+    <div
+      v-else-if="!oralTasks.length"
+      class="flex flex-col items-center rounded-card border border-dashed border-line bg-card px-6 py-14 text-center"
+    >
+      <span class="mb-3 grid size-14 place-items-center rounded-leaf bg-card-2 text-faint">
+        <i class="pi pi-microphone text-2xl" />
+      </span>
+      <p class="max-w-sm text-sm font-medium text-muted">
+        Aucun sujet d'Expression Orale n'est encore disponible pour cette série.
+      </p>
+    </div>
+
+    <!-- Tâches -->
+    <div v-else class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+      <button
+        v-for="task in oralTasks"
+        :key="task.id"
+        type="button"
+        class="group flex items-center gap-4 rounded-card border border-line bg-card p-4 text-left shadow-soft transition-all duration-300 ease-spring hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lift focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        @click="goToConversation(task)"
+      >
+        <span class="relative grid size-12 shrink-0 place-items-center rounded-leaf brand-gradient text-white shadow-brand">
+          <i class="pi pi-microphone text-lg" />
+          <span
+            class="absolute -right-1.5 -top-1.5 grid size-5 place-items-center rounded-full border-2 border-card bg-accent-400 text-[0.6rem] font-extrabold text-primary-950"
+          >
+            {{ task.task_number }}
+          </span>
+        </span>
+
+        <span class="min-w-0 flex-1">
+          <span class="block truncate font-heading text-sm font-bold text-ink">
+            {{ task.title ?? `Tâche ${task.task_number}` }}
+          </span>
+          <span class="mt-0.5 flex items-center gap-1.5 text-xs text-muted">
+            <i class="pi pi-clock text-[0.65rem]" />
+            {{ durationLabel(task) }}
+          </span>
+          <span
+            v-if="lastAttemptFor(task.task_number)"
+            class="mt-1.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[0.7rem] font-semibold tabular-nums"
+            :class="
+              lastAttemptFor(task.task_number)?.capped
+                ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300'
+                : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300'
+            "
+          >
+            <i class="pi pi-history text-[0.6rem]" />
+            Dernier essai : {{ lastAttemptFor(task.task_number)?.total_score }}/20{{
+              lastAttemptFor(task.task_number)?.capped ? " (plafonné)" : ""
+            }}
+          </span>
+        </span>
+
+        <span
+          class="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-bold text-primary transition-colors group-hover:bg-primary group-hover:text-primary-contrast"
         >
-          <div class="eo-task-card__icon">
-            <i class="pi pi-microphone" />
-          </div>
-
-          <div class="eo-task-card__body">
-            <span class="eo-task-card__title">{{ task.title ?? `Tâche ${task.task_number}` }}</span>
-            <span class="eo-task-card__sub">{{ durationLabel(task) }}</span>
-            <span
-              v-if="lastAttemptFor(task.task_number)"
-              class="eo-task-card__last-attempt"
-              :class="lastAttemptFor(task.task_number)?.capped ? 'eo-task-card__last-attempt--capped' : ''"
-            >
-              Dernier essai : {{ lastAttemptFor(task.task_number)?.total_score }}/20{{
-                lastAttemptFor(task.task_number)?.capped ? " (plafonné)" : ""
-              }}
-            </span>
-          </div>
-
-          <div class="eo-task-card__cta">
-            <Button
-              label="Démarrer"
-              size="small"
-              class="bg-gradient-primary border-none"
-              @click.stop="goToConversation(task)"
-            />
-          </div>
-        </div>
-
-        <Message v-if="!oralTasks.length" severity="info">
-          Aucun sujet d'Expression Orale n'est encore disponible pour cette série.
-        </Message>
-      </div>
+          <i class="pi pi-play text-[0.6rem]" />
+          Démarrer
+        </span>
+      </button>
     </div>
   </div>
 </template>
 
-<style scoped>
-.eo-task-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 0.875rem;
-}
-
-.eo-task-card {
-  display: flex;
-  align-items: center;
-  gap: 0.875rem;
-  padding: 1rem 1.125rem;
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 0.875rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.eo-task-card:hover {
-  border-color: var(--color-primary-300);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.07);
-}
-
-.eo-task-card__icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 0.625rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  background: var(--color-primary-50);
-}
-
-.eo-task-card__icon i {
-  color: var(--color-primary-600);
-  font-size: 1rem;
-}
-
-.eo-task-card__body {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.125rem;
-}
-
-.eo-task-card__title {
-  font-size: 0.9rem;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-.eo-task-card__sub {
-  font-size: 0.8125rem;
-  color: var(--text-tertiary);
-}
-
-.eo-task-card__last-attempt {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--color-primary-600);
-  margin-top: 0.125rem;
-}
-
-.eo-task-card__last-attempt--capped {
-  color: #b45309;
-}
-
-.eo-task-card__cta :deep(.p-button) {
-  border: none !important;
-  border-radius: 0.5rem !important;
-  font-size: 0.8125rem !important;
-  font-weight: 600 !important;
-  white-space: nowrap;
-}
-</style>

@@ -1,7 +1,7 @@
 <template>
-  <div class="layout">
+  <div class="flex min-h-screen flex-col bg-canvas text-ink">
     <LandingNavBar />
-    <main class="layout__main">
+    <main class="flex-1">
       <slot />
     </main>
     <LandingFooter />
@@ -9,15 +9,3 @@
     <Toast />
   </div>
 </template>
-
-<style>
-.layout {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-}
-
-.layout__main {
-  flex: 1;
-}
-</style>

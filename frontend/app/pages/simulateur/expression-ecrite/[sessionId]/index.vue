@@ -1,254 +1,150 @@
+
 <template>
   <div>
-    <NuxtLink to="/simulateur/expression-ecrite" class="ee-back-link">
+    <NuxtLink
+      to="/simulateur/expression-ecrite"
+      class="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-muted transition-colors hover:text-primary"
+    >
       <i class="pi pi-arrow-left text-xs" /> Expression Écrite
     </NuxtLink>
 
-    <div class="ee-session-header">
-      <div>
-        <h1 class="account-page-title" style="margin-bottom: 0.25rem">
-          {{ session?.name ?? "…" }}
-        </h1>
-        <p class="ee-session-sub">
-          {{ session ? formatMonth(session.month) : "" }} ·
-          {{ combinations.length }} combinaison{{ combinations.length > 1 ? "s" : "" }}
-          de sujets
+    <!-- En-tête -->
+    <div class="mb-6 flex flex-wrap items-start justify-between gap-4">
+      <div class="min-w-0">
+        <h1 class="account-page-title mb-1!">{{ session?.name ?? "…" }}</h1>
+        <p class="text-sm text-muted">
+          <span class="capitalize">{{ session ? formatMonth(session.month) : "" }}</span>
+          <span class="mx-1.5 text-faint">·</span>
+          <span class="font-semibold tabular-nums text-ink">{{ combinations.length }}</span>
+          combinaison{{ combinations.length > 1 ? "s" : "" }} de sujets
         </p>
       </div>
-      <Tag
+      <span
         v-if="session"
-        :value="session.is_active ? 'Actif' : 'Archivé'"
-        :severity="session.is_active ? 'success' : 'secondary'"
-      />
+        class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold"
+        :class="
+          session.is_active
+            ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300'
+            : 'bg-card-2 text-muted'
+        "
+      >
+        <span class="size-1.5 rounded-full" :class="session.is_active ? 'bg-emerald-500' : 'bg-faint'" />
+        {{ session.is_active ? "Actif" : "Archivé" }}
+      </span>
     </div>
 
-    <!-- Crédits -->
+    <!-- Plus de crédits -->
     <div
       v-if="sub.aiCreditsRemaining === 0"
-      class="ee-credit-warning"
+      class="mb-5 flex flex-col gap-3 rounded-2xl border border-accent-200 bg-accent-50 p-4 sm:flex-row sm:items-center dark:border-accent-500/25 dark:bg-accent-500/10"
     >
-      <i class="pi pi-exclamation-triangle" />
-      <div class="ee-credit-warning__body">
-        <strong>Aucun crédit IA disponible</strong>
-        <p>Vous pouvez lire les sujets mais pas lancer la correction IA. Achetez des crédits pour simuler.</p>
+      <span class="grid size-10 shrink-0 place-items-center rounded-leaf bg-accent-100 text-accent-800 dark:bg-accent-500/15 dark:text-accent-300">
+        <i class="pi pi-exclamation-triangle" />
+      </span>
+      <div class="flex-1 text-sm">
+        <p class="font-bold text-ink">Aucun crédit IA disponible</p>
+        <p class="text-muted">
+          Vous pouvez lire les sujets mais pas lancer la correction IA. Achetez des crédits pour simuler.
+        </p>
       </div>
-      <Button
+      <AppButton
         label="Acheter des crédits"
         icon="pi pi-plus"
-        severity="warning"
+        variant="accent"
         size="small"
+        class="shrink-0"
         @click="buyCreditsVisible = true"
       />
     </div>
 
-    <div class="account-section">
-      <div v-if="loading" style="display: flex; justify-content: center; padding: 3rem">
-        <ProgressSpinner style="width: 40px; height: 40px" />
-      </div>
+    <!-- Chargement -->
+    <div v-if="loading" class="space-y-4">
+      <div v-for="n in 2" :key="n" class="h-72 animate-pulse rounded-card bg-card" />
+    </div>
 
-      <Message v-else-if="!combinations.length" severity="info">
-        Aucune combinaison disponible — les sujets de cette session n'ont pas encore été publiés.
-      </Message>
+    <!-- Aucune combinaison -->
+    <div
+      v-else-if="!combinations.length"
+      class="flex flex-col items-center rounded-card border border-dashed border-line bg-card px-6 py-14 text-center"
+    >
+      <span class="mb-3 grid size-14 place-items-center rounded-leaf bg-card-2 text-faint">
+        <i class="pi pi-inbox text-2xl" />
+      </span>
+      <p class="max-w-sm text-sm font-medium text-muted">
+        Aucune combinaison disponible. Les sujets de cette session n'ont pas encore été publiés.
+      </p>
+    </div>
 
-      <div v-else class="ee-combo-list">
-        <div v-for="combo in combinations" :key="combo.id" class="ee-combo-card">
-          <div class="ee-combo-card__header">
-            <span class="ee-combo-card__badge">Sujet {{ combo.order }}</span>
-            <h3 class="ee-combo-card__title">{{ combo.title }}</h3>
+    <!-- Combinaisons -->
+    <div v-else class="space-y-4">
+      <article
+        v-for="combo in combinations"
+        :key="combo.id"
+        class="overflow-hidden rounded-card border border-line bg-card shadow-soft transition-shadow duration-300 hover:shadow-lift"
+      >
+        <!-- En-tête -->
+        <header class="flex items-center gap-3 border-b border-line bg-card-2/50 px-5 py-4">
+          <span class="grid size-10 shrink-0 place-items-center rounded-leaf brand-gradient font-heading text-sm font-extrabold text-white shadow-brand">
+            {{ combo.order }}
+          </span>
+          <div class="min-w-0">
+            <p class="text-xs font-semibold uppercase tracking-wider text-faint">Sujet {{ combo.order }}</p>
+            <h2 class="truncate font-heading text-base font-bold text-ink">{{ combo.title }}</h2>
           </div>
+        </header>
 
-          <div class="ee-combo-card__tasks">
-            <div class="ee-combo-task">
-              <span class="ee-combo-task__label">Tâche 1 · Message</span>
-              <p class="ee-combo-task__text">{{ combo.task1_instruction }}</p>
-              <span class="ee-combo-task__words">{{ combo.task1_word_min }}–{{ combo.task1_word_max }} mots</span>
+        <!-- Tâches -->
+        <div class="grid grid-cols-1 gap-3 p-5 lg:grid-cols-3">
+          <div
+            v-for="task in [
+              { n: 1, label: 'Message', text: combo.task1_instruction, min: combo.task1_word_min, max: combo.task1_word_max },
+              { n: 2, label: 'Narration', text: combo.task2_instruction, min: combo.task2_word_min, max: combo.task2_word_max },
+              { n: 3, label: 'Argumentation', text: combo.task3_title, min: combo.task3_word_min, max: combo.task3_word_max },
+            ]"
+            :key="task.n"
+            class="flex flex-col rounded-2xl border border-line bg-card-2/40 p-4"
+          >
+            <div class="mb-2 flex items-center gap-2">
+              <span class="grid size-6 shrink-0 place-items-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+                {{ task.n }}
+              </span>
+              <span class="text-xs font-bold uppercase tracking-wider text-primary">
+                Tâche {{ task.n }} · {{ task.label }}
+              </span>
             </div>
-            <div class="ee-combo-task">
-              <span class="ee-combo-task__label">Tâche 2 · Narration</span>
-              <p class="ee-combo-task__text">{{ combo.task2_instruction }}</p>
-              <span class="ee-combo-task__words">{{ combo.task2_word_min }}–{{ combo.task2_word_max }} mots</span>
-            </div>
-            <div class="ee-combo-task">
-              <span class="ee-combo-task__label">Tâche 3 · Argumentation</span>
-              <p class="ee-combo-task__text">{{ combo.task3_title }}</p>
-              <span class="ee-combo-task__words">{{ combo.task3_word_min }}–{{ combo.task3_word_max }} mots</span>
-            </div>
-          </div>
-
-          <div class="ee-combo-card__footer">
-            <span class="ee-combo-card__hint">Correction IA disponible</span>
-            <NuxtLink :to="`/simulateur/expression-ecrite/${sessionId}/${combo.id}`">
-              <Button
-                :label="sub.aiCreditsRemaining > 0 ? 'Simuler ce sujet' : 'Voir ce sujet'"
-                :icon="sub.aiCreditsRemaining > 0 ? 'pi pi-play' : 'pi pi-eye'"
-                :class="sub.aiCreditsRemaining > 0 ? 'bg-gradient-primary border-none' : ''"
-                :outlined="sub.aiCreditsRemaining === 0"
-                size="small"
-              />
-            </NuxtLink>
+            <p class="line-clamp-4 flex-1 text-sm leading-relaxed text-ink">{{ task.text }}</p>
+            <span class="mt-3 inline-flex w-fit items-center gap-1 rounded-full bg-card px-2 py-0.5 text-xs font-semibold tabular-nums text-muted ring-1 ring-line">
+              <i class="pi pi-align-left text-[0.6rem]" />
+              {{ task.min }}–{{ task.max }} mots
+            </span>
           </div>
         </div>
-      </div>
+
+        <!-- Pied -->
+        <footer class="flex flex-col gap-3 border-t border-line px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <span class="inline-flex items-center gap-1.5 text-sm text-muted">
+            <i class="pi pi-bolt text-xs text-accent-600 dark:text-accent-400" />
+            Correction IA disponible
+          </span>
+          <NuxtLink
+            :to="`/simulateur/expression-ecrite/${sessionId}/${combo.id}`"
+            class="inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-bold transition-all duration-300 ease-spring"
+            :class="
+              sub.aiCreditsRemaining > 0
+                ? 'brand-gradient text-white shadow-brand hover:-translate-y-0.5 hover:shadow-brand-hover'
+                : 'border border-line bg-card text-ink hover:border-primary/40 hover:text-primary'
+            "
+          >
+            <i :class="sub.aiCreditsRemaining > 0 ? 'pi pi-play' : 'pi pi-eye'" class="text-xs" />
+            {{ sub.aiCreditsRemaining > 0 ? "Simuler ce sujet" : "Voir ce sujet" }}
+          </NuxtLink>
+        </footer>
+      </article>
     </div>
 
     <BuyCreditsDialog v-model="buyCreditsVisible" />
   </div>
 </template>
-
-<style scoped>
-.ee-back-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: var(--text-tertiary);
-  text-decoration: none;
-  margin-bottom: 0.75rem;
-  transition: color 0.2s;
-}
-.ee-back-link:hover {
-  color: var(--color-primary-600);
-}
-
-.ee-session-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
-  flex-wrap: wrap;
-  margin-bottom: 1.5rem;
-}
-.ee-session-sub {
-  font-size: 0.875rem;
-  color: var(--text-tertiary);
-  margin: 0;
-}
-
-.ee-credit-warning {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.875rem;
-  background: #fffbeb;
-  border: 1px solid #fde68a;
-  border-radius: 0.875rem;
-  padding: 1rem 1.125rem;
-  margin-bottom: 1.5rem;
-}
-.ee-credit-warning i {
-  color: #d97706;
-  font-size: 1.125rem;
-  margin-top: 0.125rem;
-}
-.ee-credit-warning__body {
-  flex: 1;
-}
-.ee-credit-warning__body strong {
-  display: block;
-  color: #92400e;
-  font-size: 0.9rem;
-  margin-bottom: 0.125rem;
-}
-.ee-credit-warning__body p {
-  font-size: 0.8125rem;
-  color: #b45309;
-  margin: 0;
-  line-height: 1.5;
-}
-
-.ee-combo-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.875rem;
-}
-
-.ee-combo-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 0.875rem;
-  padding: 1rem 1.125rem;
-  transition: all 0.2s ease;
-}
-.ee-combo-card:hover {
-  border-color: var(--color-primary-300);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
-}
-
-.ee-combo-card__header {
-  display: flex;
-  align-items: center;
-  gap: 0.625rem;
-  margin-bottom: 0.75rem;
-}
-.ee-combo-card__badge {
-  font-size: 0.6875rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--color-primary-600);
-  background: var(--color-primary-50);
-  padding: 0.25rem 0.5rem;
-  border-radius: 0.375rem;
-  flex-shrink: 0;
-}
-.ee-combo-card__title {
-  font-size: 0.9rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin: 0;
-}
-
-.ee-combo-card__tasks {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0.625rem;
-  margin-bottom: 0.75rem;
-}
-@media (max-width: 640px) {
-  .ee-combo-card__tasks {
-    grid-template-columns: 1fr;
-  }
-}
-.ee-combo-task {
-  background: var(--bg-ground);
-  border-radius: 0.625rem;
-  padding: 0.625rem 0.75rem;
-}
-.ee-combo-task__label {
-  display: block;
-  font-size: 0.625rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--text-tertiary);
-  margin-bottom: 0.25rem;
-}
-.ee-combo-task__text {
-  font-size: 0.75rem;
-  color: var(--text-secondary);
-  line-height: 1.4;
-  margin: 0 0 0.25rem;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-.ee-combo-task__words {
-  font-size: 0.6875rem;
-  color: var(--text-tertiary);
-}
-
-.ee-combo-card__footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  padding-top: 0.25rem;
-}
-.ee-combo-card__hint {
-  font-size: 0.75rem;
-  color: var(--text-tertiary);
-}
-</style>
 
 <script setup lang="ts">
 import type { MonthlySessionResponse } from "#shared/api/models/MonthlySessionResponse";

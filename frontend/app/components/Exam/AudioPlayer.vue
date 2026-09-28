@@ -1,28 +1,36 @@
 <template>
-  <div class="audio-player">
-    <div class="audio-player__inner">
-      <button class="audio-player__play-btn" @click="togglePlay">
-        <i :class="isPlaying ? 'pi pi-pause' : 'pi pi-play'" />
+  <div class="rounded-2xl border border-line bg-card p-4 shadow-soft">
+    <div class="flex items-center gap-4">
+      <button
+        type="button"
+        :aria-label="isPlaying ? 'Mettre en pause' : 'Lancer l\'audio'"
+        class="brand-gradient grid size-12 shrink-0 place-items-center rounded-full text-white shadow-brand transition-transform duration-200 ease-spring hover:scale-105 active:scale-95"
+        @click="togglePlay"
+      >
+        <i :class="[isPlaying ? 'pi pi-pause' : 'pi pi-play translate-x-px', 'text-lg']" />
       </button>
 
-      <div class="audio-player__info">
-        <div class="audio-player__label">
-          <i class="pi pi-headphones" />
-          <span>Extrait audio</span>
+      <div class="min-w-0 flex-1">
+        <div class="flex items-center gap-2 text-xs font-semibold text-muted">
+          <i class="pi pi-headphones text-primary" />
+          Extrait audio
+          <span v-if="isPlaying" class="ml-auto inline-flex items-center gap-1.5 text-primary">
+            <span class="size-1.5 animate-pulse rounded-full bg-primary" />
+            Lecture en cours
+          </span>
         </div>
-        <div class="audio-player__progress" @click="seek">
-          <div class="audio-player__track">
+
+        <div class="group mt-2 cursor-pointer py-2" @click="seek">
+          <div class="relative h-1.5 rounded-full bg-card-2">
+            <div class="brand-gradient absolute inset-y-0 left-0 rounded-full" :style="{ width: `${progress}%` }" />
             <div
-              class="audio-player__fill"
-              :style="{ width: `${progress}%` }"
-            />
-            <div
-              class="audio-player__thumb"
+              class="absolute top-1/2 size-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-primary shadow-soft transition-transform duration-200 group-hover:scale-125"
               :style="{ left: `${progress}%` }"
             />
           </div>
         </div>
-        <div class="audio-player__times">
+
+        <div class="flex justify-between font-mono text-xs tabular-nums text-faint">
           <span>{{ formatTime(currentTime) }}</span>
           <span>{{ formatTime(duration) }}</span>
         </div>
@@ -104,92 +112,3 @@ onMounted(() => {
   console.log("audio fullSrc:", fullSrc.value);
 });
 </script>
-
-<style scoped>
-.audio-player {
-  background: var(--color-primary-50);
-  border: 1px solid var(--color-primary-200);
-  border-radius: 0.875rem;
-  padding: 1rem 1.25rem;
-}
-
-.audio-player__inner {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.audio-player__play-btn {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background: var(--gradient-primary);
-  border: none;
-  color: #ffffff;
-  font-size: 1rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  transition: transform 0.2s ease;
-}
-
-.audio-player__play-btn:hover {
-  transform: scale(1.05);
-}
-
-.audio-player__info {
-  flex: 1;
-  min-width: 0;
-}
-
-.audio-player__label {
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: var(--color-primary-700);
-  margin-bottom: 0.5rem;
-}
-
-.audio-player__progress {
-  cursor: pointer;
-  padding: 6px 0;
-}
-
-.audio-player__track {
-  position: relative;
-  height: 4px;
-  background: rgba(0, 0, 0, 0.12);
-  border-radius: 9999px;
-}
-
-.audio-player__fill {
-  position: absolute;
-  height: 100%;
-  background: var(--gradient-primary);
-  border-radius: 9999px;
-  transition: width 0.1s linear;
-}
-
-.audio-player__thumb {
-  position: absolute;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: var(--color-primary-600);
-  transition: left 0.1s linear;
-}
-
-.audio-player__times {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.75rem;
-  color: var(--text-tertiary);
-  margin-top: 0.25rem;
-}
-</style>

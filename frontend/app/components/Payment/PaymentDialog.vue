@@ -2,246 +2,376 @@
   <Dialog
     v-model:visible="visible"
     modal
-    :header="'Abonnement - ' + (plan?.name ?? '')"
-    :style="{ width: '480px' }"
     :draggable="false"
+    :style="{ width: '32rem' }"
+    :breakpoints="{ '640px': '94vw' }"
+    :pt="{ mask: { class: 'backdrop-blur-sm' } }"
   >
-    <!-- Step 1 : Choix méthode paiement -->
-    <div v-if="step === 'method'" class="flex flex-col gap-4 pt-2">
+    <!-- En-tête -->
+    <template #header>
+      <div class="flex w-full flex-col gap-4">
+        <div class="flex items-center gap-3">
+          <span
+            class="brand-gradient grid size-11 place-items-center rounded-leaf text-white shadow-brand"
+          >
+            <i class="pi pi-crown" />
+          </span>
+          <div class="min-w-0">
+            <h3 class="truncate font-heading text-lg font-bold text-ink">
+              Abonnement {{ plan?.name ?? "" }}
+            </h3>
+            <p class="text-xs text-faint">Paiement sécurisé par Mobile Money</p>
+          </div>
+        </div>
+
+        <!-- Étapes -->
+        <ol class="flex items-center gap-2">
+          <li
+            v-for="(label, i) in stepsList"
+            :key="label"
+            class="flex flex-1 items-center gap-2"
+          >
+            <span
+              class="grid size-6 shrink-0 place-items-center rounded-full text-[0.7rem] font-bold transition-all duration-300"
+              :class="
+                step === 'error' && i + 1 === 3
+                  ? 'bg-red-100 text-red-600 dark:bg-red-950 dark:text-red-400'
+                  : stepIndex > i + 1 || step === 'success'
+                    ? 'bg-green-500 text-white'
+                    : stepIndex === i + 1
+                      ? 'brand-gradient text-white shadow-brand'
+                      : 'bg-card-2 text-faint'
+              "
+            >
+              <i
+                v-if="stepIndex > i + 1 || step === 'success'"
+                class="pi pi-check text-[0.6rem]"
+              />
+              <i
+                v-else-if="step === 'error' && i + 1 === 3"
+                class="pi pi-times text-[0.6rem]"
+              />
+              <template v-else>{{ i + 1 }}</template>
+            </span>
+            <span class="hidden text-xs font-medium text-muted sm:inline">{{
+              label
+            }}</span>
+            <span v-if="i < stepsList.length - 1" class="h-px flex-1 bg-line" />
+          </li>
+        </ol>
+      </div>
+    </template>
+
+    <!-- Étape 1 : méthode de paiement -->
+    <div v-if="step === 'method'" class="flex flex-col gap-5 pt-1">
+      <!-- Récapitulatif -->
       <div
-        class="bg-(--bg-ground) rounded-xl p-4 flex items-center justify-between"
+        class="featured-panel flex items-center justify-between gap-4 rounded-[1.5rem_0.4rem] p-5 text-white"
       >
-        <div>
-          <p class="font-bold text-(--text-primary)">{{ plan?.name }}</p>
-          <p class="text-sm text-(--text-tertiary)">
-            {{ plan?.duration_days }} jours
+        <div class="min-w-0">
+          <p class="truncate font-heading text-lg font-bold">
+            {{ plan?.name }}
+          </p>
+          <p
+            class="mt-0.5 inline-flex items-center gap-1.5 text-sm text-white/75"
+          >
+            <i class="pi pi-clock text-xs" />
+            {{ plan?.duration_days }} jours d'accès
           </p>
         </div>
-        <p class="text-2xl font-bold text-primary-600">
-          {{ finalPrice.toLocaleString("fr-FR") }} FCFA
+        <div class="shrink-0 text-right">
+          <p
+            v-if="promoValidation?.is_valid"
+            class="text-xs text-white/60 line-through"
+          >
+            {{ plan?.price.toLocaleString("fr-FR") }} FCFA
+          </p>
+          <p class="font-heading text-2xl font-extrabold">
+            {{ finalPrice.toLocaleString("fr-FR") }}
+            <span class="text-sm font-semibold text-white/80">FCFA</span>
+          </p>
+        </div>
+      </div>
+
+      <!-- Opérateur -->
+      <div class="flex flex-col gap-2">
+        <span class="text-sm font-semibold text-ink"
+          >Opérateur Mobile Money</span
+        >
+        <div class="grid grid-cols-2 gap-3">
+          <button
+            v-for="op in operators"
+            :key="op.value"
+            type="button"
+            :aria-pressed="selectedOperator === op.value"
+            class="relative flex items-center gap-3 rounded-2xl border-2 p-3 text-left transition-all duration-200"
+            :class="
+              selectedOperator === op.value
+                ? 'border-primary bg-primary-50 dark:bg-primary-950'
+                : 'border-line bg-card hover:border-primary-200'
+            "
+            @click="selectedOperator = op.value"
+          >
+            <img
+              :src="op.logo"
+              :alt="op.label"
+              class="size-9 rounded-lg object-contain"
+            />
+            <div class="min-w-0">
+              <p class="truncate text-sm font-semibold text-ink">
+                {{ op.label }}
+              </p>
+              <p class="truncate text-xs text-faint">{{ op.desc }}</p>
+            </div>
+            <span
+              v-if="selectedOperator === op.value"
+              class="absolute -right-1.5 -top-1.5 grid size-5 place-items-center rounded-full bg-primary text-white"
+            >
+              <i class="pi pi-check text-[0.55rem]" />
+            </span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Téléphone -->
+      <div class="flex flex-col gap-2">
+        <label for="payment-phone" class="text-sm font-semibold text-ink"
+          >Numéro Mobile Money</label
+        >
+        <IconField>
+          <InputIcon class="pi pi-phone" />
+          <InputText
+            id="payment-phone"
+            v-model="phoneNumber"
+            type="tel"
+            inputmode="numeric"
+            autocomplete="tel"
+            placeholder="6XX XX XX XX"
+            fluid
+          />
+        </IconField>
+        <p class="text-xs text-faint">
+          Le numéro qui recevra la demande de paiement.
         </p>
       </div>
 
-      <p class="text-sm font-semibold text-(--text-secondary)">
-        Choisissez votre opérateur Mobile Money
-      </p>
-
+      <!-- Code partenaire -->
       <div class="flex flex-col gap-2">
-        <button
-          v-for="op in operators"
-          :key="op.value"
-          class="flex items-center gap-3 p-4 rounded-xl border-2 transition-all text-left"
-          :class="
-            selectedOperator === op.value
-              ? 'border-primary-500 bg-primary-50'
-              : 'border-(--border-color) hover:border-primary-300'
-          "
-          @click="selectedOperator = op.value"
-        >
-          <img
-            :src="op.logo"
-            :alt="op.label"
-            class="h-8 w-8 object-contain rounded"
-          />
-          <div>
-            <p class="font-semibold text-sm text-(--text-primary)">
-              {{ op.label }}
-            </p>
-            <p class="text-xs text-(--text-tertiary)">{{ op.desc }}</p>
-          </div>
-          <i
-            v-if="selectedOperator === op.value"
-            class="pi pi-check-circle text-primary-500 ml-auto text-lg"
-          />
-        </button>
-      </div>
-
-      <div class="flex flex-col gap-1.5">
-        <label class="text-sm font-semibold text-(--text-secondary)"
-          >Numéro Mobile Money</label
-        >
-        <InputText v-model="phoneNumber" placeholder="6XXXXXXXX" fluid />
-        <small class="text-(--text-tertiary)"
-          >Le numéro qui recevra la demande de paiement</small
-        >
-      </div>
-
-      <!-- Code promo -->
-      <div class="flex flex-col gap-1.5">
-        <label class="text-sm font-semibold text-(--text-secondary)">
-          Code partenaire (optionnel)
+        <label for="payment-promo" class="text-sm font-semibold text-ink">
+          Code partenaire
+          <span class="font-normal text-faint">(optionnel)</span>
         </label>
         <div class="flex gap-2">
-          <InputText
-            v-model="promoCode"
-            placeholder="Ex: PARTNER2026"
-            fluid
-            :class="promoValidation?.is_valid ? 'border-green-400' : ''"
-          />
-          <Button
+          <IconField class="flex-1">
+            <InputIcon class="pi pi-ticket" />
+            <InputText
+              id="payment-promo"
+              v-model="promoCode"
+              placeholder="Ex. PARTNER2026"
+              fluid
+              class="uppercase placeholder:normal-case"
+              :class="promoValidation?.is_valid ? 'border-green-400' : ''"
+            />
+          </IconField>
+          <AppButton
             label="Appliquer"
-            outlined
+            variant="secondary"
             :loading="validatingPromo"
             :disabled="!promoCode"
             @click="validatePromo"
           />
         </div>
-        <div v-if="promoValidation">
-          <small
-            v-if="promoValidation.is_valid"
-            class="text-green-600 flex items-center gap-1"
-          >
-            <i class="pi pi-check-circle" />
-            {{ promoValidation.message }} - réduction de
-            {{ promoValidation.discount_amount?.toLocaleString("fr-FR") }} FCFA
-          </small>
-          <small v-else class="text-red-500 flex items-center gap-1">
-            <i class="pi pi-times-circle" />
-            {{ promoValidation.message }}
-          </small>
-        </div>
-      </div>
 
-      <!-- Récap prix avec promo -->
-      <div
-        v-if="promoValidation?.is_valid"
-        class="bg-green-50 border border-green-200 rounded-xl p-3 flex items-center justify-between"
-      >
-        <span class="text-sm text-green-700">Prix après réduction</span>
-        <div class="text-right">
-          <p class="text-lg font-bold text-green-700">
-            {{ promoValidation.amount_paid?.toLocaleString("fr-FR") }} FCFA
-          </p>
-          <p class="text-xs text-green-600 line-through">
-            {{ plan?.price.toLocaleString("fr-FR") }} FCFA
+        <div
+          v-if="promoValidation"
+          class="flex items-start gap-2 rounded-xl p-3 text-sm"
+          :class="
+            promoValidation.is_valid
+              ? 'border border-green-200 bg-green-50 text-green-800 dark:border-green-900 dark:bg-green-950 dark:text-green-300'
+              : 'border border-red-200 bg-red-50 text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300'
+          "
+        >
+          <i
+            :class="[
+              promoValidation.is_valid
+                ? 'pi pi-check-circle'
+                : 'pi pi-times-circle',
+              'mt-0.5',
+            ]"
+          />
+          <p>
+            {{ promoValidation.message }}
+            <template v-if="promoValidation.is_valid">
+              : réduction de
+              <strong class="font-bold"
+                >{{
+                  promoValidation.discount_amount?.toLocaleString("fr-FR")
+                }}
+                FCFA</strong
+              >
+            </template>
           </p>
         </div>
       </div>
     </div>
 
-    <!-- Step 2 : Traitement (création paiement) -->
+    <!-- Étape 2 : traitement -->
     <div
       v-else-if="step === 'processing'"
-      class="flex flex-col items-center gap-4 py-8"
+      class="flex flex-col items-center gap-4 py-10 text-center"
     >
-      <ProgressSpinner style="width: 56px; height: 56px" />
-      <p class="font-semibold text-(--text-primary)">Envoi de la demande...</p>
-      <p class="text-sm text-(--text-tertiary) text-center">
-        Un instant, nous initions votre paiement.
-      </p>
+      <span class="grid size-20 place-items-center rounded-full bg-card-2">
+        <i class="pi pi-spin pi-spinner text-3xl text-primary" />
+      </span>
+      <div>
+        <p class="font-heading text-lg font-bold text-ink">
+          Envoi de la demande...
+        </p>
+        <p class="mt-1 text-sm text-muted">
+          Un instant, nous initions votre paiement.
+        </p>
+      </div>
     </div>
 
-    <!-- Step 3 : Confirmation sur téléphone (polling) -->
+    <!-- Étape 3 : confirmation sur le téléphone -->
     <div
       v-else-if="step === 'confirm'"
-      class="flex flex-col items-center gap-4 py-6"
+      class="flex flex-col items-center gap-5 py-6 text-center"
     >
+      <span class="relative grid size-20 place-items-center">
+        <span
+          class="absolute inset-0 animate-ping rounded-full bg-primary-200/60 dark:bg-primary-800/40"
+        />
+        <span
+          class="brand-gradient relative grid size-20 place-items-center rounded-full text-white shadow-brand"
+        >
+          <i class="pi pi-mobile text-3xl" />
+        </span>
+      </span>
+      <div>
+        <p class="font-heading text-lg font-bold text-ink">
+          Confirmez sur votre téléphone
+        </p>
+        <p class="mt-2 text-sm leading-relaxed text-muted">
+          Une demande a été envoyée au
+          <strong class="font-semibold text-ink">{{ phoneNumber }}</strong
+          >. Composez votre code Mobile Money pour valider la transaction.
+        </p>
+      </div>
+
+      <div class="w-full rounded-2xl border border-line bg-canvas p-4">
+        <p class="text-xs font-semibold uppercase tracking-widest text-faint">
+          Montant à payer
+        </p>
+        <p class="mt-1 font-heading text-3xl font-extrabold text-ink">
+          {{ paymentResponse?.amount_paid?.toLocaleString("fr-FR") }}
+          <span class="text-base font-semibold text-faint">FCFA</span>
+        </p>
+        <p class="mt-1 font-mono text-xs text-faint">
+          Réf. {{ paymentResponse?.invoice_number }}
+        </p>
+      </div>
+
       <div
-        class="w-16 h-16 rounded-full bg-blue-50 flex items-center justify-center"
+        class="inline-flex items-center gap-2 rounded-full bg-card-2 px-4 py-2 text-sm text-muted"
       >
-        <i class="pi pi-mobile text-blue-500 text-2xl" />
-      </div>
-      <p class="font-bold text-(--text-primary) text-center">
-        Confirmez sur votre téléphone
-      </p>
-      <p class="text-sm text-(--text-tertiary) text-center">
-        Une demande de paiement a été envoyée au {{ phoneNumber }}. Composez
-        votre code Mobile Money pour valider la transaction.
-      </p>
-      <div class="bg-(--bg-ground) rounded-xl p-4 w-full text-center">
-        <p class="text-xs text-(--text-tertiary) mb-1">Montant à payer</p>
-        <p class="text-2xl font-bold text-(--text-primary)">
-          {{ paymentResponse?.amount_paid?.toLocaleString("fr-FR") }} FCFA
-        </p>
-        <p class="text-xs text-(--text-tertiary) mt-1">
-          Réf: {{ paymentResponse?.invoice_number }}
-        </p>
-      </div>
-      <div class="flex items-center gap-2 text-sm text-(--text-tertiary)">
-        <ProgressSpinner style="width: 18px; height: 18px" stroke-width="6" />
+        <i class="pi pi-spin pi-spinner text-primary" />
         En attente de confirmation...
       </div>
     </div>
 
-    <!-- Step 4 : Succès -->
+    <!-- Étape 4 : succès -->
     <div
       v-else-if="step === 'success'"
-      class="flex flex-col items-center gap-4 py-6"
+      class="flex flex-col items-center gap-5 py-6 text-center"
     >
-      <div
-        class="w-16 h-16 rounded-full bg-green-50 flex items-center justify-center"
+      <span
+        class="grid size-20 place-items-center rounded-full bg-green-100 text-green-600 dark:bg-green-950 dark:text-green-400"
       >
-        <i class="pi pi-check-circle text-green-500 text-3xl" />
+        <i class="pi pi-check-circle text-4xl" />
+      </span>
+      <div>
+        <p class="font-heading text-xl font-bold text-ink">
+          Paiement confirmé !
+        </p>
+        <p class="mt-1 text-sm text-muted">
+          Votre abonnement
+          <strong class="font-semibold text-ink">{{ plan?.name }}</strong> est
+          maintenant actif.
+        </p>
       </div>
-      <p class="font-bold text-xl text-(--text-primary)">Paiement confirmé !</p>
-      <p class="text-sm text-(--text-tertiary) text-center">
-        Votre abonnement <strong>{{ plan?.name }}</strong> est maintenant actif.
-      </p>
-      <div class="bg-green-50 border border-green-200 rounded-xl p-4 w-full">
-        <div class="flex items-center justify-between text-sm mb-2">
-          <span class="text-(--text-secondary)">Référence</span>
-          <span class="font-mono font-semibold">{{
-            paymentResponse?.invoice_number
-          }}</span>
+
+      <dl
+        class="w-full divide-y divide-line rounded-2xl border border-line bg-canvas text-sm"
+      >
+        <div class="flex items-center justify-between px-4 py-3">
+          <dt class="text-muted">Référence</dt>
+          <dd class="font-mono font-semibold text-ink">
+            {{ paymentResponse?.invoice_number }}
+          </dd>
         </div>
-        <div class="flex items-center justify-between text-sm">
-          <span class="text-(--text-secondary)">Montant payé</span>
-          <span class="font-bold text-green-700">
+        <div class="flex items-center justify-between px-4 py-3">
+          <dt class="text-muted">Montant payé</dt>
+          <dd class="font-heading font-bold text-green-600 dark:text-green-400">
             {{ paymentResponse?.amount_paid?.toLocaleString("fr-FR") }} FCFA
-          </span>
+          </dd>
         </div>
-      </div>
+      </dl>
     </div>
 
-    <!-- Step erreur -->
+    <!-- Erreur -->
     <div
       v-else-if="step === 'error'"
-      class="flex flex-col items-center gap-4 py-6"
+      class="flex flex-col items-center gap-4 py-6 text-center"
     >
-      <div
-        class="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center"
+      <span
+        class="grid size-20 place-items-center rounded-full bg-red-100 text-red-600 dark:bg-red-950 dark:text-red-400"
       >
-        <i class="pi pi-times-circle text-red-500 text-3xl" />
+        <i class="pi pi-times-circle text-4xl" />
+      </span>
+      <div>
+        <p class="font-heading text-xl font-bold text-ink">
+          Erreur de paiement
+        </p>
+        <p class="mt-1 max-w-sm text-sm leading-relaxed text-muted">
+          {{ errorMessage }}
+        </p>
       </div>
-      <p class="font-bold text-(--text-primary)">Erreur de paiement</p>
-      <p class="text-sm text-(--text-tertiary) text-center">
-        {{ errorMessage }}
-      </p>
     </div>
 
-    <!-- Footer -->
+    <!-- Pied -->
     <template #footer>
-      <div v-if="step === 'method'" class="flex gap-2 justify-end">
-        <Button label="Annuler" text @click="visible = false" />
-        <Button
+      <div v-if="step === 'method'" class="flex w-full justify-end gap-2">
+        <AppButton label="Annuler" variant="ghost" @click="visible = false" />
+        <AppButton
           label="Payer"
           icon="pi pi-arrow-right"
           icon-pos="right"
-          class="bg-gradient-primary border-none font-bold"
+          variant="gradient"
           :disabled="!selectedOperator || !phoneNumber"
           :loading="processing"
           @click="onPay"
         />
       </div>
-      <div v-else-if="step === 'confirm'" class="flex justify-end">
-        <Button label="Fermer" text @click="visible = false" />
+      <div v-else-if="step === 'confirm'" class="flex w-full justify-end">
+        <AppButton label="Fermer" variant="ghost" @click="visible = false" />
       </div>
-      <div v-else-if="step === 'success'" class="flex justify-end">
-        <Button
+      <div v-else-if="step === 'success'" class="flex w-full justify-end">
+        <AppButton
           label="Voir mon compte"
           icon="pi pi-user"
-          class="bg-gradient-primary border-none font-bold"
+          variant="gradient"
           @click="goToAccount"
         />
       </div>
-      <div v-else-if="step === 'error'" class="flex gap-2 justify-end">
-        <Button
+      <div v-else-if="step === 'error'" class="flex w-full justify-end gap-2">
+        <AppButton label="Fermer" variant="ghost" @click="visible = false" />
+        <AppButton
           label="Réessayer"
           icon="pi pi-refresh"
-          outlined
+          variant="secondary"
           @click="step = 'method'"
         />
-        <Button label="Fermer" text @click="visible = false" />
       </div>
     </template>
   </Dialog>
@@ -275,6 +405,14 @@ const visible = computed({
 // ── State ─────────────────────────────────────────────────────
 type Step = "method" | "processing" | "confirm" | "success" | "error";
 const step = ref<Step>("method");
+// Indicateur d'étapes (affichage uniquement)
+const stepsList = ["Choix", "Confirmation", "Terminé"];
+const stepIndex = computed(() => {
+  if (step.value === "method") return 1;
+  if (step.value === "processing" || step.value === "confirm") return 2;
+  return 3;
+});
+
 const selectedOperator = ref<string>("");
 const phoneNumber = ref("");
 const processing = ref(false);

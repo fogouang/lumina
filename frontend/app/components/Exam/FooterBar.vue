@@ -1,25 +1,32 @@
 <template>
-  <div class="exam-footer">
-    <Button
+  <div
+    class="sticky bottom-0 z-20 flex items-center justify-between gap-3 border-t border-line bg-card/90 px-4 pt-3 backdrop-blur-md pb-[max(0.75rem,env(safe-area-inset-bottom))]"
+  >
+    <AppButton
       icon="pi pi-arrow-left"
-      text
+      variant="ghost"
       rounded
+      aria-label="Question précédente"
       :disabled="isFirst"
-      class="exam-footer__btn"
       @click="emit('prev')"
     />
 
-    <div class="exam-footer__center">
-      <Tag v-if="level" :value="level" severity="success" />
-      <span class="exam-footer__pts">{{ pts }} pts</span>
+    <div class="flex items-center gap-2">
+      <span
+        v-if="level"
+        class="rounded-full bg-primary-50 px-2.5 py-0.5 text-xs font-bold text-primary-700 dark:bg-primary-950 dark:text-primary-300"
+      >
+        {{ level }}
+      </span>
+      <span class="font-heading text-sm font-bold text-ink">{{ pts }} pts</span>
     </div>
 
-    <Button
-      icon="pi pi-arrow-right"
+    <AppButton
+      :icon="isLast ? 'pi pi-check' : 'pi pi-arrow-right'"
+      :variant="selected ? 'gradient' : 'secondary'"
       rounded
+      :aria-label="isLast ? 'Terminer' : 'Question suivante'"
       :disabled="!selected"
-      class="exam-footer__btn exam-footer__btn--next"
-      :class="{ 'bg-gradient-primary': selected }"
       @click="isLast ? emit('finish') : emit('next')"
     />
   </div>
@@ -40,38 +47,3 @@ const emit = defineEmits<{
   finish: []
 }>()
 </script>
-
-<style scoped>
-.exam-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.75rem 1rem;
-  background: var(--bg-card);
-  border-top: 1px solid var(--border-color);
-  position: sticky;
-  bottom: 0;
-  z-index: 100;
-}
-
-.exam-footer__center {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.exam-footer__pts {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-}
-
-.exam-footer__btn {
-  width: 44px !important;
-  height: 44px !important;
-}
-
-.exam-footer__btn--next {
-  border: none !important;
-}
-</style>

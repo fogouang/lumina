@@ -1,168 +1,156 @@
 <template>
-  <div>
-    <h1 class="account-page-title">Mes tentatives</h1>
+  <div class="flex flex-col gap-6">
+    <h1 class="account-page-title mb-0">Mes tentatives</h1>
 
     <div class="account-section">
       <!-- Filtres -->
-      <div class="tentatives__filters">
+      <div class="mb-6 flex flex-wrap gap-2">
         <button
           v-for="f in filters"
           :key="f.value"
-          class="tentatives__filter"
-          :class="{ 'tentatives__filter--active': activeFilter === f.value }"
+          type="button"
+          class="inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition-all duration-200"
+          :class="
+            activeFilter === f.value
+              ? 'border-transparent brand-gradient text-white shadow-brand'
+              : 'border-line bg-card text-muted hover:border-primary-200 hover:text-ink'
+          "
           @click="activeFilter = f.value"
         >
           {{ f.label }}
-          <span class="tentatives__filter-count">{{
-            filterCount(f.value)
-          }}</span>
+          <span
+            class="rounded-full px-2 py-0.5 text-xs"
+            :class="activeFilter === f.value ? 'bg-white/20 text-white' : 'bg-card-2 text-faint'"
+          >
+            {{ filterCount(f.value) }}
+          </span>
         </button>
       </div>
 
-      <!-- Loading -->
-      <div
-        v-if="loading"
-        style="display: flex; justify-content: center; padding: 3rem"
-      >
-        <ProgressSpinner style="width: 40px; height: 40px" />
+      <!-- Chargement -->
+      <div v-if="loading" class="flex flex-col gap-3">
+        <Skeleton v-for="n in 3" :key="n" height="5rem" border-radius="1rem" />
       </div>
 
       <!-- Vide -->
-      <div v-else-if="!filteredGroups.length" class="tentatives__empty">
-        <i class="pi pi-inbox" />
-        <p>Aucune tentative trouvée.</p>
+      <div v-else-if="!filteredGroups.length" class="flex flex-col items-center gap-3 py-12 text-center">
+        <span class="grid size-14 place-items-center rounded-leaf bg-card-2 text-faint">
+          <i class="pi pi-inbox text-xl" />
+        </span>
+        <p class="font-semibold text-ink">Aucune tentative trouvée</p>
+        <AppCta
+          to="/epreuve/comprehension-ecrite/series"
+          label="Commencer un test"
+          icon="pi pi-play"
+          icon-pos="left"
+          size="md"
+        />
       </div>
 
       <!-- Groupes par série -->
-      <div v-else class="tentatives__groups">
+      <div v-else class="flex flex-col gap-3">
         <div
           v-for="group in filteredGroups"
           :key="group.seriesId"
-          class="serie-group"
+          class="overflow-hidden rounded-2xl border transition-all duration-300 ease-spring"
+          :class="
+            expandedGroups.includes(group.seriesId)
+              ? 'border-primary-200 bg-card shadow-lift dark:border-primary-800'
+              : 'border-line bg-canvas hover:border-primary-200 dark:hover:border-primary-800'
+          "
         >
-          <!-- Header série -->
-          <div class="serie-group__header" @click="toggleGroup(group.seriesId)">
-            <div class="serie-group__left">
-              <div class="serie-group__icon">
+          <!-- En-tête série -->
+          <button
+            type="button"
+            class="flex w-full flex-col gap-3 p-4 text-left sm:flex-row sm:items-center sm:justify-between"
+            :aria-expanded="expandedGroups.includes(group.seriesId)"
+            @click="toggleGroup(group.seriesId)"
+          >
+            <div class="flex items-center gap-4">
+              <span class="grid size-11 shrink-0 place-items-center rounded-leaf bg-primary-50 text-primary-700 dark:bg-primary-950 dark:text-primary-300">
                 <i class="pi pi-book" />
-              </div>
+              </span>
               <div>
-                <p class="serie-group__title">
-                  Série {{ group.seriesNumber ?? "—" }}
-                </p>
-                <p class="serie-group__sub">
-                  {{ group.attempts.length }} tentative{{
-                    group.attempts.length > 1 ? "s" : ""
-                  }}
-                  <span
-                    v-if="group.bestScore !== null"
-                    class="serie-group__best"
-                  >
+                <p class="font-heading font-bold text-ink">Série {{ group.seriesNumber ?? "—" }}</p>
+                <p class="mt-0.5 text-sm text-faint">
+                  {{ group.attempts.length }} tentative{{ group.attempts.length > 1 ? "s" : "" }}
+                  <template v-if="group.bestScore !== null">
                     · Meilleur score :
-                    <strong>{{ group.bestScore }}/699</strong>
-                  </span>
+                    <strong class="font-semibold text-ink">{{ group.bestScore }}/699</strong>
+                  </template>
                 </p>
               </div>
             </div>
-            <div class="serie-group__right">
-              <!-- Progression -->
-              <div
+
+            <div class="flex items-center gap-3 self-end sm:self-auto">
+              <span
                 v-if="group.attempts.length > 1 && group.progressDelta !== null"
-                class="serie-group__progress"
+                class="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold"
+                :class="
+                  group.progressDelta >= 0
+                    ? 'bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300'
+                    : 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300'
+                "
               >
-                <span
-                  :class="
-                    group.progressDelta >= 0 ? 'progress--up' : 'progress--down'
-                  "
-                >
-                  <i
-                    :class="
-                      group.progressDelta >= 0
-                        ? 'pi pi-arrow-up'
-                        : 'pi pi-arrow-down'
-                    "
-                  />
-                  {{ Math.abs(group.progressDelta) }} pts
-                </span>
-              </div>
+                <i :class="[group.progressDelta >= 0 ? 'pi pi-arrow-up' : 'pi pi-arrow-down', 'text-[0.6rem]']" />
+                {{ Math.abs(group.progressDelta) }} pts
+              </span>
               <Tag
                 :value="statusLabel(group.latestStatus)"
                 :severity="statusSeverity(group.latestStatus)"
+                rounded
               />
               <i
-                :class="
-                  expandedGroups.includes(group.seriesId)
-                    ? 'pi pi-angle-up'
-                    : 'pi pi-angle-down'
-                "
-                class="text-(--text-tertiary)"
+                class="pi pi-angle-down text-faint transition-transform duration-300 ease-spring"
+                :class="expandedGroups.includes(group.seriesId) ? 'rotate-180' : ''"
               />
             </div>
-          </div>
+          </button>
 
           <!-- Tentatives -->
-          <div
-            v-if="expandedGroups.includes(group.seriesId)"
-            class="serie-group__attempts"
-          >
+          <div v-if="expandedGroups.includes(group.seriesId)" class="border-t border-line bg-canvas/60 p-2">
             <div
               v-for="(attempt, idx) in group.attempts"
               :key="attempt.id"
-              class="tentative-row"
+              class="flex flex-col gap-3 rounded-xl p-3 transition-colors hover:bg-card sm:flex-row sm:items-center"
             >
-              <div class="tentative-row__num">
-                <span>T{{ group.attempts.length - idx }}</span>
+              <span class="grid size-9 shrink-0 place-items-center rounded-lg bg-card-2 font-heading text-xs font-bold text-muted">
+                T{{ group.attempts.length - idx }}
+              </span>
+
+              <div class="flex min-w-0 flex-1 flex-wrap items-center gap-2 text-sm text-faint">
+                <Tag :value="statusLabel(attempt.status)" :severity="statusSeverity(attempt.status)" rounded />
+                <span v-if="attempt.oral_score || attempt.written_score" class="font-heading font-bold text-ink">
+                  {{ (attempt.oral_score ?? 0) + (attempt.written_score ?? 0) }}/699
+                </span>
+                <span class="inline-flex items-center gap-1">
+                  <i class="pi pi-calendar text-[0.7rem]" />
+                  {{ formatDate(attempt.started_at) }}
+                </span>
+                <span v-if="attempt.completed_at" class="inline-flex items-center gap-1">
+                  <i class="pi pi-clock text-[0.7rem]" />
+                  {{ duration(attempt.started_at, attempt.completed_at) }}
+                </span>
               </div>
 
-              <div class="tentative-row__body">
-                <div class="tentative-row__meta">
-                  <Tag
-                    :value="statusLabel(attempt.status)"
-                    :severity="statusSeverity(attempt.status)"
-                  />
-                  <span
-                    v-if="attempt.oral_score || attempt.written_score"
-                    class="tentative-row__score"
-                  >
-                    {{
-                      (attempt.oral_score ?? 0) + (attempt.written_score ?? 0)
-                    }}/699
-                  </span>
-                  <span class="tentative-row__date">{{
-                    formatDate(attempt.started_at)
-                  }}</span>
-                  <span
-                    v-if="attempt.completed_at"
-                    class="tentative-row__duration"
-                  >
-                    {{ duration(attempt.started_at, attempt.completed_at) }}
-                  </span>
-                </div>
-              </div>
-
-              <div class="tentative-row__actions">
-                <NuxtLink
+              <div class="shrink-0">
+                <AppCta
                   v-if="attempt.status === 'completed'"
                   :to="`/epreuve/comprehension-ecrite/resultats/${attempt.id}`"
-                >
-                  <Button
-                    label="Résultats"
-                    icon="pi pi-chart-bar"
-                    size="small"
-                    outlined
-                  />
-                </NuxtLink>
-                <NuxtLink
+                  label="Résultats"
+                  icon="pi pi-chart-bar"
+                  icon-pos="left"
+                  variant="outline"
+                  size="md"
+                />
+                <AppCta
                   v-else-if="attempt.status === 'in_progress'"
                   :to="`/epreuve/comprehension-ecrite/series/${attempt.series_id}`"
-                >
-                  <Button
-                    label="Continuer"
-                    icon="pi pi-play"
-                    size="small"
-                    class="bg-gradient-primary border-none"
-                  />
-                </NuxtLink>
+                  label="Continuer"
+                  icon="pi pi-play"
+                  icon-pos="left"
+                  size="md"
+                />
               </div>
             </div>
           </div>
@@ -170,11 +158,11 @@
       </div>
     </div>
 
-    <div class="account-section" style="margin-top: 1.5rem">
+    <div class="account-section">
       <ExpressionOraleHistory />
     </div>
 
-    <div class="account-section" style="margin-top: 1.5rem">
+    <div class="account-section">
       <ExpressionecriteHistory />
     </div>
   </div>
@@ -183,6 +171,7 @@
 <script setup lang="ts">
 import type { ExamAttemptResponse } from "#shared/api/models/ExamAttemptResponse";
 import type { SuccessResponse_list_ExamAttemptResponse__ } from "#shared/api/models/SuccessResponse_list_ExamAttemptResponse__";
+import { site } from "~/config/site";
 
 definePageMeta({ layout: "account", middleware: "auth" });
 
@@ -190,21 +179,15 @@ const { get } = useApi();
 const loading = ref(true);
 const attempts = ref<ExamAttemptResponse[]>([]);
 const expandedGroups = ref<string[]>([]);
-const activeFilter = ref<"all" | "completed" | "in_progress" | "abandoned">(
-  "all",
-);
+const activeFilter = ref<"all" | "completed" | "in_progress" | "abandoned">("all");
 
 onMounted(async () => {
   try {
-    const res =
-      await get<SuccessResponse_list_ExamAttemptResponse__>(
-        "/v1/exam-attempts",
-      );
+    const res = await get<SuccessResponse_list_ExamAttemptResponse__>("/v1/exam-attempts");
     attempts.value = (res.data ?? []).sort(
-      (a, b) =>
-        new Date(b.started_at).getTime() - new Date(a.started_at).getTime(),
+      (a, b) => new Date(b.started_at).getTime() - new Date(a.started_at).getTime(),
     );
-    // Expand le premier groupe par défaut
+    // Déplie le premier groupe par défaut
     const firstGroup = groups.value[0];
     if (firstGroup) expandedGroups.value = [firstGroup.seriesId];
   } finally {
@@ -223,8 +206,7 @@ const groups = computed(() => {
 
   return Array.from(map.entries()).map(([seriesId, list]) => {
     const sorted = [...list].sort(
-      (a, b) =>
-        new Date(b.started_at).getTime() - new Date(a.started_at).getTime(),
+      (a, b) => new Date(b.started_at).getTime() - new Date(a.started_at).getTime(),
     );
     const scores = sorted
       .filter((a) => a.status === "completed")
@@ -234,9 +216,7 @@ const groups = computed(() => {
     const latestScore = scores[0] ?? null;
     const previousScore = scores[1] ?? null;
     const progressDelta =
-      latestScore !== null && previousScore !== null
-        ? latestScore - previousScore
-        : null;
+      latestScore !== null && previousScore !== null ? latestScore - previousScore : null;
 
     return {
       seriesId,
@@ -262,15 +242,12 @@ const filters: {
 
 function filterCount(value: string): number {
   if (value === "all") return groups.value.length;
-  return groups.value.filter((g) => g.attempts.some((a) => a.status === value))
-    .length;
+  return groups.value.filter((g) => g.attempts.some((a) => a.status === value)).length;
 }
 
 const filteredGroups = computed(() => {
   if (activeFilter.value === "all") return groups.value;
-  return groups.value.filter((g) =>
-    g.attempts.some((a) => a.status === activeFilter.value),
-  );
+  return groups.value.filter((g) => g.attempts.some((a) => a.status === activeFilter.value));
 });
 
 function toggleGroup(id: string) {
@@ -283,17 +260,10 @@ function toggleGroup(id: string) {
 
 // ── Helpers ───────────────────────────────────────────────────
 function statusLabel(s: string) {
-  return (
-    { in_progress: "En cours", completed: "Terminé", abandoned: "Abandonné" }[
-      s
-    ] ?? s
-  );
+  return { in_progress: "En cours", completed: "Terminé", abandoned: "Abandonné" }[s] ?? s;
 }
 function statusSeverity(s: string) {
-  return (
-    { in_progress: "warning", completed: "success", abandoned: "danger" }[s] ??
-    "secondary"
-  );
+  return { in_progress: "warning", completed: "success", abandoned: "danger" }[s] ?? "secondary";
 }
 function formatDate(d: string) {
   return new Date(d).toLocaleDateString("fr-FR", {
@@ -303,211 +273,11 @@ function formatDate(d: string) {
   });
 }
 function duration(start: string, end: string): string {
-  const diff = Math.round(
-    (new Date(end).getTime() - new Date(start).getTime()) / 1000,
-  );
+  const diff = Math.round((new Date(end).getTime() - new Date(start).getTime()) / 1000);
   const m = Math.floor(diff / 60);
   const s = diff % 60;
   return `${m}min ${s}s`;
 }
 
-useHead({ title: "Mes tentatives | Lumina TCF" });
+useHead({ title: `Mes tentatives | ${site.name}` });
 </script>
-
-<style scoped>
-.tentatives__filters {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-  margin-bottom: 1.5rem;
-  padding-bottom: 1.25rem;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.tentatives__filter {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  border-radius: 9999px;
-  border: 1px solid var(--border-color);
-  background: var(--bg-card);
-  color: var(--text-secondary);
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.tentatives__filter:hover {
-  border-color: var(--color-primary-400);
-  color: var(--color-primary-600);
-}
-.tentatives__filter--active {
-  background: var(--gradient-primary);
-  border-color: transparent;
-  color: #ffffff;
-  font-weight: 600;
-}
-.tentatives__filter-count {
-  background: rgba(0, 0, 0, 0.1);
-  border-radius: 9999px;
-  padding: 1px 7px;
-  font-size: 0.75rem;
-  font-weight: 700;
-}
-.tentatives__filter--active .tentatives__filter-count {
-  background: rgba(255, 255, 255, 0.25);
-}
-
-.tentatives__empty {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 2rem 0;
-  color: var(--text-tertiary);
-}
-.tentatives__empty i {
-  font-size: 1.5rem;
-}
-
-/* ── Groupes ──────────────────────────────────────────────── */
-.tentatives__groups {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.serie-group {
-  border: 1px solid var(--border-color);
-  border-radius: 0.875rem;
-  overflow: hidden;
-  background: var(--bg-card);
-}
-
-.serie-group__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1rem 1.25rem;
-  cursor: pointer;
-  transition: background 0.15s;
-  gap: 1rem;
-}
-
-.serie-group__header:hover {
-  background: var(--bg-ground);
-}
-
-.serie-group__left {
-  display: flex;
-  align-items: center;
-  gap: 0.875rem;
-}
-
-.serie-group__icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 0.625rem;
-  background: var(--color-primary-50);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.serie-group__icon i {
-  color: var(--color-primary-600);
-  font-size: 1rem;
-}
-
-.serie-group__title {
-  font-size: 0.9375rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin: 0 0 0.125rem;
-}
-.serie-group__sub {
-  font-size: 0.8125rem;
-  color: var(--text-tertiary);
-  margin: 0;
-}
-.serie-group__best {
-  color: var(--color-primary-600);
-}
-
-.serie-group__right {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  flex-shrink: 0;
-}
-
-.serie-group__progress {
-  font-size: 0.8125rem;
-  font-weight: 700;
-}
-.progress--up {
-  color: #16a34a;
-}
-.progress--down {
-  color: #dc2626;
-}
-
-/* ── Tentatives ───────────────────────────────────────────── */
-.serie-group__attempts {
-  border-top: 1px solid var(--border-color);
-  background: var(--bg-ground);
-}
-
-.tentative-row {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 0.875rem 1.25rem;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.tentative-row:last-child {
-  border-bottom: none;
-}
-
-.tentative-row__num {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: var(--text-secondary);
-}
-
-.tentative-row__body {
-  flex: 1;
-  min-width: 0;
-}
-.tentative-row__meta {
-  display: flex;
-  align-items: center;
-  gap: 0.625rem;
-  flex-wrap: wrap;
-}
-.tentative-row__score {
-  font-size: 0.8125rem;
-  font-weight: 700;
-  color: var(--color-primary-600);
-}
-.tentative-row__date,
-.tentative-row__duration {
-  font-size: 0.8125rem;
-  color: var(--text-tertiary);
-}
-.tentative-row__actions {
-  flex-shrink: 0;
-}
-</style>

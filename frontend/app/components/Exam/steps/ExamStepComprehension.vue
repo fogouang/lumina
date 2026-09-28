@@ -1,91 +1,92 @@
 <template>
-  <div class="step">
+  <div class="min-h-screen bg-canvas">
     <!-- ── DESKTOP ────────────────────────────────────────────── -->
-    <div class="step__desktop">
+    <div class="hidden min-h-screen lg:flex">
       <!-- Sidebar gauche -->
-      <aside class="step__sidebar">
+      <aside
+        class="sticky top-0 flex h-screen w-76 shrink-0 flex-col gap-3 overflow-y-auto border-r border-line bg-card p-3 shadow-[4px_0_24px_-12px_rgb(15_23_42/0.18)]"
+      >
         <!-- Timer -->
         <ExamTimer :total-seconds="totalSeconds" @expired="onExpired" />
 
         <!-- Navigation -->
-        <div class="step__nav-card">
-          <p class="step__nav-title">Navigation des questions</p>
+        <div
+          class="rounded-2xl border border-line bg-linear-to-b from-card-2 to-canvas p-3.5 shadow-[inset_0_1px_0_rgb(255_255_255/0.6)] dark:shadow-none"
+        >
+          <div class="mb-3.5">
+            <div class="flex items-center justify-between gap-2">
+              <p class="font-heading text-xs font-bold uppercase tracking-wider text-ink">
+                Navigation
+              </p>
+              <span class="font-heading text-xs font-bold tabular-nums text-muted">
+                {{ answeredInStep }} <span class="text-faint">/ {{ questions.length }} répondues</span>
+              </span>
+            </div>
+            <div class="mt-2 h-1.5 overflow-hidden rounded-full bg-line">
+              <div
+                class="h-full rounded-full bg-linear-to-r from-emerald-400 to-emerald-600 transition-all duration-500"
+                :style="{ width: `${progress}%` }"
+              />
+            </div>
+          </div>
 
           <!-- CO -->
-          <div class="step__nav-section">
-            <p class="step__nav-label">
-              <i class="pi pi-headphones text-xs" />
+          <div class="mb-4 transition-opacity" :class="!isStepCO ? 'opacity-50' : ''">
+            <p class="mb-2 flex items-center gap-1.5 text-xs font-semibold text-muted">
+              <i class="pi pi-headphones text-xs text-primary" />
               Compréhension Orale
+              <i v-if="!isStepCO" class="pi pi-lock ml-auto text-xs opacity-60" />
             </p>
-            <div class="step__nav-grid">
-              <button
+            <div class="grid grid-cols-8 gap-1.5">
+              <ExamNavButton
                 v-for="(q, i) in allOralQuestions"
                 :key="q.id"
-                class="step__nav-btn"
-                :class="{
-                  'step__nav-btn--current': isStepCO && i === currentIndex,
-                  'step__nav-btn--answered': answersMap[q.id],
-                }"
+                :label="q.question_number"
+                :current="isStepCO && i === currentIndex"
+                :answered="!!answersMap[q.id]"
+                :locked="!isStepCO"
                 @click="onNavGo('co', i)"
-              >
-                {{ q.question_number }}
-              </button>
+              />
             </div>
           </div>
 
           <!-- CE -->
-          <div
-            class="step__nav-section"
-            :class="{ 'step__nav-section--locked': isStepCO }"
-          >
-            <p class="step__nav-label">
-              <i class="pi pi-book text-xs" />
+          <div class="transition-opacity" :class="isStepCO ? 'opacity-50' : ''">
+            <p class="mb-2 flex items-center gap-1.5 text-xs font-semibold text-muted">
+              <i class="pi pi-book text-xs text-primary" />
               Compréhension Écrite
-              <i
-                v-if="isStepCO"
-                class="pi pi-lock text-xs ml-auto opacity-50"
-              />
+              <i v-if="isStepCO" class="pi pi-lock ml-auto text-xs opacity-60" />
             </p>
-            <div class="step__nav-grid">
-              <button
+            <div class="grid grid-cols-8 gap-1.5">
+              <ExamNavButton
                 v-for="(q, i) in allWrittenQuestions"
                 :key="q.id"
-                class="step__nav-btn"
-                :class="{
-                  'step__nav-btn--current': !isStepCO && i === currentIndex,
-                  'step__nav-btn--answered': answersMap[q.id],
-                  'step__nav-btn--locked': isStepCO,
-                }"
-                :disabled="isStepCO"
+                :label="q.question_number"
+                :current="!isStepCO && i === currentIndex"
+                :answered="!!answersMap[q.id]"
+                :locked="isStepCO"
                 @click="onNavGo('ce', i)"
-              >
-                {{ q.question_number }}
-              </button>
+              />
             </div>
           </div>
 
           <!-- Légende -->
-          <div class="step__legend">
-            <span class="step__legend-item"
-              ><span class="step__dot step__dot--current" />Actuelle</span
-            >
-            <span class="step__legend-item"
-              ><span class="step__dot step__dot--answered" />Répondue</span
-            >
-            <span class="step__legend-item"
-              ><span class="step__dot step__dot--none" />Non rép.</span
-            >
-          </div>
+          <ExamNavLegend class="mt-4 border-t border-line pt-3" />
         </div>
 
         <!-- Quitter -->
-        <button class="step__quit" @click="emit('quit')">
-          <i class="pi pi-sign-out" /> Quitter l'examen
+        <button
+          type="button"
+          class="mt-auto flex shrink-0 items-center justify-center gap-2 rounded-xl border border-red-200 bg-red-50/60 px-4 py-2.5 text-sm font-semibold text-red-600 transition-colors hover:bg-red-100 dark:border-red-900 dark:bg-red-950/40 dark:text-red-400 dark:hover:bg-red-950"
+          @click="emit('quit')"
+        >
+          <i class="pi pi-sign-out" />
+          Quitter l'examen
         </button>
       </aside>
 
       <!-- Zone question -->
-      <main class="step__main">
+      <main class="min-w-0 flex-1 overflow-y-auto p-5">
         <ExamQuestionPanel
           v-if="currentQuestion"
           :question="currentQuestion"
@@ -104,8 +105,7 @@
     </div>
 
     <!-- ── MOBILE ─────────────────────────────────────────────── -->
-    <!-- Topbar sticky -->
-    <div class="step__mobile">
+    <div class="flex min-h-screen flex-col lg:hidden">
       <ExamTopBar
         :total-seconds="totalSeconds"
         :current-index="currentIndex"
@@ -186,11 +186,20 @@ const answers = computed({
 });
 
 const answersMap = computed(() => props.modelValue);
+const isStepCO = computed(() => props.isStepCO);
 const currentIndex = ref(0);
 const submitting = ref(false);
 const navOpen = ref(false);
 const currentQuestion = computed(
   () => props.questions[currentIndex.value] ?? null,
+);
+
+// Progression du module en cours (affichage)
+const answeredInStep = computed(
+  () => props.questions.filter((q) => answersMap.value[q.id]).length,
+);
+const progress = computed(() =>
+  props.questions.length ? (answeredInStep.value / props.questions.length) * 100 : 0,
 );
 
 function onSelect(key: string) {
@@ -229,12 +238,11 @@ async function onGo(index: number) {
 }
 
 async function onNavGo(type: "co" | "ce", index: number) {
-  if (isStepCO && type === "ce") return;
+  // On ne navigue que dans le module en cours
+  if ((isStepCO.value && type === "ce") || (!isStepCO.value && type === "co")) return;
   await submitCurrentAnswer();
   currentIndex.value = index;
 }
-
-const isStepCO = computed(() => props.isStepCO);
 
 async function onFinishStep() {
   await submitCurrentAnswer();
@@ -255,198 +263,3 @@ function getLevel(pts: number): string {
   return "C2";
 }
 </script>
-
-<style scoped>
-.step {
-  min-height: 100vh;
-  background: var(--bg-ground);
-}
-
-/* ── Desktop ───────────────────────────────────────────────── */
-.step__desktop {
-  display: none;
-}
-
-@media (min-width: 1024px) {
-  .step__desktop {
-    display: flex;
-    gap: 0;
-    min-height: 100vh;
-  }
-  .step__mobile {
-    display: none;
-  }
-}
-
-/* Sidebar */
-.step__sidebar {
-  width: 280px;
-  flex-shrink: 0;
-  background: var(--bg-card);
-  border-right: 1px solid var(--border-color);
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  padding: 1rem;
-  position: sticky;
-  top: 0;
-  height: 100vh;
-  overflow-y: auto;
-}
-
-/* Main */
-.step__main {
-  flex: 1;
-  padding: 2rem;
-  overflow-y: auto;
-}
-
-/* Nav card */
-.step__nav-card {
-  flex: 1;
-  overflow-y: auto;
-}
-
-.step__nav-title {
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  margin: 0 0 0.75rem;
-}
-
-.step__nav-section {
-  margin-bottom: 0.875rem;
-}
-
-.step__nav-section--locked {
-  opacity: 0.45;
-}
-
-.step__nav-label {
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-  margin-bottom: 0.375rem;
-}
-
-.step__nav-grid {
-  display: grid;
-  grid-template-columns: repeat(8, 1fr);
-  gap: 0.25rem;
-}
-
-.step__nav-btn {
-  aspect-ratio: 1;
-  border-radius: 0.375rem;
-  border: 1px solid var(--border-color);
-  background: var(--bg-ground);
-  color: var(--text-secondary);
-  font-size: 0.625rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.step__nav-btn:hover:not(:disabled) {
-  border-color: var(--color-primary-400);
-  color: var(--color-primary-600);
-}
-
-.step__nav-btn--current {
-  background: var(--gradient-primary);
-  border-color: transparent;
-  color: #ffffff;
-}
-
-.step__nav-btn--answered {
-  background: #f0fdf4;
-  border-color: #22c55e;
-  color: #15803d;
-}
-
-.step__nav-btn--locked {
-  cursor: not-allowed;
-  pointer-events: none;
-}
-
-/* Légende */
-.step__legend {
-  display: flex;
-  gap: 0.625rem;
-  flex-wrap: wrap;
-  padding-top: 0.625rem;
-  border-top: 1px solid var(--border-color);
-  margin-top: 0.625rem;
-}
-
-.step__legend-item {
-  display: flex;
-  align-items: center;
-  gap: 0.3rem;
-  font-size: 0.6875rem;
-  color: var(--text-tertiary);
-}
-
-.step__dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.step__dot--current {
-  background: var(--color-primary-500);
-}
-.step__dot--answered {
-  background: #22c55e;
-}
-.step__dot--none {
-  background: transparent;
-  border: 1px solid var(--border-color);
-}
-
-/* Quitter */
-.step__quit {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  width: 100%;
-  padding: 0.625rem;
-  background: none;
-  border: 1px solid var(--color-danger-200);
-  border-radius: 0.75rem;
-  color: var(--color-danger-600);
-  font-size: 0.8125rem;
-  font-weight: 600;
-  cursor: pointer;
-  font-family: inherit;
-  transition: all 0.2s ease;
-  flex-shrink: 0;
-}
-
-.step__quit:hover {
-  background: var(--color-danger-50);
-}
-
-/* ── Mobile ────────────────────────────────────────────────── */
-.step__mobile {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-}
-
-@media (min-width: 1024px) {
-  .step__mobile {
-    display: none;
-  }
-}
-</style>

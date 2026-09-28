@@ -1,15 +1,27 @@
 <template>
-  <div class="min-h-screen bg-(--bg-ground)">
-    <div v-if="loading" class="flex items-center justify-center min-h-screen">
-      <ProgressSpinner style="width:48px;height:48px" />
+  <div class="min-h-screen bg-canvas">
+    <!-- Chargement -->
+    <div v-if="loading" class="flex min-h-screen flex-col items-center justify-center gap-3">
+      <i class="pi pi-spin pi-spinner text-3xl text-primary" />
+      <p class="text-sm text-muted">Préparation du module...</p>
     </div>
 
-    <div v-else-if="error" class="flex flex-col items-center justify-center min-h-screen gap-4">
-      <i class="pi pi-exclamation-triangle text-4xl text-red-500" />
-      <p class="text-(--text-secondary)">{{ error }}</p>
-      <NuxtLink :to="`/epreuve/${slug}/series/${seriesId}`">
-        <Button label="Retour" icon="pi pi-arrow-left" />
-      </NuxtLink>
+    <!-- Erreur -->
+    <div v-else-if="error" class="flex min-h-screen items-center justify-center p-4">
+      <div class="flex max-w-md flex-col items-center gap-4 rounded-card border border-line bg-card p-8 text-center shadow-lift">
+        <span class="grid size-14 place-items-center rounded-full bg-red-100 text-red-600 dark:bg-red-950 dark:text-red-400">
+          <i class="pi pi-exclamation-triangle text-xl" />
+        </span>
+        <p class="text-muted">{{ error }}</p>
+        <AppCta
+          :to="`/epreuve/${slug}/series/${seriesId}`"
+          label="Retour"
+          icon="pi pi-arrow-left"
+          icon-pos="left"
+          variant="outline"
+          size="md"
+        />
+      </div>
     </div>
 
     <template v-else>
@@ -62,41 +74,55 @@
       />
     </template>
 
-    <!-- Dialog terminer -->
+    <!-- Terminer -->
     <Dialog
       v-model:visible="confirmFinish"
       modal
-      header="Module terminé"
-      :style="{ width: '420px' }"
+      :draggable="false"
+      :style="{ width: '28rem' }"
+      :breakpoints="{ '640px': '94vw' }"
+      :pt="{ mask: { class: 'backdrop-blur-sm' } }"
     >
-      <p class="text-(--text-secondary) leading-relaxed">
+      <template #header>
+        <div class="flex items-center gap-3">
+          <span class="grid size-10 place-items-center rounded-xl bg-green-100 text-green-600 dark:bg-green-950 dark:text-green-400">
+            <i class="pi pi-flag" />
+          </span>
+          <h3 class="font-heading text-lg font-bold text-ink">Module terminé</h3>
+        </div>
+      </template>
+      <p class="leading-relaxed text-muted">
         Vous avez terminé ce module. Voulez-vous valider et retourner à la liste des modules ?
       </p>
       <template #footer>
-        <Button label="Continuer" text @click="confirmFinish = false" />
-        <Button
-          label="Terminer"
-          icon="pi pi-check"
-          severity="success"
-          :loading="finishing"
-          @click="onFinish"
-        />
+        <AppButton label="Continuer" variant="ghost" @click="confirmFinish = false" />
+        <AppButton label="Terminer" icon="pi pi-check" variant="gradient" :loading="finishing" @click="onFinish" />
       </template>
     </Dialog>
 
-    <!-- Dialog quitter -->
+    <!-- Quitter -->
     <Dialog
       v-model:visible="confirmQuit"
       modal
-      header="Quitter le module"
-      :style="{ width: '380px' }"
+      :draggable="false"
+      :style="{ width: '26rem' }"
+      :breakpoints="{ '640px': '94vw' }"
+      :pt="{ mask: { class: 'backdrop-blur-sm' } }"
     >
-      <p class="text-(--text-secondary) leading-relaxed">
+      <template #header>
+        <div class="flex items-center gap-3">
+          <span class="grid size-10 place-items-center rounded-xl bg-red-100 text-red-600 dark:bg-red-950 dark:text-red-400">
+            <i class="pi pi-sign-out" />
+          </span>
+          <h3 class="font-heading text-lg font-bold text-ink">Quitter le module ?</h3>
+        </div>
+      </template>
+      <p class="leading-relaxed text-muted">
         Vos réponses déjà soumises sont sauvegardées. Vous pourrez reprendre plus tard.
       </p>
       <template #footer>
-        <Button label="Annuler" text @click="confirmQuit = false" />
-        <Button label="Quitter" severity="danger" icon="pi pi-sign-out" @click="doQuit" />
+        <AppButton label="Annuler" variant="ghost" @click="confirmQuit = false" />
+        <AppButton label="Quitter" icon="pi pi-sign-out" variant="danger" @click="doQuit" />
       </template>
     </Dialog>
   </div>

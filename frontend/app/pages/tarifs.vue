@@ -1,155 +1,252 @@
 <template>
   <div>
-    <!-- ── Hero ─────────────────────────────────────────────── -->
-    <section class="tarifs-hero">
-      <div class="container tarifs-hero__inner">
-        <Tag value="Tarifs" severity="warning" />
-        <h1 class="tarifs-hero__title">Choisissez votre formule</h1>
-        <p class="tarifs-hero__sub">
+    <!-- Hero -->
+    <section class="featured-panel px-4 pb-44 pt-32 sm:px-6 lg:px-8 lg:pt-40">
+      <div
+        class="bg-grid animate-grid-drift pointer-events-none absolute inset-0"
+        style="--app-line: rgba(255, 255, 255, 0.06)"
+      />
+
+      <div class="relative mx-auto flex max-w-2xl flex-col items-center text-center">
+        <span
+          v-reveal
+          class="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-white backdrop-blur-md"
+        >
+          <span class="size-1.5 rounded-full bg-accent-400" />
+          Tarifs
+        </span>
+        <h1
+          v-reveal="{ delay: 100 }"
+          class="mt-6 font-heading text-[clamp(2rem,4.5vw,3.25rem)] font-extrabold leading-[1.1] tracking-tight text-white"
+        >
+          Choisissez votre <span class="text-accent-400">formule</span>
+        </h1>
+        <p v-reveal="{ delay: 200 }" class="mt-5 max-w-xl text-lg leading-relaxed text-white/80">
           Sans engagement. Accès immédiat après paiement via Mobile Money.
         </p>
       </div>
-      <div class="tarifs-hero__wave">
-        <svg
-          viewBox="0 0 1440 80"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          preserveAspectRatio="none"
-        >
-          <path
-            d="M0 80L60 72C120 64 240 48 360 42.7C480 37 600 43 720 48C840 53 960 59 1080 58.7C1200 59 1320 53 1380 50.7L1440 48V80H0Z"
-            fill="var(--bg-ground)"
-          />
-        </svg>
-      </div>
     </section>
 
-    <!-- ── Plans ─────────────────────────────────────────────── -->
-    <section class="section section--light">
-      <div class="tarifs-payment">
-        <p class="tarifs-payment__title">Moyens de paiement acceptés</p>
-        <div class="tarifs-payment__logos">
-          <img
-            src="/images/orange.jpg"
-            alt="Orange Money"
-            class="tarifs-payment__logo"
-          />
-          <img
-            src="/images/momo.jpg"
-            alt="MTN MoMo"
-            class="tarifs-payment__logo"
-          />
-          <img src="/images/visa.png" alt="Visa" class="tarifs-payment__logo" />
-          <img
-            src="/images/master.png"
-            alt="Mastercard"
-            class="tarifs-payment__logo"
-          />
-          <img
-            src="/images/paypal.png"
-            alt="PayPal"
-            class="tarifs-payment__logo"
-          />
-        </div>
-      </div>
-
-      <div class="container">
-        <div v-if="loading" class="tarifs-loading">
-          <ProgressSpinner style="width: 40px; height: 40px" />
+    <!-- Plans : chevauchent le bas du hero -->
+    <section class="relative z-10 -mt-28 px-4 sm:px-6 lg:px-8">
+      <div class="mx-auto max-w-6xl">
+        <!-- Chargement -->
+        <div v-if="loading" class="grid items-start gap-6 md:grid-cols-3">
+          <div
+            v-for="n in 3"
+            :key="n"
+            class="rounded-[2rem_0.5rem] border border-line bg-card p-8 shadow-lift"
+          >
+            <Skeleton width="50%" height="1.5rem" />
+            <Skeleton width="70%" height="3rem" class="mt-4" />
+            <div class="mt-8 space-y-4">
+              <Skeleton v-for="i in 5" :key="i" height="1rem" />
+            </div>
+            <Skeleton height="3.5rem" class="mt-8" border-radius="1.8rem 0.6rem" />
+          </div>
         </div>
 
-        <div v-else-if="error" class="tarifs-error">
-          <p>{{ error }}</p>
+        <!-- Erreur -->
+        <div v-else-if="error" class="mx-auto max-w-md rounded-card border border-line bg-card p-8 text-center shadow-lift">
+          <span class="mx-auto grid size-12 place-items-center rounded-leaf bg-red-50 text-red-600 dark:bg-red-950 dark:text-red-300">
+            <i class="pi pi-exclamation-triangle text-lg" />
+          </span>
+          <p class="mt-4 font-medium text-ink">{{ error }}</p>
+          <p class="mt-1 text-sm text-faint">Actualisez la page ou réessayez dans quelques instants.</p>
         </div>
 
-        <div v-else class="tarifs-grid">
+        <!-- Cartes -->
+        <div v-else class="grid items-center gap-6 md:grid-cols-3">
           <div
             v-for="(plan, idx) in b2cPlans"
             :key="plan.id"
-            class="plan-card"
-            :class="{ 'plan-card--featured': isFeatured(plan) }"
+            v-reveal="{ delay: 200 + idx * 120 }"
+            :class="isFeatured(plan) ? 'md:-my-4 md:scale-[1.04]' : ''"
           >
-            <!-- Ribbon -->
-            <div class="plan-card__ribbon" :class="getRibbonClass(idx)">
-              <span>Lumina</span>
-            </div>
+            <article
+              class="relative flex h-full flex-col rounded-[2rem_0.5rem] p-8 transition-all duration-300 ease-spring hover:-translate-y-1.5"
+              :class="
+                isFeatured(plan)
+                  ? 'featured-panel text-white shadow-brand ring-2 ring-accent-400/60'
+                  : 'border border-line bg-card shadow-lift hover:border-primary-200 dark:hover:border-primary-800'
+              "
+            >
+              <!-- Badge -->
+              <span
+                v-if="isFeatured(plan)"
+                class="absolute right-6 top-6 inline-flex items-center gap-1.5 rounded-full bg-accent-400 px-3 py-1 text-xs font-bold text-accent-950"
+              >
+                <i class="pi pi-star-fill text-[0.65rem]" />
+                Le plus choisi
+              </span>
 
-            <!-- Header -->
-            <div class="plan-card__header">
-              <h3 class="plan-card__name">{{ plan.name }}</h3>
-              <div class="plan-card__price">
-                <span class="plan-card__currency">FCFA</span>
-                <span class="plan-card__amount">{{
-                  formatPrice(plan.price)
-                }}</span>
+              <!-- En-tête -->
+              <h3
+                class="font-heading text-xl font-bold"
+                :class="isFeatured(plan) ? 'text-white' : 'text-ink'"
+              >
+                {{ plan.name }}
+              </h3>
+
+              <div class="mt-4 flex items-baseline gap-2">
+                <span
+                  class="font-heading text-5xl font-extrabold leading-none tracking-tight"
+                  :class="isFeatured(plan) ? 'text-white' : 'text-ink'"
+                >
+                  {{ formatPrice(plan.price) }}
+                </span>
+                <span
+                  class="text-sm font-semibold"
+                  :class="isFeatured(plan) ? 'text-white/70' : 'text-faint'"
+                >
+                  FCFA
+                </span>
               </div>
-            </div>
 
-            <!-- Body -->
-            <div class="plan-card__body">
-              <ul class="plan-card__features">
-                <li v-for="feat in getPlanFeatures(plan)" :key="feat">
-                  <i class="pi pi-check-circle" />
+              <div
+                class="mt-4 inline-flex w-fit items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold"
+                :class="
+                  isFeatured(plan)
+                    ? 'bg-white/10 text-white'
+                    : 'bg-primary-50 text-primary-700 dark:bg-primary-950 dark:text-primary-300'
+                "
+              >
+                <i class="pi pi-clock text-[0.7rem]" />
+                Accès : {{ formatDuration(plan.duration_days) }}
+              </div>
+
+              <!-- Fonctionnalités -->
+              <ul
+                class="mt-7 flex flex-1 flex-col gap-3 border-t pt-7"
+                :class="isFeatured(plan) ? 'border-white/15' : 'border-line'"
+              >
+                <li
+                  v-for="feat in getPlanFeatures(plan)"
+                  :key="feat"
+                  class="flex items-start gap-3 text-sm leading-relaxed"
+                  :class="isFeatured(plan) ? 'text-white/85' : 'text-muted'"
+                >
+                  <i
+                    class="pi pi-check-circle mt-0.5 shrink-0"
+                    :class="isFeatured(plan) ? 'text-accent-400' : 'text-primary'"
+                  />
                   {{ feat }}
                 </li>
               </ul>
 
               <!-- Bonus IA -->
-              <div class="plan-card__bonus">
-                <span class="plan-card__bonus-tag">
-                  <i class="pi pi-sparkles" /> BONUS
+              <div
+                class="mt-7 rounded-2xl border p-4"
+                :class="
+                  isFeatured(plan)
+                    ? 'border-white/20 bg-white/10'
+                    : 'border-accent-200 bg-accent-50 dark:border-accent-900 dark:bg-accent-950'
+                "
+              >
+                <span
+                  class="inline-flex items-center gap-1.5 rounded-full bg-accent-400 px-2.5 py-0.5 text-[0.65rem] font-extrabold uppercase tracking-wider text-accent-950"
+                >
+                  <i class="pi pi-sparkles text-[0.65rem]" />
+                  Bonus
                 </span>
-                <p class="plan-card__bonus-text">
+                <p
+                  class="mt-2 text-sm leading-relaxed"
+                  :class="isFeatured(plan) ? 'text-white/85' : 'text-accent-900 dark:text-accent-200'"
+                >
                   Accès au simulateur d'expression écrite :
-                  <strong>{{ plan.ai_credits }} essais inclus</strong>
+                  <strong class="font-extrabold">{{ plan.ai_credits }} essais inclus</strong>
                 </p>
               </div>
 
-              <div class="plan-card__duration-badge">
-                <i class="pi pi-clock" />
-                Accès : {{ formatDuration(plan.duration_days) }}
+              <!-- Actions -->
+              <div class="mt-8 flex flex-col items-center gap-3">
+                <AppCta
+                  label="S'abonner"
+                  icon="pi pi-arrow-right"
+                  :variant="isFeatured(plan) ? 'light' : 'gradient'"
+                  class="w-full"
+                  @click="onChoosePlan(plan)"
+                />
+                <button
+                  type="button"
+                  class="text-sm font-medium underline-offset-4 transition-colors hover:underline"
+                  :class="isFeatured(plan) ? 'text-white/75 hover:text-white' : 'text-primary'"
+                >
+                  En savoir plus
+                </button>
               </div>
-            </div>
-
-            <!-- Footer -->
-            <div class="plan-card__footer">
-              <Button
-                label="S'ABONNER"
-                class="plan-card__btn w-full"
-                @click="onChoosePlan(plan)"
-              />
-              <button class="plan-card__savoir">En savoir plus</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Garanties -->
-        <div class="tarifs-guarantees">
-          <div v-for="g in guarantees" :key="g.label" class="tarifs-guarantee">
-            <i :class="g.icon" />
-            <span>{{ g.label }}</span>
+            </article>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- ── FAQ ───────────────────────────────────────────────── -->
-    <section class="section section--white">
-      <div class="container--narrow">
-        <div class="section-header">
-          <h2 class="section-title">Questions sur les tarifs</h2>
+    <!-- Paiement et garanties -->
+    <section class="px-4 pb-20 pt-16 sm:px-6 lg:px-8">
+      <div v-reveal class="mx-auto max-w-5xl rounded-card border border-line bg-card p-8 shadow-soft">
+        <p class="text-center text-xs font-semibold uppercase tracking-widest text-faint">
+          Moyens de paiement acceptés
+        </p>
+        <div class="mt-5 flex flex-wrap items-center justify-center gap-4">
+          <img
+            v-for="logo in paymentLogos"
+            :key="logo.alt"
+            :src="logo.src"
+            :alt="logo.alt"
+            class="h-10 rounded-lg border border-line bg-white object-contain px-2 py-1 grayscale-40 transition-all duration-300 hover:grayscale-0"
+          />
         </div>
-        <Accordion>
-          <AccordionPanel v-for="faq in faqs" :key="faq.q" :value="faq.q">
-            <AccordionHeader>{{ faq.q }}</AccordionHeader>
-            <AccordionContent>
-              <p class="tarifs-faq__answer">{{ faq.a }}</p>
-            </AccordionContent>
-          </AccordionPanel>
-        </Accordion>
+
+        <div class="mt-8 flex flex-wrap justify-center gap-3 border-t border-line pt-8">
+          <span
+            v-for="g in guarantees"
+            :key="g.label"
+            class="inline-flex items-center gap-2 rounded-full bg-card-2 px-4 py-2 text-sm font-medium text-muted"
+          >
+            <i :class="[g.icon, 'text-primary']" />
+            {{ g.label }}
+          </span>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="border-t border-line bg-card px-4 py-20 sm:px-6 lg:px-8 lg:py-28">
+      <div class="mx-auto grid max-w-6xl gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-16">
+        <div class="lg:sticky lg:top-28 lg:self-start">
+          <SectionHeading
+            align="left"
+            eyebrow="FAQ"
+            title="Questions sur les tarifs"
+            subtitle="Paiement, formules, remboursement : l'essentiel avant de vous abonner."
+          />
+        </div>
+
+        <div v-reveal="{ delay: 150 }">
+          <Accordion value="0" class="flex flex-col gap-3">
+            <AccordionPanel
+              v-for="(faq, i) in faqs"
+              :key="faq.q"
+              :value="String(i)"
+              class="overflow-hidden rounded-card border border-line bg-canvas transition-all duration-300 ease-spring [&.p-accordionpanel-active]:border-primary-200 [&.p-accordionpanel-active]:bg-card [&.p-accordionpanel-active]:shadow-lift dark:[&.p-accordionpanel-active]:border-primary-800"
+            >
+              <AccordionHeader
+                class="bg-transparent px-6 py-5 text-left font-heading text-[0.9375rem] font-semibold text-ink hover:bg-card-2 [&_.p-accordionheader-toggle-icon]:text-primary"
+              >
+                {{ faq.q }}
+              </AccordionHeader>
+              <AccordionContent>
+                <p class="border-t border-line px-6 py-5 text-[0.9375rem] leading-relaxed text-muted">
+                  {{ faq.a }}
+                </p>
+              </AccordionContent>
+            </AccordionPanel>
+          </Accordion>
+        </div>
       </div>
     </section>
   </div>
+
   <PaymentDialog v-model="paymentVisible" :plan="paymentPlan" />
 </template>
 
@@ -157,6 +254,9 @@
 import type { PlanListResponse } from "#shared/api/models/PlanListResponse";
 import type { SuccessResponse_list_PlanListResponse__ } from "#shared/api/models/SuccessResponse_list_PlanListResponse__";
 import { PlanType } from "#shared/api/models/PlanType";
+import { site } from "~/config/site";
+
+definePageMeta({ navbarOverlay: true });
 
 const { get } = useApi();
 const auth = useAuthStore();
@@ -194,15 +294,6 @@ function isFeatured(plan: PlanListResponse): boolean {
   return idx === Math.floor(b2cPlans.value.length / 2);
 }
 
-function getRibbonClass(idx: number): string {
-  const classes = [
-    "plan-card__ribbon--red",
-    "plan-card__ribbon--dark",
-    "plan-card__ribbon--amber",
-  ];
-  return classes[idx % classes.length] ?? "plan-card__ribbon--red";
-}
-
 function getPlanFeatures(plan: PlanListResponse): string[] {
   if (plan.features && typeof plan.features === "object") {
     const f = plan.features as Record<string, unknown>;
@@ -236,6 +327,14 @@ function onChoosePlan(plan: PlanListResponse) {
   paymentVisible.value = true;
 }
 
+const paymentLogos = [
+  { src: "/images/orange.jpg", alt: "Orange Money" },
+  { src: "/images/momo.jpg", alt: "MTN MoMo" },
+  { src: "/images/visa.png", alt: "Visa" },
+  { src: "/images/master.png", alt: "Mastercard" },
+  { src: "/images/paypal.png", alt: "PayPal" },
+];
+
 const guarantees = [
   { icon: "pi pi-shield", label: "Paiement sécurisé" },
   { icon: "pi pi-mobile", label: "Mobile Money (Orange, MTN)" },
@@ -262,362 +361,5 @@ const faqs = [
   },
 ];
 
-useHead({ title: "Tarifs | Lumina TCF" });
+useHead({ title: `Tarifs | ${site.name}` });
 </script>
-
-<style scoped>
-/* ── Hero ──────────────────────────────────────────────────── */
-.tarifs-hero {
-  position: relative;
-  background: var(--gradient-primary);
-  padding: 3.5rem 0 5rem;
-  text-align: center;
-}
-
-.tarifs-hero__inner {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1rem;
-}
-
-.tarifs-hero__title {
-  font-size: clamp(2rem, 4vw, 3rem);
-  font-weight: 800;
-  color: #ffffff;
-  margin: 0;
-}
-
-.tarifs-hero__sub {
-  font-size: 1.0625rem;
-  color: rgba(255, 255, 255, 0.8);
-  margin: 0;
-  max-width: 520px;
-}
-
-.tarifs-hero__wave {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  line-height: 0;
-}
-
-.tarifs-hero__wave svg {
-  width: 100%;
-  display: block;
-}
-
-/* ── Loading ───────────────────────────────────────────────── */
-.tarifs-loading,
-.tarifs-error {
-  display: flex;
-  justify-content: center;
-  padding: 4rem 0;
-  color: var(--text-secondary);
-}
-
-/* ── Grid ──────────────────────────────────────────────────── */
-.tarifs-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1.5rem;
-  align-items: start;
-  margin-bottom: 3rem;
-}
-
-/* ── Card ──────────────────────────────────────────────────── */
-.plan-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 1.25rem;
-  overflow: hidden;
-  position: relative;
-  transition: all 0.25s ease;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-}
-
-.plan-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.1);
-}
-
-.plan-card--featured {
-  border: 2px solid var(--color-primary-500);
-  transform: scale(1.03);
-}
-
-.plan-card--featured:hover {
-  transform: scale(1.03) translateY(-4px);
-}
-
-/* ── Ribbon ────────────────────────────────────────────────── */
-.plan-card__ribbon {
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 80px;
-  height: 80px;
-  overflow: hidden;
-  z-index: 2;
-}
-
-.plan-card__ribbon span {
-  position: absolute;
-  top: 18px;
-  right: -22px;
-  width: 100px;
-  text-align: center;
-  font-size: 0.625rem;
-  font-weight: 800;
-  color: #ffffff;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  padding: 4px 0;
-  transform: rotate(45deg);
-}
-
-.plan-card__ribbon--red span {
-  background: #a80d26;
-}
-.plan-card__ribbon--dark span {
-  background: #475569;
-}
-.plan-card__ribbon--amber span {
-  background: #b45309;
-}
-
-/* ── Header ────────────────────────────────────────────────── */
-.plan-card__header {
-  background: var(--gradient-primary);
-  padding: 2rem 1.5rem 1.5rem;
-  text-align: center;
-}
-
-.plan-card__name {
-  font-size: 1.5rem;
-  font-weight: 800;
-  color: #ffffff;
-  margin: 0 0 0.75rem;
-}
-
-.plan-card__price {
-  display: flex;
-  align-items: baseline;
-  justify-content: center;
-  gap: 0.25rem;
-}
-
-.plan-card__amount {
-  font-size: 3rem;
-  font-weight: 800;
-  color: #ffffff;
-  line-height: 1;
-}
-
-.plan-card__currency {
-  font-size: 0.9375rem;
-  font-weight: 700;
-  color: rgba(255, 255, 255, 0.85);
-  align-self: flex-start;
-  margin-top: 0.625rem;
-}
-
-/* ── Body ──────────────────────────────────────────────────── */
-.plan-card__body {
-  padding: 1.5rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-  flex: 1;
-}
-
-.plan-card__features {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.plan-card__features li {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.625rem;
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-  line-height: 1.5;
-  padding: 0.625rem 0;
-  border-bottom: 1px solid var(--border-color);
-  text-align: left;
-}
-
-.plan-card__features li:last-child {
-  border-bottom: none;
-}
-
-.plan-card__features li i {
-  color: var(--color-primary-500);
-  font-size: 0.875rem;
-  margin-top: 2px;
-  flex-shrink: 0;
-}
-
-/* Bonus */
-.plan-card__bonus {
-  background: #f0fdf4;
-  border: 1px solid #bbf7d0;
-  border-radius: 0.75rem;
-  padding: 0.875rem 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.375rem;
-}
-
-.plan-card__bonus-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  background: #16a34a;
-  color: #ffffff;
-  padding: 2px 10px;
-  border-radius: 9999px;
-  font-size: 0.6875rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  width: fit-content;
-}
-
-.plan-card__bonus-text {
-  font-size: 0.875rem;
-  color: #15803d;
-  line-height: 1.5;
-  margin: 0;
-}
-
-.plan-card__bonus-text strong {
-  font-weight: 800;
-}
-
-/* Duration */
-.plan-card__duration-badge {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  font-size: 1rem;
-  font-weight: 800;
-  color: var(--text-primary);
-}
-
-.plan-card__duration-badge i {
-  color: var(--color-primary-500);
-}
-
-/* Footer */
-.plan-card__footer {
-  padding: 0 1.5rem 1.75rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.plan-card__btn {
-  background: var(--gradient-primary) !important;
-  border: none !important;
-  border-radius: 9999px !important;
-  font-weight: 800 !important;
-  font-size: 1rem !important;
-  letter-spacing: 0.06em !important;
-  padding: 0.875rem !important;
-}
-
-.plan-card__savoir {
-  font-size: 0.8125rem;
-  color: var(--color-primary-600);
-  text-decoration: underline;
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-family: inherit;
-}
-
-.w-full {
-  width: 100% !important;
-}
-
-/* ── Garanties ─────────────────────────────────────────────── */
-.tarifs-guarantees {
-  display: flex;
-  justify-content: center;
-  gap: 2rem;
-  flex-wrap: wrap;
-  padding: 2rem 0;
-  border-top: 1px solid var(--border-color);
-}
-
-.tarifs-guarantee {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-  font-weight: 500;
-}
-
-.tarifs-guarantee i {
-  color: var(--color-primary-500);
-}
-
-/* ── FAQ ───────────────────────────────────────────────────── */
-.tarifs-faq__answer {
-  font-size: 0.9375rem;
-  color: var(--text-secondary);
-  line-height: 1.75;
-  margin: 0;
-}
-
-@media (max-width: 768px) {
-  .plan-card--featured {
-    transform: none;
-  }
-  .plan-card--featured:hover {
-    transform: translateY(-4px);
-  }
-  .tarifs-guarantees {
-    gap: 1rem;
-  }
-}
-.tarifs-payment {
-  text-align: center;
-  margin-bottom: 2rem;
-}
-
-.tarifs-payment__title {
-  font-size: 0.9375rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-  margin: 0 0 1rem;
-}
-
-.tarifs-payment__logos {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-
-.tarifs-payment__logo {
-  height: 40px;
-  border-radius: 0.5rem;
-  object-fit: contain;
-  border: 1px solid var(--border-color);
-  padding: 4px 8px;
-  background: #fff;
-}
-</style>

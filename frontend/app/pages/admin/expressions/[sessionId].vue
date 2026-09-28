@@ -1,348 +1,522 @@
 <template>
   <div>
-    <!-- Back + Header -->
+    <!-- Retour + en-tête -->
     <div class="mb-6">
-      <NuxtLink to="/admin/expressions"
-        class="inline-flex items-center gap-2 text-sm text-(--text-tertiary) hover:text-primary-600 transition-colors mb-4">
-        <i class="pi pi-arrow-left" /> Retour aux sessions
+      <NuxtLink
+        to="/admin/expressions"
+        class="mb-3 inline-flex items-center gap-1.5 text-sm font-medium text-muted transition-colors hover:text-primary"
+      >
+        <i class="pi pi-arrow-left text-xs" /> Retour aux sessions
       </NuxtLink>
 
-      <div v-if="session" class="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h1 class="text-xl font-bold text-(--text-primary)">{{ session.name }}</h1>
-          <p class="text-sm text-(--text-tertiary) mt-0.5">{{ formatMonth(session.month) }}</p>
+      <div v-if="session" class="flex flex-wrap items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <span
+            class="grid size-12 shrink-0 place-items-center rounded-leaf"
+            :class="session.is_active ? 'brand-gradient text-white shadow-brand' : 'bg-card-2 text-faint'"
+          >
+            <i class="pi pi-calendar" />
+          </span>
+          <div>
+            <h1 class="font-heading text-2xl font-extrabold tracking-tight text-ink">{{ session.name }}</h1>
+            <p class="text-sm capitalize text-muted">{{ formatMonth(session.month) }}</p>
+          </div>
         </div>
-        <Tag :value="session.is_active ? 'Active' : 'Inactive'"
-          :severity="session.is_active ? 'success' : 'secondary'" />
+        <span
+          class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold"
+          :class="
+            session.is_active
+              ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300'
+              : 'bg-card-2 text-muted'
+          "
+        >
+          <span class="size-1.5 rounded-full" :class="session.is_active ? 'bg-emerald-500' : 'bg-faint'" />
+          {{ session.is_active ? "Active" : "Inactive" }}
+        </span>
       </div>
     </div>
 
-    <!-- Loading -->
-    <div v-if="loading" class="flex justify-center py-16">
-      <ProgressSpinner style="width:40px;height:40px" />
+    <!-- Chargement -->
+    <div v-if="loading" class="space-y-4">
+      <div class="grid grid-cols-2 gap-4 md:grid-cols-4">
+        <div v-for="n in 4" :key="n" class="h-24 animate-pulse rounded-card bg-card" />
+      </div>
+      <div class="h-80 animate-pulse rounded-card bg-card" />
     </div>
 
     <template v-else-if="session">
-
       <!-- Stats -->
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        <div v-for="stat in stats" :key="stat.label"
-          class="bg-(--bg-card) border border-(--border-color) rounded-xl p-4 text-center">
-          <p class="text-2xl font-extrabold text-primary-600">{{ stat.val }}</p>
-          <p class="text-xs text-(--text-tertiary) mt-1">{{ stat.label }}</p>
+      <div class="mb-6 grid grid-cols-2 gap-4 md:grid-cols-4">
+        <div
+          v-for="stat in stats"
+          :key="stat.label"
+          class="rounded-card border border-line bg-card p-4 text-center shadow-soft"
+        >
+          <p class="font-heading text-3xl font-extrabold tabular-nums text-primary">{{ stat.val }}</p>
+          <p class="mt-1 text-xs font-semibold uppercase tracking-wider text-faint">{{ stat.label }}</p>
         </div>
       </div>
 
-      <!-- Tabs EE / EO Task2 / EO Task3 -->
-      <TabView>
+      <!-- Onglets EE / EO Tâche 2 / EO Tâche 3 -->
+      <div class="overflow-hidden rounded-card border border-line bg-card shadow-soft">
+        <Tabs value="0">
+          <TabList>
+            <Tab value="0">
+              <span class="flex items-center gap-2">
+                <i class="pi pi-pen-to-square" />
+                Expression Écrite
+                <span class="rounded-full bg-card-2 px-2 py-0.5 text-xs tabular-nums text-muted">{{ eeCombinations.length }}</span>
+              </span>
+            </Tab>
+            <Tab value="1">
+              <span class="flex items-center gap-2">
+                <i class="pi pi-microphone" />
+                EO · Tâche 2
+                <span class="rounded-full bg-card-2 px-2 py-0.5 text-xs tabular-nums text-muted">{{ eoTask2Pool.length }}</span>
+              </span>
+            </Tab>
+            <Tab value="2">
+              <span class="flex items-center gap-2">
+                <i class="pi pi-comments" />
+                EO · Tâche 3
+                <span class="rounded-full bg-card-2 px-2 py-0.5 text-xs tabular-nums text-muted">{{ eoTask3Pool.length }}</span>
+              </span>
+            </Tab>
+          </TabList>
 
-        <!-- EE -->
-        <TabPanel value="0">
-          <template #header>
-            <div class="flex items-center gap-2">
-              <i class="pi pi-pen-to-square" />
-              Expression Écrite ({{ eeCombinations.length }})
-            </div>
-          </template>
+          <TabPanels>
+            <!-- ── EE ─────────────────────────────────────────── -->
+            <TabPanel value="0">
+              <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <p class="text-sm text-muted">Chaque combinaison contient les 3 tâches EE.</p>
+                <AppButton
+                  label="Nouvelle combinaison"
+                  icon="pi pi-plus"
+                  variant="gradient"
+                  size="small"
+                  @click="eeFormVisible = true; editingEE = null"
+                />
+              </div>
 
-          <div class="flex items-center justify-between mb-4 pt-2">
-            <p class="text-sm text-(--text-secondary)">Chaque combinaison contient les 3 tâches EE.</p>
-            <Button label="Nouvelle combinaison" icon="pi pi-plus" size="small"
-              class="bg-gradient-primary border-none font-bold"
-              @click="eeFormVisible = true; editingEE = null" />
-          </div>
+              <div
+                v-if="!eeCombinations.length"
+                class="flex flex-col items-center rounded-2xl border border-dashed border-line bg-card-2/40 px-6 py-12 text-center"
+              >
+                <span class="mb-3 grid size-14 place-items-center rounded-leaf bg-card-2 text-faint">
+                  <i class="pi pi-pen-to-square text-2xl" />
+                </span>
+                <p class="mb-1 font-heading font-bold text-ink">Aucune combinaison EE</p>
+                <p class="mb-4 text-sm text-muted">Créez votre première combinaison d'expression écrite</p>
+                <AppButton
+                  label="Créer une combinaison"
+                  icon="pi pi-plus"
+                  variant="secondary"
+                  @click="eeFormVisible = true; editingEE = null"
+                />
+              </div>
 
-          <div v-if="!eeCombinations.length"
-            class="text-center py-12 bg-(--bg-ground) rounded-2xl border border-(--border-color)">
-            <i class="pi pi-pen-to-square text-4xl opacity-30 text-(--text-tertiary) mb-3 block" />
-            <p class="font-semibold text-(--text-primary) mb-1">Aucune combinaison EE</p>
-            <p class="text-sm text-(--text-secondary) mb-4">Créez votre première combinaison d'expression écrite</p>
-            <Button label="Créer une combinaison" icon="pi pi-plus" outlined
-              @click="eeFormVisible = true; editingEE = null" />
-          </div>
-
-          <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div v-for="combo in eeCombinations" :key="combo.id"
-              class="bg-(--bg-card) border border-(--border-color) rounded-xl overflow-hidden">
-              <!-- Header combo -->
-              <div class="px-4 py-3 bg-(--bg-ground) border-b border-(--border-color) flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                  <div class="w-6 h-6 rounded-lg bg-gradient-primary flex items-center justify-center text-white text-xs font-bold">
-                    {{ combo.order + 1 }}
+              <div v-else class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                <article
+                  v-for="combo in eeCombinations"
+                  :key="combo.id"
+                  class="overflow-hidden rounded-2xl border border-line bg-card transition-shadow hover:shadow-lift"
+                >
+                  <div class="flex items-center justify-between gap-3 border-b border-line bg-card-2/60 px-4 py-3">
+                    <div class="flex min-w-0 items-center gap-2.5">
+                      <span class="grid size-7 shrink-0 place-items-center rounded-lg brand-gradient text-xs font-bold text-white">
+                        {{ combo.order + 1 }}
+                      </span>
+                      <p class="truncate text-sm font-semibold text-ink">{{ combo.title }}</p>
+                    </div>
+                    <div class="flex shrink-0 gap-1">
+                      <Button icon="pi pi-pencil" text rounded size="small" severity="secondary" aria-label="Modifier" @click="openEditEE(combo)" />
+                      <Button icon="pi pi-trash" text rounded size="small" severity="danger" aria-label="Supprimer" @click="deleteEE(combo.id)" />
+                    </div>
                   </div>
-                  <p class="font-semibold text-sm text-(--text-primary) truncate max-w-48">{{ combo.title }}</p>
-                </div>
-                <div class="flex gap-1">
-                  <Button icon="pi pi-pencil" text size="small" @click="openEditEE(combo)" />
-                  <Button icon="pi pi-trash" text severity="danger" size="small" @click="deleteEE(combo.id)" />
-                </div>
+                  <ol class="flex flex-col gap-2.5 px-4 py-3.5">
+                    <li
+                      v-for="(line, i) in [combo.task1_instruction, combo.task2_instruction, combo.task3_title]"
+                      :key="i"
+                      class="flex items-start gap-2.5"
+                    >
+                      <span class="mt-0.5 grid size-5 shrink-0 place-items-center rounded-full bg-primary/10 text-[0.65rem] font-bold text-primary">
+                        {{ i + 1 }}
+                      </span>
+                      <p class="line-clamp-2 text-xs leading-relaxed text-muted">{{ line }}</p>
+                    </li>
+                  </ol>
+                </article>
               </div>
-              <!-- Body combo -->
-              <div class="px-4 py-3 flex flex-col gap-2">
-                <div class="flex items-start gap-2">
-                  <span class="w-5 h-5 rounded-full bg-primary-100 text-primary-700 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">1</span>
-                  <p class="text-xs text-(--text-secondary) leading-relaxed line-clamp-2">{{ combo.task1_instruction }}</p>
-                </div>
-                <div class="flex items-start gap-2">
-                  <span class="w-5 h-5 rounded-full bg-primary-100 text-primary-700 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">2</span>
-                  <p class="text-xs text-(--text-secondary) leading-relaxed line-clamp-2">{{ combo.task2_instruction }}</p>
-                </div>
-                <div class="flex items-start gap-2">
-                  <span class="w-5 h-5 rounded-full bg-primary-100 text-primary-700 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">3</span>
-                  <p class="text-xs text-(--text-secondary) leading-relaxed line-clamp-2">{{ combo.task3_title }}</p>
-                </div>
+            </TabPanel>
+
+            <!-- ── EO Tâche 2 ─────────────────────────────────── -->
+            <TabPanel value="1">
+              <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <p class="text-sm text-muted">Exercice en interaction (5 min 30).</p>
+                <AppButton
+                  label="Nouveau sujet"
+                  icon="pi pi-plus"
+                  variant="gradient"
+                  size="small"
+                  @click="task2FormVisible = true; editingTask2 = null"
+                />
               </div>
-            </div>
-          </div>
-        </TabPanel>
 
-        <!-- EO Task 2 -->
-        <TabPanel value="1">
-          <template #header>
-            <div class="flex items-center gap-2">
-              <i class="pi pi-microphone" />
-              EO — Tâche 2 ({{ eoTask2Pool.length }})
-            </div>
-          </template>
-
-          <div class="flex items-center justify-between mb-4 pt-2">
-            <p class="text-sm text-(--text-secondary)">Exercice en interaction (5 min 30).</p>
-            <Button label="Nouveau sujet" icon="pi pi-plus" size="small"
-              class="bg-gradient-primary border-none font-bold"
-              @click="task2FormVisible = true; editingTask2 = null" />
-          </div>
-
-          <div v-if="!eoTask2Pool.length"
-            class="text-center py-12 bg-(--bg-ground) rounded-2xl border border-(--border-color)">
-            <i class="pi pi-microphone text-4xl opacity-30 text-(--text-tertiary) mb-3 block" />
-            <p class="font-semibold text-(--text-primary) mb-1">Aucun sujet Tâche 2</p>
-            <Button label="Créer un sujet" icon="pi pi-plus" outlined
-              @click="task2FormVisible = true; editingTask2 = null" />
-          </div>
-
-          <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div v-for="task in eoTask2Pool" :key="task.id"
-              class="bg-(--bg-card) border border-(--border-color) rounded-xl p-4">
-              <div class="flex items-start justify-between gap-2 mb-3">
-                <div class="w-6 h-6 rounded-lg bg-blue-100 flex items-center justify-center text-blue-700 text-xs font-bold shrink-0">
-                  {{ task.order + 1 }}
-                </div>
-                <div class="flex gap-1 shrink-0">
-                  <Button icon="pi pi-pencil" text size="small" @click="openEditTask2(task)" />
-                  <Button icon="pi pi-trash" text severity="danger" size="small" @click="deleteTask2(task.id)" />
-                </div>
+              <div
+                v-if="!eoTask2Pool.length"
+                class="flex flex-col items-center rounded-2xl border border-dashed border-line bg-card-2/40 px-6 py-12 text-center"
+              >
+                <span class="mb-3 grid size-14 place-items-center rounded-leaf bg-card-2 text-faint">
+                  <i class="pi pi-microphone text-2xl" />
+                </span>
+                <p class="mb-4 font-heading font-bold text-ink">Aucun sujet Tâche 2</p>
+                <AppButton
+                  label="Créer un sujet"
+                  icon="pi pi-plus"
+                  variant="secondary"
+                  @click="task2FormVisible = true; editingTask2 = null"
+                />
               </div>
-              <p class="text-sm text-(--text-primary) leading-relaxed">{{ task.subject }}</p>
-            </div>
-          </div>
-        </TabPanel>
 
-        <!-- EO Task 3 -->
-        <TabPanel value="2">
-          <template #header>
-            <div class="flex items-center gap-2">
-              <i class="pi pi-comments" />
-              EO — Tâche 3 ({{ eoTask3Pool.length }})
-            </div>
-          </template>
-
-          <div class="flex items-center justify-between mb-4 pt-2">
-            <p class="text-sm text-(--text-secondary)">Expression d'un point de vue (4 min 30).</p>
-            <Button label="Nouveau sujet" icon="pi pi-plus" size="small"
-              class="bg-gradient-primary border-none font-bold"
-              @click="task3FormVisible = true; editingTask3 = null" />
-          </div>
-
-          <div v-if="!eoTask3Pool.length"
-            class="text-center py-12 bg-(--bg-ground) rounded-2xl border border-(--border-color)">
-            <i class="pi pi-comments text-4xl opacity-30 text-(--text-tertiary) mb-3 block" />
-            <p class="font-semibold text-(--text-primary) mb-1">Aucun sujet Tâche 3</p>
-            <Button label="Créer un sujet" icon="pi pi-plus" outlined
-              @click="task3FormVisible = true; editingTask3 = null" />
-          </div>
-
-          <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div v-for="task in eoTask3Pool" :key="task.id"
-              class="bg-(--bg-card) border border-(--border-color) rounded-xl p-4">
-              <div class="flex items-start justify-between gap-2 mb-3">
-                <div class="w-6 h-6 rounded-lg bg-purple-100 flex items-center justify-center text-purple-700 text-xs font-bold shrink-0">
-                  {{ task.order + 1 }}
-                </div>
-                <div class="flex gap-1 shrink-0">
-                  <Button icon="pi pi-pencil" text size="small" @click="openEditTask3(task)" />
-                  <Button icon="pi pi-trash" text severity="danger" size="small" @click="deleteTask3(task.id)" />
-                </div>
+              <div v-else class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+                <article
+                  v-for="task in eoTask2Pool"
+                  :key="task.id"
+                  class="rounded-2xl border border-line bg-card p-4 transition-shadow hover:shadow-lift"
+                >
+                  <div class="mb-3 flex items-center justify-between gap-2">
+                    <span class="grid size-7 shrink-0 place-items-center rounded-lg bg-primary/10 text-xs font-bold text-primary">
+                      {{ task.order + 1 }}
+                    </span>
+                    <div class="flex shrink-0 gap-1">
+                      <Button icon="pi pi-pencil" text rounded size="small" severity="secondary" aria-label="Modifier" @click="openEditTask2(task)" />
+                      <Button icon="pi pi-trash" text rounded size="small" severity="danger" aria-label="Supprimer" @click="deleteTask2(task.id)" />
+                    </div>
+                  </div>
+                  <p class="text-sm leading-relaxed text-ink">{{ task.subject }}</p>
+                </article>
               </div>
-              <p class="text-sm text-(--text-primary) leading-relaxed">{{ task.subject }}</p>
-            </div>
-          </div>
-        </TabPanel>
+            </TabPanel>
 
-      </TabView>
+            <!-- ── EO Tâche 3 ─────────────────────────────────── -->
+            <TabPanel value="2">
+              <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <p class="text-sm text-muted">Expression d'un point de vue (4 min 30).</p>
+                <AppButton
+                  label="Nouveau sujet"
+                  icon="pi pi-plus"
+                  variant="gradient"
+                  size="small"
+                  @click="task3FormVisible = true; editingTask3 = null"
+                />
+              </div>
+
+              <div
+                v-if="!eoTask3Pool.length"
+                class="flex flex-col items-center rounded-2xl border border-dashed border-line bg-card-2/40 px-6 py-12 text-center"
+              >
+                <span class="mb-3 grid size-14 place-items-center rounded-leaf bg-card-2 text-faint">
+                  <i class="pi pi-comments text-2xl" />
+                </span>
+                <p class="mb-4 font-heading font-bold text-ink">Aucun sujet Tâche 3</p>
+                <AppButton
+                  label="Créer un sujet"
+                  icon="pi pi-plus"
+                  variant="secondary"
+                  @click="task3FormVisible = true; editingTask3 = null"
+                />
+              </div>
+
+              <div v-else class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+                <article
+                  v-for="task in eoTask3Pool"
+                  :key="task.id"
+                  class="rounded-2xl border border-line bg-card p-4 transition-shadow hover:shadow-lift"
+                >
+                  <div class="mb-3 flex items-center justify-between gap-2">
+                    <span class="grid size-7 shrink-0 place-items-center rounded-lg bg-accent-100 text-xs font-bold text-accent-800 dark:bg-accent-500/15 dark:text-accent-300">
+                      {{ task.order + 1 }}
+                    </span>
+                    <div class="flex shrink-0 gap-1">
+                      <Button icon="pi pi-pencil" text rounded size="small" severity="secondary" aria-label="Modifier" @click="openEditTask3(task)" />
+                      <Button icon="pi pi-trash" text rounded size="small" severity="danger" aria-label="Supprimer" @click="deleteTask3(task.id)" />
+                    </div>
+                  </div>
+                  <p class="text-sm leading-relaxed text-ink">{{ task.subject }}</p>
+                </article>
+              </div>
+            </TabPanel>
+          </TabPanels>
+        </Tabs>
+      </div>
     </template>
 
-    <!-- Dialog EE Combinaison -->
-    <Dialog v-model:visible="eeFormVisible" modal :draggable="false" :style="{ width: '760px', maxHeight: '90vh' }"
-      :header="editingEE ? 'Modifier la combinaison EE' : 'Nouvelle combinaison EE'"
-      :content-style="{ overflowY: 'auto' }">
-      <div class="flex flex-col gap-5 pt-2">
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div class="md:col-span-3 flex flex-col gap-1.5">
-            <label class="text-sm font-semibold text-(--text-secondary)">Titre général</label>
-            <InputText v-model="eeForm.title" placeholder="Ex: La télévision dans l'éducation" fluid />
+    <!-- ── Dialog combinaison EE ─────────────────────────────── -->
+    <Dialog
+      v-model:visible="eeFormVisible"
+      modal
+      :draggable="false"
+      :style="{ width: '48rem', maxHeight: '90vh' }"
+      :breakpoints="{ '820px': '96vw' }"
+      :content-style="{ overflowY: 'auto' }"
+      :pt="{ mask: { class: 'backdrop-blur-sm' } }"
+    >
+      <template #header>
+        <div class="flex items-center gap-3">
+          <span class="grid size-10 place-items-center rounded-leaf bg-primary/10 text-primary">
+            <i class="pi pi-pen-to-square" />
+          </span>
+          <h3 class="font-heading text-lg font-bold text-ink">
+            {{ editingEE ? "Modifier la combinaison EE" : "Nouvelle combinaison EE" }}
+          </h3>
+        </div>
+      </template>
+
+      <div class="flex flex-col gap-5 pt-1">
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
+          <div class="flex flex-col gap-1.5 md:col-span-3">
+            <label for="ee-title" class="text-sm font-semibold text-ink">Titre général</label>
+            <InputText id="ee-title" v-model="eeForm.title" placeholder="Ex : La télévision dans l'éducation" fluid />
           </div>
           <div class="flex flex-col gap-1.5">
-            <label class="text-sm font-semibold text-(--text-secondary)">Ordre</label>
-            <InputNumber v-model="eeForm.order" :min="0" fluid />
+            <label for="ee-order" class="text-sm font-semibold text-ink">Ordre</label>
+            <InputNumber v-model="eeForm.order" input-id="ee-order" :min="0" fluid />
           </div>
         </div>
 
-        <!-- Tabs tâches -->
-        <TabView>
-          <TabPanel value="0" header="Tâche 1 — Message">
-            <div class="flex flex-col gap-4 pt-3">
-              <div class="flex flex-col gap-1.5">
-                <label class="text-sm font-semibold text-(--text-secondary)">Consigne</label>
-                <Textarea v-model="eeForm.task1_instruction" :rows="4" fluid placeholder="Décrivez la consigne..." />
-              </div>
-              <div class="flex flex-col gap-1.5">
-                <label class="text-sm font-semibold text-(--text-secondary)">Correction</label>
-                <Textarea v-model="eeForm.task1_correction" :rows="4" fluid placeholder="Décrivez la consigne..." />
-              </div>
-              <div class="grid grid-cols-2 gap-3">
-                <div class="flex flex-col gap-1.5">
-                  <label class="text-sm font-semibold text-(--text-secondary)">Mots minimum</label>
-                  <InputNumber v-model="eeForm.task1_word_min" :min="40" :max="100" fluid />
+        <div class="overflow-hidden rounded-2xl border border-line">
+          <Tabs value="0">
+            <TabList>
+              <Tab value="0">Tâche 1 · Message</Tab>
+              <Tab value="1">Tâche 2 · Article</Tab>
+              <Tab value="2">Tâche 3 · Argumentation</Tab>
+            </TabList>
+            <TabPanels>
+              <!-- Tâche 1 -->
+              <TabPanel value="0">
+                <div class="flex flex-col gap-4">
+                  <div class="flex flex-col gap-1.5">
+                    <label for="t1-instruction" class="text-sm font-semibold text-ink">Consigne</label>
+                    <Textarea id="t1-instruction" v-model="eeForm.task1_instruction" :rows="4" auto-resize fluid placeholder="Décrivez la consigne..." />
+                  </div>
+                  <div class="flex flex-col gap-1.5">
+                    <label for="t1-correction" class="text-sm font-semibold text-ink">Correction</label>
+                    <Textarea id="t1-correction" v-model="eeForm.task1_correction" :rows="4" auto-resize fluid placeholder="Rédigez la correction..." />
+                  </div>
+                  <div class="grid grid-cols-2 gap-3">
+                    <div class="flex flex-col gap-1.5">
+                      <label for="t1-min" class="text-sm font-semibold text-ink">Mots minimum</label>
+                      <InputNumber v-model="eeForm.task1_word_min" input-id="t1-min" :min="40" :max="100" fluid />
+                    </div>
+                    <div class="flex flex-col gap-1.5">
+                      <label for="t1-max" class="text-sm font-semibold text-ink">Mots maximum</label>
+                      <InputNumber v-model="eeForm.task1_word_max" input-id="t1-max" :min="60" :max="120" fluid />
+                    </div>
+                  </div>
                 </div>
-                <div class="flex flex-col gap-1.5">
-                  <label class="text-sm font-semibold text-(--text-secondary)">Mots maximum</label>
-                  <InputNumber v-model="eeForm.task1_word_max" :min="60" :max="120" fluid />
-                </div>
-              </div>
-            </div>
-          </TabPanel>
+              </TabPanel>
 
-          <TabPanel value="1" header="Tâche 2 — Article">
-            <div class="flex flex-col gap-4 pt-3">
-              <div class="flex flex-col gap-1.5">
-                <label class="text-sm font-semibold text-(--text-secondary)">Consigne</label>
-                <Textarea v-model="eeForm.task2_instruction" :rows="4" fluid placeholder="Décrivez la consigne..." />
-              </div>
-              <div class="flex flex-col gap-1.5">
-                <label class="text-sm font-semibold text-(--text-secondary)">Correction</label>
-                <Textarea v-model="eeForm.task2_correction" :rows="4" fluid placeholder="Décrivez la consigne..." />
-              </div>
-              <div class="grid grid-cols-2 gap-3">
-                <div class="flex flex-col gap-1.5">
-                  <label class="text-sm font-semibold text-(--text-secondary)">Mots minimum</label>
-                  <InputNumber v-model="eeForm.task2_word_min" :min="100" :max="150" fluid />
+              <!-- Tâche 2 -->
+              <TabPanel value="1">
+                <div class="flex flex-col gap-4">
+                  <div class="flex flex-col gap-1.5">
+                    <label for="t2-instruction" class="text-sm font-semibold text-ink">Consigne</label>
+                    <Textarea id="t2-instruction" v-model="eeForm.task2_instruction" :rows="4" auto-resize fluid placeholder="Décrivez la consigne..." />
+                  </div>
+                  <div class="flex flex-col gap-1.5">
+                    <label for="t2-correction" class="text-sm font-semibold text-ink">Correction</label>
+                    <Textarea id="t2-correction" v-model="eeForm.task2_correction" :rows="4" auto-resize fluid placeholder="Rédigez la correction..." />
+                  </div>
+                  <div class="grid grid-cols-2 gap-3">
+                    <div class="flex flex-col gap-1.5">
+                      <label for="t2-min" class="text-sm font-semibold text-ink">Mots minimum</label>
+                      <InputNumber v-model="eeForm.task2_word_min" input-id="t2-min" :min="100" :max="150" fluid />
+                    </div>
+                    <div class="flex flex-col gap-1.5">
+                      <label for="t2-max" class="text-sm font-semibold text-ink">Mots maximum</label>
+                      <InputNumber v-model="eeForm.task2_word_max" input-id="t2-max" :min="120" :max="180" fluid />
+                    </div>
+                  </div>
                 </div>
-                <div class="flex flex-col gap-1.5">
-                  <label class="text-sm font-semibold text-(--text-secondary)">Mots maximum</label>
-                  <InputNumber v-model="eeForm.task2_word_max" :min="120" :max="180" fluid />
-                </div>
-              </div>
-            </div>
-          </TabPanel>
+              </TabPanel>
 
-          <TabPanel value="2" header="Tâche 3 — Argumentation">
-            <div class="flex flex-col gap-4 pt-3">
-              <div class="flex flex-col gap-1.5">
-                <label class="text-sm font-semibold text-(--text-secondary)">Titre du débat</label>
-                <InputText v-model="eeForm.task3_title" placeholder="Ex: La chasse aux animaux : Pour ou Contre ?" fluid />
-              </div>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div class="flex flex-col gap-1.5">
-                  <label class="text-sm font-semibold text-(--text-secondary)">Document 1</label>
-                  <Textarea v-model="eeForm.task3_document_1" :rows="4" fluid placeholder="Témoignage ou opinion..." />
+              <!-- Tâche 3 -->
+              <TabPanel value="2">
+                <div class="flex flex-col gap-4">
+                  <div class="flex flex-col gap-1.5">
+                    <label for="t3-title" class="text-sm font-semibold text-ink">Titre du débat</label>
+                    <InputText id="t3-title" v-model="eeForm.task3_title" placeholder="Ex : La chasse aux animaux : Pour ou Contre ?" fluid />
+                  </div>
+                  <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
+                    <div class="flex flex-col gap-1.5">
+                      <label for="t3-doc1" class="text-sm font-semibold text-ink">Document 1</label>
+                      <Textarea id="t3-doc1" v-model="eeForm.task3_document_1" :rows="4" auto-resize fluid placeholder="Témoignage ou opinion..." />
+                    </div>
+                    <div class="flex flex-col gap-1.5">
+                      <label for="t3-doc2" class="text-sm font-semibold text-ink">Document 2</label>
+                      <Textarea id="t3-doc2" v-model="eeForm.task3_document_2" :rows="4" auto-resize fluid placeholder="Témoignage ou opinion..." />
+                    </div>
+                    <div class="flex flex-col gap-1.5 md:col-span-2">
+                      <label for="t3-correction" class="text-sm font-semibold text-ink">Correction</label>
+                      <Textarea id="t3-correction" v-model="eeForm.task3_correction" :rows="4" auto-resize fluid placeholder="Rédigez la correction..." />
+                    </div>
+                  </div>
+                  <div class="grid grid-cols-2 gap-3">
+                    <div class="flex flex-col gap-1.5">
+                      <label for="t3-min" class="text-sm font-semibold text-ink">Mots minimum</label>
+                      <InputNumber v-model="eeForm.task3_word_min" input-id="t3-min" :min="120" :max="180" fluid />
+                    </div>
+                    <div class="flex flex-col gap-1.5">
+                      <label for="t3-max" class="text-sm font-semibold text-ink">Mots maximum</label>
+                      <InputNumber v-model="eeForm.task3_word_max" input-id="t3-max" :min="150" :max="200" fluid />
+                    </div>
+                  </div>
                 </div>
-                <div class="flex flex-col gap-1.5">
-                  <label class="text-sm font-semibold text-(--text-secondary)">Document 2</label>
-                  <Textarea v-model="eeForm.task3_document_2" :rows="4" fluid placeholder="Témoignage ou opinion..." />
-                </div>
-                <div class="flex flex-col gap-1.5">
-                  <label class="text-sm font-semibold text-(--text-secondary)">Correction</label>
-                  <Textarea v-model="eeForm.task3_correction" :rows="4" fluid placeholder="Témoignage ou opinion..." />
-                </div>
-              </div>
-              <div class="grid grid-cols-2 gap-3">
-                <div class="flex flex-col gap-1.5">
-                  <label class="text-sm font-semibold text-(--text-secondary)">Mots minimum</label>
-                  <InputNumber v-model="eeForm.task3_word_min" :min="120" :max="180" fluid />
-                </div>
-                <div class="flex flex-col gap-1.5">
-                  <label class="text-sm font-semibold text-(--text-secondary)">Mots maximum</label>
-                  <InputNumber v-model="eeForm.task3_word_max" :min="150" :max="200" fluid />
-                </div>
-              </div>
-            </div>
-          </TabPanel>
-        </TabView>
+              </TabPanel>
+            </TabPanels>
+          </Tabs>
+        </div>
       </div>
+
       <template #footer>
-        <Button label="Annuler" text @click="eeFormVisible = false" />
-        <Button :label="editingEE ? 'Mettre à jour' : 'Créer'" :loading="savingEE"
-          class="bg-gradient-primary border-none font-bold" @click="saveEE" />
+        <AppButton label="Annuler" variant="ghost" @click="eeFormVisible = false" />
+        <AppButton
+          :label="editingEE ? 'Mettre à jour' : 'Créer'"
+          icon="pi pi-check"
+          variant="gradient"
+          :loading="savingEE"
+          @click="saveEE"
+        />
       </template>
     </Dialog>
 
-    <!-- Dialog EO Task 2 -->
-    <Dialog v-model:visible="task2FormVisible" modal :draggable="false" :style="{ width: '520px' }"
-      :header="editingTask2 ? 'Modifier le sujet Tâche 2' : 'Nouveau sujet — Tâche 2 EO'">
-      <div class="flex flex-col gap-4 pt-2">
+    <!-- ── Dialog EO Tâche 2 ─────────────────────────────────── -->
+    <Dialog
+      v-model:visible="task2FormVisible"
+      modal
+      :draggable="false"
+      :style="{ width: '32rem' }"
+      :breakpoints="{ '640px': '94vw' }"
+      :pt="{ mask: { class: 'backdrop-blur-sm' } }"
+    >
+      <template #header>
+        <div class="flex items-center gap-3">
+          <span class="grid size-10 place-items-center rounded-leaf bg-primary/10 text-primary">
+            <i class="pi pi-microphone" />
+          </span>
+          <h3 class="font-heading text-lg font-bold text-ink">
+            {{ editingTask2 ? "Modifier le sujet Tâche 2" : "Nouveau sujet · Tâche 2 EO" }}
+          </h3>
+        </div>
+      </template>
+
+      <div class="flex flex-col gap-4 pt-1">
         <div class="flex flex-col gap-1.5">
-          <label class="text-sm font-semibold text-(--text-secondary)">Sujet</label>
-          <Textarea v-model="task2Form.subject" :rows="4" fluid
-            placeholder="Ex: Risques liés à l'utilisation des appareils électroniques..." />
-          <small class="text-(--text-tertiary)">Le candidat devra échanger sur ce sujet pendant 3 min 30.</small>
+          <label for="eo2-subject" class="text-sm font-semibold text-ink">Sujet</label>
+          <Textarea
+            id="eo2-subject"
+            v-model="task2Form.subject"
+            :rows="4"
+            auto-resize
+            fluid
+            placeholder="Ex : Risques liés à l'utilisation des appareils électroniques..."
+          />
+          <small class="text-xs text-muted">Le candidat devra échanger sur ce sujet pendant 3 min 30.</small>
         </div>
         <div class="flex flex-col gap-1.5">
-          <label class="text-sm font-semibold text-(--text-secondary)">Correction</label>
-          <Textarea v-model="task2Form.eo_task2_correction" :rows="4" fluid
-            placeholder="Ex: Gouvernements 50/50 hommes-femmes : Qu'en pensez-vous ?" />
-          <small class="text-(--text-tertiary)">Correction.</small>
+          <label for="eo2-correction" class="text-sm font-semibold text-ink">Correction</label>
+          <Textarea
+            id="eo2-correction"
+            v-model="task2Form.eo_task2_correction"
+            :rows="4"
+            auto-resize
+            fluid
+            placeholder="Rédigez la correction..."
+          />
         </div>
         <div class="flex flex-col gap-1.5">
-          <label class="text-sm font-semibold text-(--text-secondary)">Ordre</label>
-          <InputNumber v-model="task2Form.order" :min="0" fluid />
+          <label for="eo2-order" class="text-sm font-semibold text-ink">Ordre</label>
+          <InputNumber v-model="task2Form.order" input-id="eo2-order" :min="0" fluid />
         </div>
       </div>
+
       <template #footer>
-        <Button label="Annuler" text @click="task2FormVisible = false" />
-        <Button :label="editingTask2 ? 'Mettre à jour' : 'Créer'" :loading="savingTask2"
-          :disabled="!task2Form.subject" class="bg-gradient-primary border-none font-bold" @click="saveTask2" />
+        <AppButton label="Annuler" variant="ghost" @click="task2FormVisible = false" />
+        <AppButton
+          :label="editingTask2 ? 'Mettre à jour' : 'Créer'"
+          icon="pi pi-check"
+          variant="gradient"
+          :loading="savingTask2"
+          :disabled="!task2Form.subject"
+          @click="saveTask2"
+        />
       </template>
     </Dialog>
 
-    <!-- Dialog EO Task 3 -->
-    <Dialog v-model:visible="task3FormVisible" modal :draggable="false" :style="{ width: '520px' }"
-      :header="editingTask3 ? 'Modifier le sujet Tâche 3' : 'Nouveau sujet — Tâche 3 EO'">
-      <div class="flex flex-col gap-4 pt-2">
+    <!-- ── Dialog EO Tâche 3 ─────────────────────────────────── -->
+    <Dialog
+      v-model:visible="task3FormVisible"
+      modal
+      :draggable="false"
+      :style="{ width: '32rem' }"
+      :breakpoints="{ '640px': '94vw' }"
+      :pt="{ mask: { class: 'backdrop-blur-sm' } }"
+    >
+      <template #header>
+        <div class="flex items-center gap-3">
+          <span class="grid size-10 place-items-center rounded-leaf bg-accent-100 text-accent-800 dark:bg-accent-500/15 dark:text-accent-300">
+            <i class="pi pi-comments" />
+          </span>
+          <h3 class="font-heading text-lg font-bold text-ink">
+            {{ editingTask3 ? "Modifier le sujet Tâche 3" : "Nouveau sujet · Tâche 3 EO" }}
+          </h3>
+        </div>
+      </template>
+
+      <div class="flex flex-col gap-4 pt-1">
         <div class="flex flex-col gap-1.5">
-          <label class="text-sm font-semibold text-(--text-secondary)">Sujet</label>
-          <Textarea v-model="task3Form.subject" :rows="4" fluid
-            placeholder="Ex: Gouvernements 50/50 hommes-femmes : Qu'en pensez-vous ?" />
-          <small class="text-(--text-tertiary)">Le candidat défendra son point de vue pendant 4 min 30.</small>
+          <label for="eo3-subject" class="text-sm font-semibold text-ink">Sujet</label>
+          <Textarea
+            id="eo3-subject"
+            v-model="task3Form.subject"
+            :rows="4"
+            auto-resize
+            fluid
+            placeholder="Ex : Gouvernements 50/50 hommes-femmes : Qu'en pensez-vous ?"
+          />
+          <small class="text-xs text-muted">Le candidat défendra son point de vue pendant 4 min 30.</small>
         </div>
         <div class="flex flex-col gap-1.5">
-          <label class="text-sm font-semibold text-(--text-secondary)">Correction</label>
-          <Textarea v-model="task3Form.eo_task3_correction" :rows="4" fluid
-            placeholder="Ex: Gouvernements 50/50 hommes-femmes : Qu'en pensez-vous ?" />
-          <small class="text-(--text-tertiary)">Correction.</small>
+          <label for="eo3-correction" class="text-sm font-semibold text-ink">Correction</label>
+          <Textarea
+            id="eo3-correction"
+            v-model="task3Form.eo_task3_correction"
+            :rows="4"
+            auto-resize
+            fluid
+            placeholder="Rédigez la correction..."
+          />
         </div>
         <div class="flex flex-col gap-1.5">
-          <label class="text-sm font-semibold text-(--text-secondary)">Ordre</label>
-          <InputNumber v-model="task3Form.order" :min="0" fluid />
+          <label for="eo3-order" class="text-sm font-semibold text-ink">Ordre</label>
+          <InputNumber v-model="task3Form.order" input-id="eo3-order" :min="0" fluid />
         </div>
       </div>
+
       <template #footer>
-        <Button label="Annuler" text @click="task3FormVisible = false" />
-        <Button :label="editingTask3 ? 'Mettre à jour' : 'Créer'" :loading="savingTask3"
-          :disabled="!task3Form.subject" class="bg-gradient-primary border-none font-bold" @click="saveTask3" />
+        <AppButton label="Annuler" variant="ghost" @click="task3FormVisible = false" />
+        <AppButton
+          :label="editingTask3 ? 'Mettre à jour' : 'Créer'"
+          icon="pi pi-check"
+          variant="gradient"
+          :loading="savingTask3"
+          :disabled="!task3Form.subject"
+          @click="saveTask3"
+        />
       </template>
     </Dialog>
 
-    <ConfirmDialog />
+    <ConfirmDialog :pt="{ mask: { class: 'backdrop-blur-sm' } }" />
   </div>
 </template>
 

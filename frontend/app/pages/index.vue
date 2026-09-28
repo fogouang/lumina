@@ -1,3 +1,7 @@
+<script setup lang="ts">
+definePageMeta({ navbarOverlay: true });
+</script>
+
 <template>
   <div>
     <LandingHero />

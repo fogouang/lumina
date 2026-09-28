@@ -1,61 +1,53 @@
-//serie/[serieId].vue
 <template>
-  <div class="min-h-screen bg-(--bg-ground)">
-    <!-- Loading -->
-    <div
-      v-if="loading"
-      class="flex flex-col items-center justify-center min-h-screen gap-4 text-(--text-secondary)"
-    >
-      <ProgressSpinner style="width: 48px; height: 48px" />
-      <p>{{ msgs.loading }}</p>
+  <div class="min-h-screen bg-canvas">
+    <!-- Chargement -->
+    <div v-if="loading" class="flex min-h-screen flex-col items-center justify-center gap-3">
+      <i class="pi pi-spin pi-spinner text-3xl text-primary" />
+      <p class="text-sm text-muted">{{ msgs.loading }}</p>
     </div>
 
     <!-- Erreur -->
-    <div
-      v-else-if="error"
-      class="flex flex-col items-center justify-center min-h-screen gap-4 text-(--text-secondary)"
-    >
-      <i class="pi pi-exclamation-triangle text-4xl text-red-500" />
-      <p>{{ error }}</p>
-      <NuxtLink :to="`/epreuve/${slug}/series`">
-        <Button label="Retour aux séries" icon="pi pi-arrow-left" />
-      </NuxtLink>
+    <div v-else-if="error" class="flex min-h-screen items-center justify-center p-4">
+      <div class="flex max-w-md flex-col items-center gap-4 rounded-card border border-line bg-card p-8 text-center shadow-lift">
+        <span class="grid size-14 place-items-center rounded-full bg-red-100 text-red-600 dark:bg-red-950 dark:text-red-400">
+          <i class="pi pi-exclamation-triangle text-xl" />
+        </span>
+        <p class="text-muted">{{ error }}</p>
+        <AppCta
+          :to="`/epreuve/${slug}/series`"
+          label="Retour aux séries"
+          icon="pi pi-arrow-left"
+          icon-pos="left"
+          variant="outline"
+          size="md"
+        />
+      </div>
     </div>
 
     <template v-else>
-      <!-- ── Indicateur de step ─────────────────────────────── -->
-      <div class="bg-(--bg-card) border-b border-(--border-color) px-4 py-2">
-        <div class="max-w-4xl mx-auto flex items-center gap-2 overflow-x-auto">
-          <div
-            v-for="(s, i) in steps"
-            :key="s.key"
-            class="flex items-center gap-1.5 shrink-0"
-          >
-            <div
-              class="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold transition-all"
+      <!-- Étapes -->
+      <div class="border-b border-line bg-card px-4 py-2.5">
+        <ol class="mx-auto flex max-w-4xl items-center gap-2 overflow-x-auto">
+          <li v-for="(s, i) in steps" :key="s.key" class="flex shrink-0 items-center gap-2">
+            <span
+              class="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-all duration-300"
               :class="
                 currentStep === i
-                  ? 'step-active'
+                  ? 'brand-gradient text-white shadow-brand'
                   : completedSteps.includes(i)
-                    ? 'bg-green-100 text-green-700'
-                    : 'bg-gray-100 text-gray-400'
+                    ? 'bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300'
+                    : 'bg-card-2 text-faint'
               "
             >
-              <i
-                :class="completedSteps.includes(i) ? 'pi pi-check' : s.icon"
-                class="text-xs"
-              />
+              <i :class="[completedSteps.includes(i) ? 'pi pi-check' : s.icon, 'text-xs']" />
               <span class="hidden sm:inline">{{ s.label }}</span>
-            </div>
-            <i
-              v-if="i < steps.length - 1"
-              class="pi pi-angle-right text-(--text-tertiary) text-xs"
-            />
-          </div>
-        </div>
+            </span>
+            <span v-if="i < steps.length - 1" class="h-px w-4 bg-line sm:w-6" />
+          </li>
+        </ol>
       </div>
 
-      <!-- ── Step 1 : Compréhension Orale ─────────────────── -->
+      <!-- Étape 1 : compréhension orale -->
       <ExamStepComprehension
         v-if="currentStep === 0 && attemptId && oralQuestions.length"
         :questions="oralQuestions"
@@ -70,7 +62,7 @@
         @quit="confirmQuit = true"
       />
 
-      <!-- ── Step 2 : Compréhension Écrite ─────────────────── -->
+      <!-- Étape 2 : compréhension écrite -->
       <ExamStepComprehension
         v-else-if="currentStep === 1 && attemptId && writtenQuestions.length"
         :questions="writtenQuestions"
@@ -85,7 +77,7 @@
         @quit="confirmQuit = true"
       />
 
-      <!-- ── Step 3 : Expression Écrite ────────────────────── -->
+      <!-- Étape 3 : expression écrite -->
       <ExamStepExpressionEcrite
         v-else-if="currentStep === 2"
         :tasks="writtenTasks"
@@ -95,7 +87,7 @@
         @quit="confirmQuit = true"
       />
 
-      <!-- ── Step 4 : Expression Orale ─────────────────────── -->
+      <!-- Étape 4 : expression orale -->
       <ExamStepExpressionOrale
         v-else-if="currentStep === 3"
         :tasks="oralTasks"
@@ -104,46 +96,51 @@
       />
     </template>
 
-    <!-- Dialog quitter -->
+    <!-- Quitter -->
     <Dialog
       v-model:visible="confirmQuit"
       modal
-      header="Quitter l'examen"
-      :style="{ width: '380px' }"
+      :draggable="false"
+      :style="{ width: '26rem' }"
+      :breakpoints="{ '640px': '94vw' }"
+      :pt="{ mask: { class: 'backdrop-blur-sm' } }"
     >
-      <p class="text-(--text-secondary) leading-relaxed">
-        {{ msgs.quit }}
-      </p>
+      <template #header>
+        <div class="flex items-center gap-3">
+          <span class="grid size-10 place-items-center rounded-xl bg-red-100 text-red-600 dark:bg-red-950 dark:text-red-400">
+            <i class="pi pi-sign-out" />
+          </span>
+          <h3 class="font-heading text-lg font-bold text-ink">Quitter l'examen ?</h3>
+        </div>
+      </template>
+      <p class="leading-relaxed text-muted">{{ msgs.quit }}</p>
       <template #footer>
-        <Button label="Annuler" text @click="confirmQuit = false" />
-        <Button
-          label="Quitter"
-          severity="danger"
-          icon="pi pi-sign-out"
-          @click="onQuit"
-        />
+        <AppButton label="Annuler" variant="ghost" @click="confirmQuit = false" />
+        <AppButton label="Quitter" icon="pi pi-sign-out" variant="danger" @click="onQuit" />
       </template>
     </Dialog>
 
-    <!-- Dialog terminer -->
+    <!-- Terminer -->
     <Dialog
       v-model:visible="confirmFinish"
       modal
-      header="Terminer l'examen"
-      :style="{ width: '420px' }"
+      :draggable="false"
+      :style="{ width: '28rem' }"
+      :breakpoints="{ '640px': '94vw' }"
+      :pt="{ mask: { class: 'backdrop-blur-sm' } }"
     >
-      <p class="text-(--text-secondary) leading-relaxed">
-        {{ msgs.finish }}
-      </p>
+      <template #header>
+        <div class="flex items-center gap-3">
+          <span class="grid size-10 place-items-center rounded-xl bg-green-100 text-green-600 dark:bg-green-950 dark:text-green-400">
+            <i class="pi pi-flag" />
+          </span>
+          <h3 class="font-heading text-lg font-bold text-ink">Terminer l'examen</h3>
+        </div>
+      </template>
+      <p class="leading-relaxed text-muted">{{ msgs.finish }}</p>
       <template #footer>
-        <Button label="Continuer" text @click="confirmFinish = false" />
-        <Button
-          label="Terminer"
-          icon="pi pi-check"
-          severity="success"
-          :loading="finishing"
-          @click="onFinish"
-        />
+        <AppButton label="Continuer" variant="ghost" @click="confirmFinish = false" />
+        <AppButton label="Terminer" icon="pi pi-check" variant="gradient" :loading="finishing" @click="onFinish" />
       </template>
     </Dialog>
   </div>

@@ -1,67 +1,81 @@
 <template>
-  <div class="question-panel">
-
-    <!-- Header -->
-    <div class="question-panel__header">
-      <span class="question-panel__badge">Question {{ question.question_number }}</span>
-      <Tag :value="`${question.points} pts`" severity="success" />
+  <div
+    class="flex flex-col gap-4 rounded-[2rem_0.5rem] border border-line bg-card p-4 shadow-lift sm:p-6 lg:gap-3 lg:p-5"
+  >
+    <!-- En-tête (mobile / tablette ; sur desktop il passe dans la barre du bas) -->
+    <div class="flex items-center justify-between gap-3 lg:hidden">
+      <span
+        class="brand-gradient inline-flex items-center gap-2 rounded-full px-3.5 py-1 text-sm font-bold text-white shadow-brand"
+      >
+        Question {{ question.question_number }}
+      </span>
+      <span
+        class="rounded-full bg-accent-100 px-3 py-1 text-xs font-bold text-accent-800 dark:bg-accent-950 dark:text-accent-300"
+      >
+        {{ question.points }} pts
+      </span>
     </div>
 
     <!-- Contenu -->
-    <div class="question-panel__body">
-
-      <!-- ORAL -->
-      <template v-if="question.type === 'oral'">
-        <div
-          v-if="question.image_url"
-          class="question-panel__image-wrap"
+    <div class="flex flex-col gap-3">
+      <!-- Image (oral et écrit) -->
+      <figure v-if="question.image_url" class="-mx-4 sm:mx-0">
+        <button
+          type="button"
+          class="group relative mx-auto block w-full cursor-zoom-in overflow-hidden sm:rounded-xl lg:w-fit"
+          aria-label="Agrandir le document"
           @click="openZoom(mediaUrl(question.image_url) ?? '')"
         >
           <img
             :src="mediaUrl(question.image_url) ?? ''"
-            class="question-panel__image"
+            class="mx-auto block h-auto w-full object-contain sm:rounded-xl lg:max-h-[calc(100dvh-19rem)] lg:w-auto lg:max-w-full"
             alt="Document"
           />
-          <div class="question-panel__image-overlay">
+          <!-- Survol (desktop) -->
+          <span
+            class="pointer-events-none absolute right-3 top-3 hidden size-10 place-items-center rounded-full bg-primary-950/50 text-white opacity-0 backdrop-blur-sm transition-opacity duration-300 group-hover:opacity-100 lg:grid"
+          >
             <i class="pi pi-search-plus" />
-          </div>
-        </div>
-        <p v-if="question.asked_question" class="question-panel__asked">
-          {{ question.asked_question }}
-        </p>
-        <ExamAudioPlayer
-          v-if="question.audio_url"
-          :src="mediaUrl(question.audio_url) ?? ''"
-        />
-      </template>
+          </span>
+        </button>
 
-      <!-- ÉCRIT -->
-      <template v-else>
-        <div
-          v-if="question.image_url"
-          class="question-panel__image-wrap"
-          @click="openZoom(mediaUrl(question.image_url) ?? '')"
-        >
-          <img
-            :src="mediaUrl(question.image_url) ?? ''"
-            class="question-panel__image"
-            alt="Document"
-          />
-          <div class="question-panel__image-overlay">
-            <i class="pi pi-search-plus" />
-          </div>
+        <!-- Agrandir (mobile / tablette) -->
+        <div class="mt-2 flex justify-end px-4 sm:px-0 lg:hidden">
+          <button
+            type="button"
+            class="inline-flex items-center gap-2 rounded-full border border-line bg-card-2 px-3.5 py-1.5 text-xs font-semibold text-muted transition-colors hover:text-ink"
+            @click="openZoom(mediaUrl(question.image_url) ?? '')"
+          >
+            <i class="pi pi-expand text-[0.7rem]" />
+            Agrandir
+          </button>
         </div>
-        <div v-else-if="question.question_text" class="question-panel__text-doc">
-          {{ question.question_text }}
-        </div>
-        <p v-if="question.asked_question" class="question-panel__asked">
-          {{ question.asked_question }}
-        </p>
-      </template>
+      </figure>
 
+      <!-- Texte (écrit, sans image) -->
+      <div
+        v-else-if="question.type !== 'oral' && question.question_text"
+        class="whitespace-pre-wrap rounded-2xl border-l-4 border-primary bg-canvas p-5 text-base leading-relaxed text-ink sm:text-lg"
+      >
+        {{ question.question_text }}
+      </div>
+
+      <!-- Question posée -->
+      <p
+        v-if="question.asked_question"
+        class="font-heading text-base font-bold leading-snug text-ink sm:text-lg lg:text-center"
+      >
+        {{ question.asked_question }}
+      </p>
+
+      <!-- Audio (oral) -->
+      <ExamAudioPlayer
+        v-if="question.type === 'oral' && question.audio_url"
+        :src="mediaUrl(question.audio_url) ?? ''"
+      />
     </div>
 
-    <!-- Options -->
+    <!-- Réponses -->
     <ExamOptions
       :question="question"
       :selected="selected"
@@ -69,216 +83,250 @@
       @select="emit('select', $event)"
     />
 
-    <!-- Footer navigation -->
-    <div class="question-panel__footer">
-      <Button
+    <!-- Navigation (desktop) -->
+    <div
+      class="hidden items-center justify-between gap-3 border-t border-line pt-3 lg:flex"
+    >
+      <AppButton
         label="Précédent"
         icon="pi pi-arrow-left"
-        text
+        variant="ghost"
         :disabled="isFirst"
         @click="emit('prev')"
       />
 
-      <span class="question-panel__progress">{{ currentIndex + 1 }} / {{ total }}</span>
+      <div class="flex items-center gap-2">
+        <span
+          class="brand-gradient inline-flex items-center rounded-full px-3.5 py-1 text-sm font-bold text-white shadow-brand"
+        >
+          Question {{ question.question_number }}
+        </span>
+        <span
+          class="rounded-full bg-accent-100 px-3 py-1 text-xs font-bold text-accent-800 dark:bg-accent-950 dark:text-accent-300"
+        >
+          {{ question.points }} pts
+        </span>
+        <span class="ml-1 font-heading text-sm font-bold tabular-nums text-muted">
+          {{ currentIndex + 1 }} <span class="text-faint">/ {{ total }}</span>
+        </span>
+      </div>
 
-      <Button
+      <AppButton
         v-if="!isLast"
         label="Suivant"
         icon="pi pi-arrow-right"
         icon-pos="right"
-        class="question-panel__next bg-gradient-primary"
+        variant="gradient"
         :loading="submitting"
         :disabled="!selected"
         @click="emit('next')"
       />
-      <Button
+      <AppButton
         v-else
         label="Terminer"
         icon="pi pi-check"
         icon-pos="right"
-        severity="success"
+        variant="gradient"
         :loading="submitting"
         :disabled="!selected"
         @click="emit('finish')"
       />
     </div>
 
-    <!-- Dialog zoom image -->
-    <Dialog
-      v-model:visible="zoomVisible"
-      modal
-      :closable="true"
-      :style="{ width: '90vw', maxWidth: '900px', background: '#000' }"
-      :pt="{ content: { style: 'padding:0;background:#000' }, header: { style: 'background:#000;border:none' } }"
-    >
-      <img :src="zoomSrc" style="width:100%;height:auto;display:block;" alt="Zoom" />
-    </Dialog>
+    <!-- Visionneuse plein écran -->
+    <Teleport to="body">
+      <Transition
+        enter-active-class="transition-opacity duration-200"
+        leave-active-class="transition-opacity duration-150"
+        enter-from-class="opacity-0"
+        leave-to-class="opacity-0"
+      >
+        <div
+          v-if="zoomVisible"
+          class="fixed inset-0 z-1200 flex flex-col"
+          style="background-color: rgb(0 0 0 / 0.97)"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Document agrandi"
+        >
+          <!-- Barre d'outils -->
+          <div
+            class="flex shrink-0 items-center justify-between gap-3 px-3 py-2.5 text-white sm:px-5"
+          >
+            <div class="flex items-center gap-1 rounded-full bg-white/10 p-1">
+              <button
+                type="button"
+                class="grid size-9 place-items-center rounded-full transition-colors hover:bg-white/15 disabled:opacity-40"
+                aria-label="Dézoomer"
+                :disabled="zoomIndex === 0"
+                @click="zoomOut"
+              >
+                <i class="pi pi-search-minus" />
+              </button>
+              <span
+                class="min-w-12 text-center text-xs font-semibold tabular-nums"
+              >
+                {{ Math.round(zoomScale * 100) }}%
+              </span>
+              <button
+                type="button"
+                class="grid size-9 place-items-center rounded-full transition-colors hover:bg-white/15 disabled:opacity-40"
+                aria-label="Zoomer"
+                :disabled="zoomIndex === ZOOM_STEPS.length - 1"
+                @click="zoomIn"
+              >
+                <i class="pi pi-search-plus" />
+              </button>
+            </div>
 
+            <button
+              type="button"
+              class="grid size-10 place-items-center rounded-full bg-white/10 transition-colors hover:bg-white/20"
+              aria-label="Fermer"
+              @click="closeZoom"
+            >
+              <i class="pi pi-times" />
+            </button>
+          </div>
+
+          <!-- Image -->
+          <div
+            ref="viewport"
+            class="flex min-h-0 flex-1 overflow-auto overscroll-contain"
+            :class="
+              zoomScale > 1
+                ? 'cursor-grab active:cursor-grabbing'
+                : 'cursor-zoom-in'
+            "
+            @click.self="closeZoom"
+            @pointerdown="onPointerDown"
+            @pointermove="onPointerMove"
+            @pointerup="onPointerUp"
+            @pointercancel="onPointerUp"
+          >
+            <img
+              :src="zoomSrc"
+              alt="Document agrandi"
+              draggable="false"
+              class="m-auto block shrink-0 select-none"
+              :class="
+                zoomScale === 1
+                  ? 'max-h-full max-w-full object-contain'
+                  : 'h-auto max-w-none'
+              "
+              :style="
+                zoomScale > 1 ? { width: `${zoomScale * 100}%` } : undefined
+              "
+              @dblclick="toggleZoom"
+            />
+          </div>
+
+          <p class="shrink-0 pb-3 text-center text-[0.7rem] text-white/50">
+            Double-clic pour zoomer · Échap pour fermer
+          </p>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
 
 <script setup lang="ts">
-import type { QuestionResponse } from '#shared/api/models/QuestionResponse'
+import type { QuestionResponse } from "#shared/api/models/QuestionResponse";
 
 defineProps<{
-  question:     QuestionResponse
-  selected:     string | null
-  currentIndex: number
-  total:        number
-  isFirst:      boolean
-  isLast:       boolean
-  submitting:   boolean
-}>()
+  question: QuestionResponse;
+  selected: string | null;
+  currentIndex: number;
+  total: number;
+  isFirst: boolean;
+  isLast: boolean;
+  submitting: boolean;
+}>();
 
 const emit = defineEmits<{
-  select: [key: string]
-  prev:   []
-  next:   []
-  finish: []
-}>()
+  select: [key: string];
+  prev: [];
+  next: [];
+  finish: [];
+}>();
 
-const { mediaUrl } = useMedia()
+const { mediaUrl } = useMedia();
 
-// ── Zoom image ────────────────────────────────────────────────
-const zoomVisible = ref(false)
-const zoomSrc     = ref('')
+// ── Visionneuse ───────────────────────────────────────────────
+const ZOOM_STEPS = [1, 1.5, 2, 3] as const;
+
+const zoomVisible = ref(false);
+const zoomSrc = ref("");
+const zoomIndex = ref(0);
+const zoomScale = computed<number>(() => ZOOM_STEPS[zoomIndex.value] ?? 1);
+const viewport = ref<HTMLElement | null>(null);
 
 function openZoom(src: string) {
-  zoomSrc.value     = src
-  zoomVisible.value = true
+  zoomSrc.value = src;
+  zoomIndex.value = 0;
+  zoomVisible.value = true;
 }
+
+function closeZoom() {
+  zoomVisible.value = false;
+}
+
+function zoomIn() {
+  if (zoomIndex.value < ZOOM_STEPS.length - 1) zoomIndex.value++;
+}
+
+function zoomOut() {
+  if (zoomIndex.value > 0) zoomIndex.value--;
+}
+
+function toggleZoom() {
+  zoomIndex.value = zoomIndex.value === 0 ? 2 : 0;
+}
+
+// Déplacement à la souris une fois zoomé (le tactile scrolle nativement)
+let dragging = false;
+let startX = 0;
+let startY = 0;
+let startLeft = 0;
+let startTop = 0;
+
+function onPointerDown(e: PointerEvent) {
+  if (e.pointerType !== "mouse" || zoomScale.value === 1 || !viewport.value)
+    return;
+  dragging = true;
+  startX = e.clientX;
+  startY = e.clientY;
+  startLeft = viewport.value.scrollLeft;
+  startTop = viewport.value.scrollTop;
+}
+
+function onPointerMove(e: PointerEvent) {
+  if (!dragging || !viewport.value) return;
+  viewport.value.scrollLeft = startLeft - (e.clientX - startX);
+  viewport.value.scrollTop = startTop - (e.clientY - startY);
+}
+
+function onPointerUp() {
+  dragging = false;
+}
+
+// Échap + blocage du scroll de la page
+function onKeydown(e: KeyboardEvent) {
+  if (e.key === "Escape") closeZoom();
+  if (e.key === "+" || e.key === "=") zoomIn();
+  if (e.key === "-") zoomOut();
+}
+
+watch(zoomVisible, (open) => {
+  if (!import.meta.client) return;
+  document.body.style.overflow = open ? "hidden" : "";
+  if (open) window.addEventListener("keydown", onKeydown);
+  else window.removeEventListener("keydown", onKeydown);
+});
+
+onBeforeUnmount(() => {
+  if (!import.meta.client) return;
+  document.body.style.overflow = "";
+  window.removeEventListener("keydown", onKeydown);
+});
 </script>
-
-<style scoped>
-.question-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 1rem;
-  padding: 1.5rem;
-}
-
-/* Header */
-.question-panel__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.question-panel__badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.4rem 1rem;
-  background: var(--color-primary-50);
-  color: var(--color-primary-700);
-  border: 1px solid var(--color-primary-200);
-  border-radius: 9999px;
-  font-size: 0.9rem;
-  font-weight: 700;
-}
-
-/* Body */
-.question-panel__body {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-/* Image zoomable */
-.question-panel__image-wrap {
-  position: relative;
-  cursor: zoom-in;
-  border-radius: 0.75rem;
-  overflow: hidden;
-  border: 1px solid var(--border-color);
-}
-
-.question-panel__image {
-  width: 100%;
-  max-height: 280px;
-  object-fit: contain;
-  display: block;
-  transition: transform 0.2s ease;
-}
-
-.question-panel__image-wrap:hover .question-panel__image {
-  transform: scale(1.02);
-}
-
-.question-panel__image-overlay {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0,0,0,0);
-  transition: background 0.2s ease;
-}
-
-.question-panel__image-wrap:hover .question-panel__image-overlay {
-  background: rgba(0,0,0,0.25);
-}
-
-.question-panel__image-overlay i {
-  font-size: 1.75rem;
-  color: #ffffff;
-  opacity: 0;
-  transition: opacity 0.2s ease;
-}
-
-.question-panel__image-wrap:hover .question-panel__image-overlay i {
-  opacity: 1;
-}
-
-/* Texte doc */
-.question-panel__text-doc {
-  background: var(--bg-ground);
-  border: 1px solid var(--border-color);
-  border-radius: 0.75rem;
-  padding: 1rem 1.25rem;
-  font-size: 0.9375rem;
-  line-height: 1.8;
-  color: var(--text-primary);
-  white-space: pre-wrap;
-  max-height: 240px;
-  overflow-y: auto;
-}
-
-.question-panel__asked {
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin: 0;
-  text-align: center;
-}
-
-/* Footer */
-.question-panel__footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding-top: 0.875rem;
-  border-top: 1px solid var(--border-color);
-  gap: 0.5rem;
-}
-
-.question-panel__progress {
-  font-size: 0.875rem;
-  color: var(--text-tertiary);
-  font-weight: 500;
-  white-space: nowrap;
-}
-
-.question-panel__next {
-  border: none !important;
-  border-radius: 0.75rem !important;
-  font-weight: 700 !important;
-}
-
-@media (max-width: 640px) {
-  .question-panel { padding: 1rem; gap: 1rem; }
-  .question-panel__image { max-height: 200px; }
-}
-</style>

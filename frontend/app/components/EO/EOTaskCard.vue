@@ -1,53 +1,44 @@
 <template>
   <div
-    class="bg-(--bg-card) border border-(--border-color) rounded-2xl overflow-hidden transition-all duration-200 hover:shadow-md"
+    class="overflow-hidden rounded-card border bg-card shadow-soft transition-all duration-300 ease-spring"
+    :class="showCorrection ? 'border-primary-200 shadow-lift dark:border-primary-800' : 'border-line hover:shadow-lift'"
   >
-    <!-- Card header -->
-    <div class="px-5 py-4 flex items-start justify-between gap-3">
-      <div class="flex items-start gap-3 flex-1 min-w-0">
-        <!-- Index badge -->
-        <span
-          class="shrink-0 w-7 h-7 rounded-full bg-(--bg-ground) border border-(--border-color) text-(--text-secondary) text-xs font-bold flex items-center justify-center mt-0.5"
-        >
+    <!-- En-tête -->
+    <div class="flex items-start justify-between gap-3 px-5 py-4">
+      <div class="flex min-w-0 flex-1 items-start gap-3">
+        <span class="grid size-8 shrink-0 place-items-center rounded-[0.8rem_0.25rem] bg-primary-50 font-heading text-xs font-bold text-primary-700 dark:bg-primary-950 dark:text-primary-300">
           {{ index }}
         </span>
-
-        <!-- Subject -->
-        <p class="text-(--text-primary) leading-relaxed font-medium">
+        <p class="pt-1 font-medium leading-relaxed text-ink">
           {{ task.subject }}
         </p>
       </div>
 
-      <!-- Toggle correction -->
       <button
         type="button"
-        class="shrink-0 flex items-center gap-1.5 text-xs font-semibold text-primary-500 hover:text-primary-400 transition-colors px-3 py-1.5 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-950/30"
+        class="inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-all duration-200"
+        :class="
+          showCorrection
+            ? 'border-transparent bg-primary-50 text-primary-700 dark:bg-primary-950 dark:text-primary-300'
+            : 'border-line text-primary hover:border-primary-200 hover:bg-primary-50 dark:hover:bg-primary-950'
+        "
+        :aria-expanded="showCorrection"
         @click="showCorrection = !showCorrection"
       >
-        <i
-          :class="[
-            'pi text-xs transition-transform duration-200',
-            showCorrection ? 'pi-eye-slash' : 'pi-eye',
-          ]"
-        />
+        <i :class="['pi text-xs', showCorrection ? 'pi-eye-slash' : 'pi-eye']" />
         {{ showCorrection ? "Masquer" : "Correction" }}
       </button>
     </div>
 
-    <!-- Correction panel -->
+    <!-- Pistes de réponse -->
     <Transition name="slide-down">
-      <div
-        v-if="showCorrection"
-        class="border-t border-(--border-color) px-5 py-4 bg-(--bg-ground)"
-      >
-        <p
-          class="text-xs font-semibold text-(--text-tertiary) uppercase tracking-wide mb-3 flex items-center gap-1.5"
-        >
-          <i class="pi pi-check-circle text-green-500" />
+      <div v-if="showCorrection" class="border-t border-line bg-canvas px-5 py-4">
+        <p class="mb-3 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-faint">
+          <i class="pi pi-check-circle text-green-600 dark:text-green-400" />
           Pistes de réponse
         </p>
         <p
-          class="text-green-800  text-md leading-relaxed whitespace-pre-line"
+          class="whitespace-pre-line rounded-2xl border-l-4 border-green-400 bg-green-50 p-4 leading-relaxed text-ink dark:border-green-700 dark:bg-green-950"
         >
           {{ correctionText }}
         </p>
@@ -81,11 +72,12 @@ const correctionText = computed(() => {
 .slide-down-enter-active,
 .slide-down-leave-active {
   transition:
-    max-height 0.25s ease,
-    opacity 0.2s ease;
+    max-height 0.35s var(--ease-spring),
+    opacity 0.25s ease;
   overflow: hidden;
-  max-height: 500px;
+  max-height: 600px;
 }
+
 .slide-down-enter-from,
 .slide-down-leave-to {
   max-height: 0;

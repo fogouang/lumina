@@ -1,160 +1,141 @@
+<script setup lang="ts">
+import { site } from "~/config/site";
+import { mainNav } from "~/config/navigation";
+
+const epreuves = mainNav.filter((link) => link.to !== "/");
+const year = new Date().getFullYear();
+</script>
+
 <template>
-  <footer
-    class="relative border-t border-(--border-color) bg-(--bg-section) text-(--text-primary) shadow-[0_-8px_24px_-8px_rgba(0,0,0,0.08)]"
-  >
-    <div class="container pb-8 pt-20">
+  <footer class="border-t border-line bg-card">
+    <div class="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
       <div
-        class="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr] m-4"
+        class="grid gap-12 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1.2fr]"
       >
-        <!-- Brand -->
-        <div class="sm:col-span-2 lg:col-span-1">
-          <img
-            src="/images/logo.png"
-            alt="Lumina TCF"
-            class="mb-4 h-10 object-contain"
-          />
-          <p
-            class="max-w-85 text-[0.9rem] leading-[1.7] text-(--text-secondary)"
-          >
-            Votre plateforme de préparation au TCF Canada. Simulations en
-            conditions réelles, correction IA et suivi de progression
-            personnalisé.
+        <!-- Marque -->
+        <div class="space-y-5">
+          <NuxtLink to="/" class="flex items-center gap-3">
+            <span
+              class="brand-gradient flex size-10 items-center justify-center rounded-leaf font-heading font-bold text-white shadow-brand"
+            >
+              {{ site.name.charAt(0) }}
+            </span>
+            <span class="font-heading text-lg font-bold text-ink">{{
+              site.name
+            }}</span>
+          </NuxtLink>
+          <p class="max-w-xs text-sm leading-relaxed text-muted">
+            {{ site.description }}
           </p>
-
-          <div class="mt-6 flex gap-1">
-            <Button
-              icon="pi pi-youtube"
-              rounded
-              text
-              aria-label="YouTube"
-              class="text-(--text-secondary)! hover:bg-(--bg-hover)! hover:text-primary-600!"
-            />
-            <Button
-              icon="pi pi-whatsapp"
-              rounded
-              text
-              aria-label="WhatsApp"
-              class="text-(--text-secondary)! hover:bg-(--bg-hover)! hover:text-primary-600!"
-            />
-            <Button
-              icon="pi pi-instagram"
-              rounded
-              text
-              aria-label="Instagram"
-              class="text-(--text-secondary)! hover:bg-(--bg-hover)! hover:text-primary-600!"
-            />
-            <Button
-              icon="pi pi-facebook"
-              rounded
-              text
-              aria-label="Facebook"
-              class="text-(--text-secondary)! hover:bg-(--bg-hover)! hover:text-primary-600!"
-            />
+          <div class="flex gap-2">
+            <a
+              v-for="social in site.socials"
+              :key="social.label"
+              :href="social.href"
+              :aria-label="social.label"
+              target="_blank"
+              rel="noopener"
+              class="flex size-10 items-center justify-center rounded-xl border border-line text-muted transition-all duration-300 ease-spring hover:-translate-y-0.5 hover:border-transparent hover:text-white hover:brand-gradient"
+            >
+              <i :class="social.icon" />
+            </a>
           </div>
+        </div>
 
-          <!-- Newsletter -->
-          <div class="mt-6">
-            <p class="mb-2.5 text-sm font-semibold text-(--text-primary)">
-              Restez informé
-            </p>
-            <div class="flex gap-2">
-              <InputText
-                placeholder="Votre email"
-                class="flex-1 bg-(--bg-card)! border-(--border-color)! text-(--text-primary)!"
-              />
-              <Button
-                icon="pi pi-arrow-right"
-                aria-label="S’abonner"
-                class="shrink-0 bg-gradient-primary! border-none! text-white!"
-              />
-            </div>
-          </div>
+        <!-- Épreuves -->
+        <div>
+          <h3
+            class="mb-4 font-heading text-sm font-semibold uppercase tracking-wider text-ink"
+          >
+            Épreuves
+          </h3>
+          <ul class="space-y-3">
+            <li v-for="link in epreuves" :key="link.to">
+              <NuxtLink
+                :to="link.to"
+                class="group inline-flex items-center gap-2 text-sm text-muted transition-colors hover:text-primary"
+              >
+                <i
+                  :class="[
+                    link.icon,
+                    'text-xs text-faint transition-colors group-hover:text-primary',
+                  ]"
+                />
+                {{ link.label }}
+              </NuxtLink>
+            </li>
+          </ul>
         </div>
 
         <!-- Ressources -->
         <div>
           <h3
-            class="mb-4 flex items-center gap-2 text-base font-bold text-(--text-primary)"
+            class="mb-4 font-heading text-sm font-semibold uppercase tracking-wider text-ink"
           >
-            <i class="pi pi-compass text-[0.9375rem] text-primary-600" />
             Ressources
           </h3>
-          <ul class="flex flex-col gap-2.5 list-none p-0 m-0">
-            <li v-for="link in ressourcesLinks" :key="link.to">
+          <ul class="space-y-3">
+            <li v-for="link in site.resources" :key="link.to">
               <NuxtLink
                 :to="link.to"
-                class="group flex items-center gap-2 text-sm text-(--text-secondary) no-underline transition-colors hover:text-primary-700"
+                class="text-sm text-muted transition-colors hover:text-primary"
               >
-                <i
-                  class="pi pi-angle-right text-xs transition-transform group-hover:translate-x-0.75"
-                />
                 {{ link.label }}
               </NuxtLink>
             </li>
           </ul>
         </div>
 
-        <!-- À propos -->
+        <!-- Contact -->
         <div>
           <h3
-            class="mb-4 flex items-center gap-2 text-base font-bold text-(--text-primary)"
+            class="mb-4 font-heading text-sm font-semibold uppercase tracking-wider text-ink"
           >
-            <i class="pi pi-info-circle text-[0.9375rem] text-primary-600" />
-            À propos
+            Contact
           </h3>
-          <ul class="flex flex-col gap-2.5 list-none p-0 m-0">
-            <li v-for="link in aproposLinks" :key="link.to">
-              <NuxtLink
-                :to="link.to"
-                class="group flex items-center gap-2 text-sm text-(--text-secondary) no-underline transition-colors hover:text-primary-700"
+          <ul class="space-y-3 text-sm text-muted">
+            <li class="flex items-center gap-3">
+              <i class="pi pi-envelope text-primary" />
+              <a
+                :href="`mailto:${site.contact.email}`"
+                class="hover:text-primary"
+                >{{ site.contact.email }}</a
               >
-                <i
-                  class="pi pi-angle-right text-xs transition-transform group-hover:translate-x-0.75"
-                />
-                {{ link.label }}
-              </NuxtLink>
+            </li>
+            <li class="flex items-center gap-3">
+              <i class="pi pi-phone text-primary" />
+              <span>{{ site.contact.phone }}</span>
+            </li>
+            <li class="flex items-center gap-3">
+              <i class="pi pi-map-marker text-primary" />
+              <span>{{ site.contact.address }}</span>
             </li>
           </ul>
         </div>
       </div>
 
-      <Divider class="border-(--border-color)! my-8!" />
+      <div
+        class="mt-12 flex flex-col gap-4 border-t border-line pt-8 text-sm text-faint sm:flex-row sm:items-center sm:justify-between"
+      >
+        <p>
+          © {{ year }} {{ site.name }}. Tous droits réservés.
+          <span class="mx-1.5">·</span>
+          Un produit de
 
-      <!-- Bottom -->
-      <div class="flex flex-wrap items-center justify-between gap-4">
-        <span class="text-sm text-(--text-secondary)">
-          © {{ new Date().getFullYear() }} <strong>Lumina TCF</strong> -
-          Fogouang Corporation. Tous droits réservés.
-        </span>
-        <div class="flex flex-wrap items-center gap-3">
-          <Tag
-            value="Version 2026"
-            class="bg-primary-50! text-primary-700! border! border-primary-200!"
-          />
-          <Tag
-            value="Correction IA"
-            class="bg-primary-50! text-primary-700! border! border-primary-200!"
-          />
-          <div
-            class="flex items-center gap-1.5 text-sm text-(--text-secondary)"
+          <a
+            :href="site.company.url"
+            target="_blank"
+            rel="noopener"
+            class="font-semibold text-muted transition-colors hover:text-primary"
           >
-            <i class="pi pi-shield text-primary-600" />
-            <span>Paiement sécurisé</span>
-          </div>
+            {{ site.company.name }}
+          </a>
+        </p>
+        <div class="flex gap-6">
+          <a href="/politique-confidentialite" class="hover:text-primary">Mentions légales</a>
+          <a href="/condition-remboursement" class="hover:text-primary">Confidentialité</a>
         </div>
       </div>
     </div>
   </footer>
 </template>
-
-<script setup>
-const ressourcesLinks = [
-  { to: "/politique-confidentialite", label: "Confidentialité" },
-  { to: "/condition-remboursemnet", label: "Condition de remboursement" },
-];
-
-const aproposLinks = [
-  { to: "/tarifs", label: "Tarifs" },
-  { to: "/contact", label: "Contact" },
-];
-</script>

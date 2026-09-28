@@ -1,256 +1,280 @@
 <template>
-  <div class="resultats" v-if="attempt">
-    <!-- ── Header ────────────────────────────────────────────── -->
-    <div class="resultats__header">
-      <div class="resultats__header-inner container">
-        <div class="resultats__serie-badge">
-          <i class="pi pi-check-circle" />
-          Série {{ attempt.series_number }} ·
-          {{ fromModule ? moduleLabels[fromModule] : "Série complète" }} ·
-          Terminée
-        </div>
+  <div v-if="attempt" class="min-h-screen bg-canvas">
+    <!-- Hero -->
+    <section class="featured-panel px-4 pb-32 pt-32 sm:px-6 lg:pt-40">
+      <div
+        class="bg-grid animate-grid-drift pointer-events-none absolute inset-0"
+        style="--app-line: rgba(255, 255, 255, 0.06)"
+      />
+      <div class="relative mx-auto flex max-w-3xl flex-col items-center text-center">
+        <span
+          v-reveal
+          class="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3.5 py-1.5 text-xs font-semibold text-white backdrop-blur-md"
+        >
+          <i class="pi pi-check-circle text-green-300" />
+          Série {{ attempt.series_number }} · {{ fromModule ? moduleLabels[fromModule] : "Série complète" }} · Terminée
+        </span>
 
-        <div class="resultats__score-main">
-          <div class="resultats__nclc">
-            <span class="resultats__nclc-label">Niveau</span>
-            <span class="resultats__nclc-value">{{ mainLevel }}</span>
-            <span class="resultats__nclc-sub">NCLC {{ mainLevel }}</span>
+        <div v-reveal="{ from: 'zoom', delay: 100 }" class="mt-8 flex items-center gap-6 sm:gap-10">
+          <div class="flex flex-col items-center">
+            <span class="text-xs font-semibold uppercase tracking-widest text-white/60">Niveau</span>
+            <span class="mt-1 grid size-24 place-items-center rounded-leaf bg-accent-400 font-heading text-5xl font-extrabold text-accent-950 shadow-lift">
+              {{ mainLevel }}
+            </span>
+            <span class="mt-2 text-sm font-semibold text-white/80">NCLC {{ mainLevel }}</span>
           </div>
-          <div class="resultats__score-pts">
-            <span class="resultats__pts-value">{{ mainScore }}</span>
-            <span class="resultats__pts-max">/699</span>
-          </div>
-        </div>
-
-        <div class="resultats__stats">
-          <div class="resultats__stat">
-            <i class="pi pi-check-circle" style="color: #22c55e" />
-            <span class="resultats__stat-value">{{ correctCount }}</span>
-            <span class="resultats__stat-label">Correctes</span>
-          </div>
-          <div class="resultats__stat">
-            <i class="pi pi-times-circle" style="color: #ef4444" />
-            <span class="resultats__stat-value">{{ incorrectCount }}</span>
-            <span class="resultats__stat-label">Incorrectes</span>
-          </div>
-          <div class="resultats__stat">
-            <i class="pi pi-clock" style="color: #f59e0b" />
-            <span class="resultats__stat-value">{{ timeSpent }}</span>
-            <span class="resultats__stat-label">Temps passé</span>
+          <div class="h-24 w-px bg-white/20" />
+          <div class="flex flex-col items-center">
+            <span class="text-xs font-semibold uppercase tracking-widest text-white/60">Score</span>
+            <p class="mt-1 font-heading text-6xl font-extrabold leading-none text-white">
+              {{ mainScore }}<span class="text-2xl text-white/60">/699</span>
+            </p>
           </div>
         </div>
       </div>
-    </div>
+    </section>
 
-    <div class="container resultats__body">
-      <!-- ── Aperçu des réponses ──────────────────────────────── -->
-      <div class="resultats__section">
-        <h2 class="resultats__section-title">Aperçu des réponses</h2>
-        <div class="resultats__grid">
-          <div
+    <div class="relative z-10 mx-auto -mt-16 max-w-5xl px-4 pb-20 sm:px-6 lg:px-8">
+      <!-- Statistiques -->
+      <div v-reveal="{ delay: 200 }" class="grid grid-cols-3 gap-3 sm:gap-4">
+        <div class="flex flex-col items-center gap-1 rounded-card border border-line bg-card p-4 text-center shadow-lift sm:p-5">
+          <i class="pi pi-check-circle text-lg text-green-600 dark:text-green-400" />
+          <span class="font-heading text-2xl font-extrabold text-ink">{{ correctCount }}</span>
+          <span class="text-xs text-muted">Correctes</span>
+        </div>
+        <div class="flex flex-col items-center gap-1 rounded-card border border-line bg-card p-4 text-center shadow-lift sm:p-5">
+          <i class="pi pi-times-circle text-lg text-red-600 dark:text-red-400" />
+          <span class="font-heading text-2xl font-extrabold text-ink">{{ incorrectCount }}</span>
+          <span class="text-xs text-muted">Incorrectes</span>
+        </div>
+        <div class="flex flex-col items-center gap-1 rounded-card border border-line bg-card p-4 text-center shadow-lift sm:p-5">
+          <i class="pi pi-clock text-lg text-accent-600" />
+          <span class="font-heading text-2xl font-extrabold text-ink">{{ timeSpent }}</span>
+          <span class="text-xs text-muted">Temps passé</span>
+        </div>
+      </div>
+
+      <!-- Aperçu -->
+      <div v-reveal="{ delay: 250 }" class="mt-6 rounded-card border border-line bg-card p-6 shadow-soft">
+        <h2 class="mb-5 border-b border-line pb-3.5 font-heading text-base font-bold text-ink">Aperçu des réponses</h2>
+        <div class="grid grid-cols-8 gap-1.5 sm:grid-cols-10 md:grid-cols-13">
+          <button
             v-for="(ans, idx) in answersFiltered"
             :key="idx"
-            class="resultats__dot"
-            :class="{
-              'resultats__dot--correct': ans.is_correct,
-              'resultats__dot--incorrect': !ans.is_correct,
-            }"
+            type="button"
             :title="`Question ${idx + 1}`"
+            class="grid aspect-square place-items-center rounded-lg text-xs font-bold transition-transform duration-200 hover:scale-110"
+            :class="
+              ans.is_correct
+                ? 'bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300'
+                : 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300'
+            "
             @click="scrollToQuestion(idx)"
           >
             {{ idx + 1 }}
-          </div>
+          </button>
         </div>
-        <div class="resultats__legend">
-          <span class="resultats__legend-item">
-            <span
-              class="resultats__dot resultats__dot--correct resultats__dot--sm"
-            />
+        <div class="mt-4 flex gap-4 border-t border-line pt-3 text-xs text-muted">
+          <span class="inline-flex items-center gap-1.5">
+            <span class="size-3 rounded bg-green-400" />
             Correcte
           </span>
-          <span class="resultats__legend-item">
-            <span
-              class="resultats__dot resultats__dot--incorrect resultats__dot--sm"
-            />
+          <span class="inline-flex items-center gap-1.5">
+            <span class="size-3 rounded bg-red-400" />
             Incorrecte
           </span>
         </div>
       </div>
 
-      <!-- ── Actions ──────────────────────────────────────────── -->
-      <div class="resultats__actions">
-        <!-- Retour : vers modules si on vient d'un module, sinon vers séries -->
-        <NuxtLink :to="backLink">
-          <Button
-            :label="fromSeriesId ? 'Autres modules' : 'Retour aux séries'"
-            icon="pi pi-arrow-left"
-            outlined
-            class="resultats__action-btn"
-          />
-        </NuxtLink>
-        <NuxtLink :to="`/epreuve/${slug}/series/${attempt.series_id}`">
-          <Button
-            :label="fromSeriesId ? 'Refaire ce module' : 'Refaire cette série'"
-            icon="pi pi-refresh"
-            class="resultats__action-btn bg-gradient-primary"
-          />
-        </NuxtLink>
+      <!-- Actions -->
+      <div class="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
+        <AppCta
+          :to="backLink"
+          :label="fromSeriesId ? 'Autres modules' : 'Retour aux séries'"
+          icon="pi pi-arrow-left"
+          icon-pos="left"
+          variant="outline"
+          size="md"
+        />
+        <AppCta
+          :to="`/epreuve/${slug}/series/${attempt.series_id}`"
+          :label="fromSeriesId ? 'Refaire ce module' : 'Refaire cette série'"
+          icon="pi pi-refresh"
+          icon-pos="left"
+          size="md"
+        />
       </div>
 
-      <!-- ── Correction détaillée ─────────────────────────────── -->
-      <div class="resultats__section">
-        <h2 class="resultats__section-title">Correction détaillée</h2>
+      <!-- Correction détaillée -->
+      <div class="mt-12">
+        <h2 class="mb-5 font-heading text-2xl font-extrabold tracking-tight text-ink">Correction détaillée</h2>
 
-        <div class="correction-list">
-          <div
+        <div class="flex flex-col gap-5">
+          <article
             v-for="(question, idx) in questionsFiltered"
-            :key="question.id"
             :id="`question-${idx}`"
-            class="correction-card"
-            :class="{
-              'correction-card--correct': answersMap[question.id]?.is_correct,
-              'correction-card--incorrect':
-                !answersMap[question.id]?.is_correct,
-            }"
+            :key="question.id"
+            class="scroll-mt-28 overflow-hidden rounded-card border bg-card shadow-soft"
+            :class="
+              answersMap[question.id]?.is_correct
+                ? 'border-green-200 dark:border-green-900'
+                : 'border-red-200 dark:border-red-900'
+            "
           >
-            <!-- Header question -->
-            <div class="correction-card__header">
-              <div class="correction-card__num">
-                <i
-                  :class="
-                    answersMap[question.id]?.is_correct
-                      ? 'pi pi-check'
-                      : 'pi pi-times'
-                  "
-                />
-                Question {{ question.question_number }}
-                <span class="correction-card__type">
-                  {{
-                    question.type === "oral"
-                      ? "Compréhension Orale"
-                      : "Compréhension Écrite"
-                  }}
-                </span>
-              </div>
-              <div class="correction-card__header-right">
-                <Tag
-                  :value="
-                    answersMap[question.id]?.is_correct
-                      ? `Correct +${answersMap[question.id]?.points_earned} pts`
-                      : 'Incorrect'
-                  "
-                  :severity="
-                    answersMap[question.id]?.is_correct ? 'success' : 'danger'
-                  "
-                />
-              </div>
-            </div>
-
-            <!-- Contenu : audio (oral) -->
+            <!-- En-tête -->
             <div
-              v-if="question.type === 'oral' && question.audio_url"
-              class="correction-card__audio"
+              class="flex flex-wrap items-center justify-between gap-3 border-b px-5 py-3.5"
+              :class="
+                answersMap[question.id]?.is_correct
+                  ? 'border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-950'
+                  : 'border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950'
+              "
             >
-              <ExamAudioPlayer :src="mediaUrl(question.audio_url) ?? ''" />
+              <div class="flex items-center gap-3">
+                <span
+                  class="grid size-8 place-items-center rounded-full text-white"
+                  :class="answersMap[question.id]?.is_correct ? 'bg-green-500' : 'bg-red-500'"
+                >
+                  <i :class="[answersMap[question.id]?.is_correct ? 'pi pi-check' : 'pi pi-times', 'text-xs']" />
+                </span>
+                <div>
+                  <p class="font-heading text-sm font-bold text-ink">Question {{ question.question_number }}</p>
+                  <p class="text-xs text-muted">
+                    {{ question.type === "oral" ? "Compréhension orale" : "Compréhension écrite" }}
+                  </p>
+                </div>
+              </div>
+              <span
+                class="rounded-full px-3 py-1 text-xs font-bold"
+                :class="
+                  answersMap[question.id]?.is_correct
+                    ? 'bg-green-500 text-white'
+                    : 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-200'
+                "
+              >
+                {{
+                  answersMap[question.id]?.is_correct
+                    ? `Correct +${answersMap[question.id]?.points_earned} pts`
+                    : "Incorrect"
+                }}
+              </span>
             </div>
 
-            <!-- Contenu : image ou texte (écrit) -->
-            <template v-if="question.type === 'written'">
+            <div class="flex flex-col gap-4 p-5">
+              <!-- Audio (oral) -->
+              <ExamAudioPlayer
+                v-if="question.type === 'oral' && question.audio_url"
+                :src="mediaUrl(question.audio_url) ?? ''"
+              />
+
+              <!-- Image (oral et écrit) -->
               <img
                 v-if="question.image_url"
                 :src="mediaUrl(question.image_url) ?? ''"
-                class="correction-card__image"
+                class="mx-auto max-h-96 w-auto rounded-2xl border border-line object-contain"
                 alt="Document"
               />
+
+              <!-- Texte (écrit, sans image) -->
               <div
-                v-else-if="question.question_text"
-                class="correction-card__text"
+                v-else-if="question.type === 'written' && question.question_text"
+                class="whitespace-pre-wrap rounded-2xl border-l-4 border-primary bg-canvas p-5 text-[0.9375rem] leading-relaxed text-ink"
               >
                 {{ question.question_text }}
               </div>
-            </template>
 
-            <!-- Image optionnelle oral -->
-            <img
-              v-if="question.type === 'oral' && question.image_url"
-              :src="mediaUrl(question.image_url) ?? ''"
-              class="correction-card__image"
-              alt="Document"
-            />
+              <!-- Question posée -->
+              <p v-if="question.asked_question" class="font-heading text-lg font-bold leading-snug text-ink">
+                {{ question.asked_question }}
+              </p>
 
-            <!-- Question posée -->
-            <p v-if="question.asked_question" class="correction-card__asked">
-              {{ question.asked_question }}
-            </p>
-
-            <!-- Options avec correction colorée -->
-            <div class="correction-options">
-              <div
-                v-for="opt in getOptions(question)"
-                :key="opt.key"
-                class="correction-option"
-                :class="
-                  getOptionClass(opt.key, question, answersMap[question.id])
-                "
-              >
-                <div class="correction-option__indicator">
-                  <i
-                    v-if="
-                      isSelectedCorrect(
-                        opt.key,
-                        question,
-                        answersMap[question.id],
-                      )
+              <!-- Réponses -->
+              <div class="flex flex-col gap-2">
+                <div
+                  v-for="opt in getOptions(question)"
+                  :key="opt.key"
+                  class="flex items-start gap-3 rounded-2xl border-2 p-3.5"
+                  :class="
+                    isSelectedCorrect(opt.key, question, answersMap[question.id])
+                      ? 'border-green-400 bg-green-50 dark:border-green-700 dark:bg-green-950'
+                      : isSelectedWrong(opt.key, question, answersMap[question.id])
+                        ? 'border-red-400 bg-red-50 dark:border-red-700 dark:bg-red-950'
+                        : isCorrectAnswer(opt.key, question)
+                          ? 'border-dashed border-green-400 bg-green-50/50 dark:border-green-700 dark:bg-green-950/40'
+                          : 'border-line bg-card'
+                  "
+                >
+                  <span
+                    class="grid size-7 shrink-0 place-items-center rounded-[0.7rem_0.2rem] font-heading text-xs font-extrabold"
+                    :class="
+                      isSelectedCorrect(opt.key, question, answersMap[question.id]) || isCorrectAnswer(opt.key, question)
+                        ? 'bg-green-500 text-white'
+                        : isSelectedWrong(opt.key, question, answersMap[question.id])
+                          ? 'bg-red-500 text-white'
+                          : 'bg-card-2 text-muted'
                     "
-                    class="pi pi-check correction-option__icon correction-option__icon--ok"
-                  />
-                  <i
-                    v-else-if="
-                      isSelectedWrong(
-                        opt.key,
-                        question,
-                        answersMap[question.id],
-                      )
-                    "
-                    class="pi pi-times correction-option__icon correction-option__icon--ko"
-                  />
-                  <i
+                  >
+                    {{ opt.key.toUpperCase() }}
+                  </span>
+                  <span class="flex-1 pt-0.5 text-sm leading-relaxed text-ink">{{ opt.text }}</span>
+                  <span
+                    v-if="isSelectedCorrect(opt.key, question, answersMap[question.id])"
+                    class="shrink-0 text-xs font-bold text-green-700 dark:text-green-400"
+                  >
+                    Votre réponse <i class="pi pi-check ml-0.5 text-[0.65rem]" />
+                  </span>
+                  <span
+                    v-else-if="isSelectedWrong(opt.key, question, answersMap[question.id])"
+                    class="shrink-0 text-xs font-bold text-red-700 dark:text-red-400"
+                  >
+                    Votre réponse <i class="pi pi-times ml-0.5 text-[0.65rem]" />
+                  </span>
+                  <span
                     v-else-if="isCorrectAnswer(opt.key, question)"
-                    class="pi pi-check correction-option__icon correction-option__icon--ok"
-                  />
+                    class="shrink-0 text-xs font-bold text-green-700 dark:text-green-400"
+                  >
+                    Bonne réponse
+                  </span>
                 </div>
-                <span class="correction-option__key">{{ opt.key }}</span>
-                <span class="correction-option__text">{{ opt.text }}</span>
+              </div>
+
+              <!-- Explication -->
+              <div
+                v-if="question.explanation"
+                class="flex items-start gap-3 rounded-2xl border-l-4 border-accent-400 bg-accent-50 p-4 dark:bg-accent-950"
+              >
+                <i class="pi pi-lightbulb mt-0.5 shrink-0 text-accent-700 dark:text-accent-300" />
+                <p class="text-sm leading-relaxed text-accent-900 dark:text-accent-200">{{ question.explanation }}</p>
               </div>
             </div>
-
-            <!-- Explication -->
-            <div
-              v-if="question.explanation"
-              class="correction-card__explanation"
-            >
-              <i class="pi pi-lightbulb" />
-              <p>{{ question.explanation }}</p>
-            </div>
-          </div>
+          </article>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Loading -->
-  <div v-else-if="loading" class="resultats-loading">
-    <ProgressSpinner style="width: 48px; height: 48px" />
-    <p>Chargement des résultats...</p>
+  <!-- Chargement -->
+  <div v-else-if="loading" class="flex min-h-screen flex-col items-center justify-center gap-3 bg-canvas">
+    <i class="pi pi-spin pi-spinner text-3xl text-primary" />
+    <p class="text-sm text-muted">Chargement des résultats...</p>
   </div>
 
   <!-- Erreur -->
-  <div v-else class="resultats-error container">
-    <i class="pi pi-exclamation-triangle" />
-    <p>{{ error }}</p>
-    <NuxtLink :to="`/epreuve/${slug}/series`">
-      <Button label="Retour aux séries" icon="pi pi-arrow-left" />
-    </NuxtLink>
+  <div v-else class="flex min-h-screen items-center justify-center bg-canvas p-4">
+    <div class="flex max-w-md flex-col items-center gap-4 rounded-card border border-line bg-card p-8 text-center shadow-lift">
+      <span class="grid size-14 place-items-center rounded-full bg-red-100 text-red-600 dark:bg-red-950 dark:text-red-400">
+        <i class="pi pi-exclamation-triangle text-xl" />
+      </span>
+      <p class="text-muted">{{ error }}</p>
+      <AppCta
+        :to="`/epreuve/${slug}/series`"
+        label="Retour aux séries"
+        icon="pi pi-arrow-left"
+        icon-pos="left"
+        variant="outline"
+        size="md"
+      />
+    </div>
   </div>
 </template>
 

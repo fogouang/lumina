@@ -1,7 +1,8 @@
 <template>
-  <div>
+  <div class="flex flex-col gap-6">
+    <h1 class="account-page-title mb-0">Sécurité</h1>
 
-    <!-- Changer mot de passe -->
+    <!-- Mot de passe -->
     <div class="account-section">
       <h2 class="account-section__title">Mot de passe</h2>
 
@@ -9,14 +10,16 @@
         v-slot="$form"
         :initial-values="{ current_password: '', new_password: '', confirm_password: '' }"
         :resolver="passwordResolver"
-        class="security-form"
+        class="flex max-w-xl flex-col gap-5"
         @submit="onPasswordSubmit"
       >
-        <div class="security-form__field">
-          <label class="security-form__label">Mot de passe actuel</label>
+        <div class="flex flex-col gap-2">
+          <label for="security-current" class="text-sm font-semibold text-ink">Mot de passe actuel</label>
           <Password
+            input-id="security-current"
             name="current_password"
             placeholder="••••••••"
+            autocomplete="current-password"
             :feedback="false"
             toggle-mask
             fluid
@@ -27,11 +30,13 @@
           </Message>
         </div>
 
-        <div class="security-form__field">
-          <label class="security-form__label">Nouveau mot de passe</label>
+        <div class="flex flex-col gap-2">
+          <label for="security-new" class="text-sm font-semibold text-ink">Nouveau mot de passe</label>
           <Password
+            input-id="security-new"
             name="new_password"
             placeholder="••••••••"
+            autocomplete="new-password"
             toggle-mask
             fluid
             :invalid="$form.new_password?.invalid"
@@ -41,11 +46,13 @@
           </Message>
         </div>
 
-        <div class="security-form__field">
-          <label class="security-form__label">Confirmer le nouveau mot de passe</label>
+        <div class="flex flex-col gap-2">
+          <label for="security-confirm" class="text-sm font-semibold text-ink">Confirmer le nouveau mot de passe</label>
           <Password
+            input-id="security-confirm"
             name="confirm_password"
             placeholder="••••••••"
+            autocomplete="new-password"
             :feedback="false"
             toggle-mask
             fluid
@@ -56,68 +63,96 @@
           </Message>
         </div>
 
-        <Message v-if="passwordSuccess" severity="success" size="small">
-          Mot de passe mis à jour avec succès.
-        </Message>
-        <Message v-if="passwordError" severity="error" size="small">
-          {{ passwordError }}
-        </Message>
+        <div
+          v-if="passwordSuccess"
+          class="flex items-start gap-3 rounded-2xl border border-green-200 bg-green-50 p-3.5 dark:border-green-900 dark:bg-green-950"
+        >
+          <i class="pi pi-check-circle mt-0.5 text-green-600 dark:text-green-400" />
+          <p class="text-sm font-medium text-green-800 dark:text-green-300">Mot de passe mis à jour avec succès.</p>
+        </div>
+        <div
+          v-if="passwordError"
+          class="flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-3.5 dark:border-red-900 dark:bg-red-950"
+        >
+          <i class="pi pi-exclamation-circle mt-0.5 text-red-600 dark:text-red-400" />
+          <p class="text-sm font-medium text-red-700 dark:text-red-300">{{ passwordError }}</p>
+        </div>
 
-        <div class="security-form__actions">
-          <Button
+        <div>
+          <AppButton
             type="submit"
             label="Mettre à jour le mot de passe"
             icon="pi pi-lock"
+            variant="gradient"
             :loading="passwordLoading"
-            class="security-form__btn bg-gradient-primary"
           />
         </div>
       </Form>
     </div>
 
-    <!-- Zone danger -->
-    <div class="account-section account-section--danger">
-      <h2 class="account-section__title account-section__title--danger">Zone de danger</h2>
+    <!-- Zone de danger -->
+    <div class="account-section border-red-200 dark:border-red-900">
+      <h2 class="account-section__title border-red-200 text-red-600 dark:border-red-900 dark:text-red-400">
+        Zone de danger
+      </h2>
 
-      <div class="danger-item">
-        <div class="danger-item__text">
-          <h3>Supprimer mon compte</h3>
-          <p>Cette action est irréversible. Toutes vos données seront définitivement supprimées.</p>
+      <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div class="flex items-start gap-4">
+          <span class="grid size-11 shrink-0 place-items-center rounded-leaf bg-red-50 text-red-600 dark:bg-red-950 dark:text-red-400">
+            <i class="pi pi-trash" />
+          </span>
+          <div>
+            <h3 class="font-heading font-bold text-ink">Supprimer mon compte</h3>
+            <p class="mt-1 max-w-lg text-sm leading-relaxed text-muted">
+              Cette action est irréversible. Toutes vos données seront définitivement supprimées.
+            </p>
+          </div>
         </div>
-        <Button
+        <AppButton
           label="Supprimer le compte"
           icon="pi pi-trash"
-          severity="danger"
-          outlined
-          class="danger-item__btn"
+          variant="danger"
+          class="shrink-0"
           @click="confirmDelete = true"
         />
       </div>
     </div>
 
-    <!-- Dialog confirmation suppression -->
+    <!-- Confirmation suppression -->
     <Dialog
       v-model:visible="confirmDelete"
       modal
-      header="Supprimer mon compte"
-      :style="{ width: '420px' }"
+      dismissable-mask
+      :draggable="false"
+      :style="{ width: '28rem' }"
+      :breakpoints="{ '640px': '94vw' }"
+      :pt="{ mask: { class: 'backdrop-blur-sm' } }"
     >
-      <p class="confirm-delete__text">
-        Êtes-vous sûr de vouloir supprimer votre compte ?
-        Cette action est <strong>irréversible</strong>.
+      <template #header>
+        <div class="flex items-center gap-3">
+          <span class="grid size-10 place-items-center rounded-xl bg-red-100 text-red-600 dark:bg-red-950 dark:text-red-400">
+            <i class="pi pi-exclamation-triangle" />
+          </span>
+          <h3 class="font-heading text-lg font-bold text-ink">Supprimer mon compte ?</h3>
+        </div>
+      </template>
+
+      <p class="leading-relaxed text-muted">
+        Êtes-vous sûr de vouloir supprimer votre compte ? Cette action est
+        <strong class="font-semibold text-ink">irréversible</strong>.
       </p>
+
       <template #footer>
-        <Button label="Annuler" text @click="confirmDelete = false" />
-        <Button
+        <AppButton label="Annuler" variant="ghost" @click="confirmDelete = false" />
+        <AppButton
           label="Oui, supprimer"
-          severity="danger"
           icon="pi pi-trash"
+          variant="danger"
           :loading="deleteLoading"
           @click="onDeleteAccount"
         />
       </template>
     </Dialog>
-
   </div>
 </template>
 
@@ -193,84 +228,3 @@ async function onDeleteAccount() {
 useHead({ title: 'Sécurité | Lumina TCF' })
 </script>
 
-<style scoped>
-/* ── Formulaire ────────────────────────────────────────────── */
-.security-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1.125rem;
-  max-width: 480px;
-}
-
-.security-form__field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.375rem;
-}
-
-.security-form__label {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-}
-
-.security-form__actions {
-  padding-top: 0.5rem;
-}
-
-.security-form__btn {
-  border: none !important;
-  border-radius: 0.75rem !important;
-  font-weight: 700 !important;
-}
-
-/* ── Danger zone ───────────────────────────────────────────── */
-.account-section--danger {
-  border-color: var(--color-danger-200) !important;
-}
-
-.account-section__title--danger {
-  color: var(--color-danger-600);
-}
-
-.danger-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1.5rem;
-}
-
-.danger-item__text h3 {
-  font-size: 0.9375rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin: 0 0 0.25rem;
-}
-
-.danger-item__text p {
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-  margin: 0;
-  line-height: 1.5;
-}
-
-.danger-item__btn {
-  border-radius: 0.75rem !important;
-  font-weight: 600 !important;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-/* ── Confirm dialog ────────────────────────────────────────── */
-.confirm-delete__text {
-  font-size: 0.9375rem;
-  color: var(--text-secondary);
-  line-height: 1.65;
-  margin: 0;
-}
-
-@media (max-width: 640px) {
-  .danger-item { flex-direction: column; align-items: flex-start; }
-  .security-form { max-width: 100%; }
-}
-</style>

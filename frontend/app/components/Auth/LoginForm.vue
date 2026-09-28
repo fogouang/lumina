@@ -3,70 +3,71 @@
     v-slot="$form"
     :initial-values="initialValues"
     :resolver="resolver"
-    class="auth-form"
+    class="flex flex-col gap-5"
     @submit="onSubmit"
   >
     <!-- Email -->
-    <div class="auth-form__field">
-      <label class="auth-form__label">Email</label>
+    <div class="flex flex-col gap-2">
+      <label for="login-email" class="text-sm font-semibold text-ink">Email</label>
       <InputText
+        id="login-email"
         name="email"
         type="email"
         placeholder="votre@email.com"
+        autocomplete="email"
         fluid
         :invalid="$form.email?.invalid"
       />
-      <Message
-        v-if="$form.email?.invalid"
-        severity="error"
-        size="small"
-        variant="simple"
-      >
+      <Message v-if="$form.email?.invalid" severity="error" size="small" variant="simple">
         {{ $form.email.error.message }}
       </Message>
     </div>
 
     <!-- Mot de passe -->
-    <div class="auth-form__field">
-      <label class="auth-form__label">Mot de passe</label>
+    <div class="flex flex-col gap-2">
+      <label for="login-password" class="text-sm font-semibold text-ink">Mot de passe</label>
       <Password
+        input-id="login-password"
         name="password"
         placeholder="••••••••"
+        autocomplete="current-password"
         :feedback="false"
         toggle-mask
         fluid
         :invalid="$form.password?.invalid"
       />
-      <Message
-        v-if="$form.password?.invalid"
-        severity="error"
-        size="small"
-        variant="simple"
-      >
+      <Message v-if="$form.password?.invalid" severity="error" size="small" variant="simple">
         {{ $form.password.error.message }}
       </Message>
     </div>
 
     <!-- Erreur API -->
-    <Message v-if="auth.error" severity="error" size="small">
-      {{ auth.error }}
-    </Message>
+    <div
+      v-if="auth.error"
+      class="flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-3.5 dark:border-red-900 dark:bg-red-950"
+    >
+      <i class="pi pi-exclamation-circle mt-0.5 text-red-600 dark:text-red-400" />
+      <p class="text-sm font-medium text-red-700 dark:text-red-300">{{ auth.error }}</p>
+    </div>
 
-    <!-- Submit -->
-    <Button
+    <!-- Envoi -->
+    <AppButton
       type="submit"
       label="Se connecter"
       icon="pi pi-sign-in"
+      variant="gradient"
+      size="large"
       :loading="auth.loading"
-      class="auth-form__submit bg-gradient-primary w-full"
+      block
+      class="mt-1"
     />
 
-    <!-- Switch -->
-    <p class="auth-form__switch">
+    <!-- Bascule -->
+    <p class="text-center text-sm text-muted">
       Pas encore de compte ?
       <button
         type="button"
-        class="auth-form__switch-btn"
+        class="font-semibold text-primary underline-offset-4 hover:underline"
         @click="switchTab('register')"
       >
         S'inscrire
@@ -110,51 +111,3 @@ async function onSubmit({
   }
 }
 </script>
-
-<style scoped>
-.auth-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1.125rem;
-}
-
-.auth-form__field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.375rem;
-}
-
-.auth-form__label {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-}
-
-.auth-form__submit {
-  border: none !important;
-  border-radius: 0.75rem !important;
-  font-weight: 700 !important;
-  margin-top: 0.25rem;
-}
-
-.auth-form__switch {
-  text-align: center;
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-  margin: 0;
-}
-
-.auth-form__switch-btn {
-  background: none;
-  border: none;
-  color: var(--color-primary-600);
-  font-weight: 600;
-  cursor: pointer;
-  padding: 0;
-  font-size: inherit;
-}
-
-.auth-form__switch-btn:hover {
-  text-decoration: underline;
-}
-</style>

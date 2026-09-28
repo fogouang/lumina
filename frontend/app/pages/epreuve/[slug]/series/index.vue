@@ -1,138 +1,203 @@
 <template>
-  <div v-if="epreuve">
-    <!-- ── Hero ─────────────────────────────────────────────── -->
-    <section class="series-hero">
-      <div class="container series-hero__inner">
-        <NuxtLink :to="`/epreuve/${epreuve.slug}`" class="series-hero__back">
-          <i class="pi pi-arrow-left" /> Retour
-        </NuxtLink>
-        <h1 class="series-hero__title">
-          {{ seriesCount }} Séries d'Entraînement
-        </h1>
-        <p class="series-hero__sub">{{ epreuve.title }} TCF Canada</p>
-        <div class="series-hero__badges">
-          <span class="series-hero__badge">
-            <i class="pi pi-list" /> {{ epreuve.questions }}
-          </span>
-          <span class="series-hero__badge">
-            <i class="pi pi-clock" /> {{ epreuve.duration }}
-          </span>
+  <div class="space-y-6">
+    <!-- En-tête -->
+    <header
+      class="featured-panel relative overflow-hidden rounded-card p-6 text-white shadow-brand sm:p-8"
+    >
+      <div
+        class="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between"
+      >
+        <div class="min-w-0">
+          <NuxtLink
+            v-if="epreuve"
+            :to="`/epreuve/${epreuve.slug}`"
+            class="mb-3 inline-flex items-center gap-2 text-sm font-medium text-white/75 transition-colors hover:text-white"
+          >
+            <i class="pi pi-arrow-left text-xs" />
+            {{ epreuve.title }}
+          </NuxtLink>
+          <h1
+            class="font-heading text-2xl font-extrabold tracking-tight sm:text-3xl"
+          >
+            Séries d'entraînement
+          </h1>
         </div>
-      </div>
-    </section>
 
-    <div class="container series-body">
-      <!-- ── Filtres ──────────────────────────────────────────── -->
-      <div class="series-filters">
-        <button
-          v-for="f in filters"
-          :key="f.value"
-          class="series-filter"
-          :class="{ 'series-filter--active': activeFilter === f.value }"
-          @click="activeFilter = f.value"
-        >
-          {{ f.label }}
-        </button>
-      </div>
-
-      <!-- ── Loading ─────────────────────────────────────────── -->
-      <div v-if="!ready" class="series-loading">
-        <ProgressSpinner style="width: 40px; height: 40px" />
-      </div>
-
-      <!-- ── Grid séries ─────────────────────────────────────── -->
-      <div v-else class="series-grid">
-        <div
-          v-for="serie in filteredSeries"
-          :key="serie.id"
-          class="serie-card"
-          :class="{
-            'serie-card--accessible': seriesStore.isAccessible(serie.number),
-            'serie-card--locked': !seriesStore.isAccessible(serie.number),
-          }"
-        >
-          <!-- Icône état -->
-          <div class="serie-card__icon">
+        <dl class="grid grid-cols-3 gap-2 sm:gap-3 lg:min-w-md">
+          <div
+            class="rounded-xl border border-white/15 bg-white/10 px-3 py-3 backdrop-blur sm:px-4"
+          >
+            <dt class="sr-only">Nombre de séries</dt>
             <i
+              class="pi pi-th-large text-sm text-accent-400"
+              aria-hidden="true"
+            />
+            <dd class="mt-1.5 font-heading text-sm font-bold sm:text-base">
+              {{ ready ? `${seriesCount} séries` : "·" }}
+            </dd>
+          </div>
+          <div
+            class="rounded-xl border border-white/15 bg-white/10 px-3 py-3 backdrop-blur sm:px-4"
+          >
+            <dt class="sr-only">Contenu</dt>
+            <i class="pi pi-list text-sm text-accent-400" aria-hidden="true" />
+            <dd class="mt-1.5 font-heading text-sm font-bold sm:text-base">
+              {{ epreuve?.questions ?? "·" }}
+            </dd>
+          </div>
+          <div
+            class="rounded-xl border border-white/15 bg-white/10 px-3 py-3 backdrop-blur sm:px-4"
+          >
+            <dt class="sr-only">Durée</dt>
+            <i class="pi pi-clock text-sm text-accent-400" aria-hidden="true" />
+            <dd class="mt-1.5 font-heading text-sm font-bold sm:text-base">
+              {{ epreuve?.duration ?? "·" }}
+            </dd>
+          </div>
+        </dl>
+      </div>
+    </header>
+
+    <!-- Filtres -->
+    <div
+      role="tablist"
+      aria-label="Filtrer les séries"
+      class="inline-flex w-full rounded-xl border border-line bg-card p-1 shadow-soft sm:w-auto"
+    >
+      <button
+        v-for="f in filters"
+        :key="f.value"
+        type="button"
+        role="tab"
+        :aria-selected="activeFilter === f.value"
+        class="flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors sm:flex-none"
+        :class="
+          activeFilter === f.value
+            ? 'bg-primary text-primary-contrast shadow-sm'
+            : 'text-muted hover:bg-card-2 hover:text-ink'
+        "
+        @click="activeFilter = f.value"
+      >
+        {{ f.label }}
+        <span
+          v-if="ready"
+          class="rounded-md px-1.5 py-0.5 text-xs tabular-nums"
+          :class="
+            activeFilter === f.value ? 'bg-white/20' : 'bg-card-2 text-faint'
+          "
+        >
+          {{ countFor(f.value) }}
+        </span>
+      </button>
+    </div>
+
+    <!-- Chargement -->
+    <div
+      v-if="!ready"
+      class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4"
+    >
+      <div
+        v-for="n in 8"
+        :key="n"
+        class="h-19 animate-pulse rounded-card border border-line bg-card"
+      />
+    </div>
+
+    <!-- Liste -->
+    <div
+      v-else-if="filteredSeries.length"
+      class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4"
+    >
+      <button
+        v-for="serie in filteredSeries"
+        :key="serie.id"
+        type="button"
+        class="group flex items-center gap-4 rounded-card border border-line bg-card p-4 text-left shadow-soft transition-all duration-300 ease-spring hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lift focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        @click="onSerieClick(serie)"
+      >
+        <span
+          class="grid size-11 shrink-0 place-items-center rounded-leaf font-heading text-sm font-bold tabular-nums"
+          :class="
+            seriesStore.isAccessible(serie.number)
+              ? 'bg-primary/10 text-primary'
+              : 'bg-accent-100 text-accent-800 dark:bg-accent-500/15 dark:text-accent-300'
+          "
+        >
+          {{ serie.number }}
+        </span>
+
+        <span class="min-w-0 flex-1">
+          <span class="block font-heading text-sm font-bold text-ink"
+            >Série {{ serie.number }}</span
+          >
+          <span
+            class="mt-1 inline-flex items-center gap-1.5 text-xs font-medium"
+            :class="
+              seriesStore.isAccessible(serie.number)
+                ? 'text-emerald-600 dark:text-emerald-400'
+                : 'text-faint'
+            "
+          >
+            <i
+              class="pi text-[0.65rem]"
               :class="
                 seriesStore.isAccessible(serie.number)
-                  ? 'pi pi-book'
-                  : 'pi pi-lock'
+                  ? 'pi-check-circle'
+                  : 'pi-lock'
               "
             />
-          </div>
+            {{
+              seriesStore.isAccessible(serie.number) ? "Disponible" : "Premium"
+            }}
+          </span>
+        </span>
 
-          <!-- Infos -->
-          <div class="serie-card__body">
-            <span class="serie-card__title"> Série {{ serie.number }} </span>
-            <span class="serie-card__sub">
-              {{
-                seriesStore.isAccessible(serie.number)
-                  ? epreuve.questions
-                  : "Accès premium"
-              }}
-            </span>
-          </div>
-
-          <!-- CTA -->
-          <div class="serie-card__cta">
-            <Button
-              v-if="seriesStore.isAccessible(serie.number)"
-              label="Commencer"
-              size="small"
-              class="serie-card__btn bg-gradient-primary"
-              @click.stop="onSerieClick(serie)"
-            />
-            <Button
-              v-else
-              label="Débloquer"
-              size="small"
-              outlined
-              icon="pi pi-lock"
-              class="serie-card__btn--locked"
-              @click.stop="router.push('/tarifs')"
-            />
-          </div>
-        </div>
-      </div>
-
-      <!-- ── Banner upgrade ───────────────────────────────────── -->
-      <div v-if="!subStore.hasActiveSubscription" class="series-upgrade">
-        <i class="pi pi-lock series-upgrade__icon" />
-        <div class="series-upgrade__text">
-          <h3>Débloquez toutes les séries</h3>
-          <p>
-            Les séries 100, 148 et 149 sont gratuites. Passez à un forfait pour
-            accéder aux {{ seriesCount - 3 }} séries restantes.
-          </p>
-        </div>
-        <NuxtLink to="/tarifs">
-          <Button
-            label="Voir les forfaits"
-            icon="pi pi-arrow-right"
-            icon-pos="right"
-            class="series-upgrade__btn bg-gradient-primary"
-          />
-        </NuxtLink>
-      </div>
+        <i
+          class="pi shrink-0 text-sm text-faint transition-all duration-300 group-hover:translate-x-0.5 group-hover:text-primary"
+          :class="
+            seriesStore.isAccessible(serie.number)
+              ? 'pi-arrow-right'
+              : 'pi-lock'
+          "
+        />
+      </button>
     </div>
-  </div>
 
-  <!-- Slug invalide -->
-  <div
-    v-else
-    class="container"
-    style="padding: 5rem 1.5rem; text-align: center"
-  >
-    <h2>Épreuve introuvable.</h2>
-    <NuxtLink to="/"
-      ><Button label="Retour à l'accueil" icon="pi pi-home"
-    /></NuxtLink>
+    <!-- Vide -->
+    <div
+      v-else
+      class="flex flex-col items-center rounded-card border border-dashed border-line bg-card px-6 py-14 text-center"
+    >
+      <i class="pi pi-inbox mb-3 text-2xl text-faint" />
+      <p class="text-sm font-medium text-muted">Aucune série dans ce filtre.</p>
+    </div>
+
+    <!-- Bandeau Premium : uniquement s'il reste des séries verrouillées -->
+    <div
+      v-if="ready && !subStore.hasActiveSubscription && lockedCount > 0"
+      class="flex flex-col gap-4 rounded-card border border-line bg-card p-5 shadow-soft sm:flex-row sm:items-center sm:justify-between"
+    >
+      <div class="flex items-center gap-4">
+        <span
+          class="grid size-11 shrink-0 place-items-center rounded-leaf bg-accent-100 text-accent-800 dark:bg-accent-500/15 dark:text-accent-300"
+        >
+          <i class="pi pi-lock" />
+        </span>
+        <p class="font-heading text-sm font-bold text-ink">
+          {{ lockedCount }}
+          {{ lockedCount > 1 ? "séries Premium" : "série Premium" }}
+        </p>
+      </div>
+      <AppCta to="/tarifs" label="Voir les tarifs" variant="gradient" />
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import type { SeriesListResponse } from "#shared/api/models/SeriesListResponse";
+import { site } from "~/config/site";
+
+definePageMeta({ layout: "account" });
 
 const route = useRoute();
 const seriesStore = useSeriesStore();
@@ -181,7 +246,6 @@ const epreuve = computed(
 );
 
 // ── Fetch ────────────────────────────────────────────────────
-
 onMounted(async () => {
   await Promise.all([seriesStore.fetchSeries(), seriesStore.fetchMyAccess()]);
   ready.value = true;
@@ -211,7 +275,21 @@ const filteredSeries = computed(() => {
   }
 });
 
+// ── Compteurs (affichage) ────────────────────────────────────
 const seriesCount = computed(() => seriesStore.series.length);
+
+const accessibleCount = computed(
+  () =>
+    seriesStore.series.filter((s) => seriesStore.isAccessible(s.number)).length,
+);
+
+const lockedCount = computed(() => seriesCount.value - accessibleCount.value);
+
+function countFor(value: "all" | "accessible" | "locked") {
+  if (value === "accessible") return accessibleCount.value;
+  if (value === "locked") return lockedCount.value;
+  return seriesCount.value;
+}
 
 // ── Clic série ───────────────────────────────────────────────
 const router = useRouter();
@@ -231,283 +309,7 @@ function onSerieClick(serie: SeriesListResponse) {
 
 useHead({
   title: epreuve.value
-    ? `Séries ${epreuve.value.title} | Lumina TCF`
-    : "Séries | Lumina TCF",
+    ? `Séries ${epreuve.value.title} | ${site.name}`
+    : `Séries | ${site.name}`,
 });
 </script>
-
-<style scoped>
-/* ── Hero ──────────────────────────────────────────────────── */
-.series-hero {
-  position: relative;
-  background: var(--gradient-primary);
-  padding: 3rem 0 5rem;
-  text-align: center;
-}
-
-.series-hero__inner {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.series-hero__back {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.8);
-  text-decoration: none;
-  margin-bottom: 0.5rem;
-  transition: color 0.2s;
-}
-
-.series-hero__back:hover {
-  color: #ffffff;
-}
-
-.series-hero__title {
-  font-size: clamp(1.75rem, 4vw, 2.5rem);
-  font-weight: 800;
-  color: #ffffff;
-  margin: 0;
-}
-
-.series-hero__sub {
-  font-size: 1rem;
-  color: rgba(255, 255, 255, 0.8);
-  margin: 0;
-}
-
-.series-hero__badges {
-  display: flex;
-  gap: 0.75rem;
-  margin-top: 0.25rem;
-}
-
-.series-hero__badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  background: rgba(255, 255, 255, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  color: #ffffff;
-  padding: 0.375rem 0.875rem;
-  border-radius: 9999px;
-  font-size: 0.875rem;
-  font-weight: 500;
-}
-
-.series-hero__wave {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  line-height: 0;
-}
-
-.series-hero__wave svg {
-  width: 100%;
-  display: block;
-}
-
-/* ── Body ──────────────────────────────────────────────────── */
-.series-body {
-  padding-top: 2rem;
-  padding-bottom: 4rem;
-}
-
-/* ── Filtres ───────────────────────────────────────────────── */
-.series-filters {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 1.75rem;
-  flex-wrap: wrap;
-}
-
-.series-filter {
-  padding: 0.5rem 1.25rem;
-  border-radius: 9999px;
-  border: 1px solid var(--border-color);
-  background: var(--bg-card);
-  color: var(--text-secondary);
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.series-filter:hover {
-  border-color: var(--color-primary-400);
-  color: var(--color-primary-600);
-}
-
-.series-filter--active {
-  background: var(--gradient-primary);
-  border-color: transparent;
-  color: #ffffff;
-  font-weight: 600;
-}
-
-/* ── Loading ───────────────────────────────────────────────── */
-.series-loading {
-  display: flex;
-  justify-content: center;
-  padding: 4rem 0;
-}
-
-/* ── Grid ──────────────────────────────────────────────────── */
-.series-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0.875rem;
-  margin-bottom: 2rem;
-}
-
-/* ── Card ──────────────────────────────────────────────────── */
-.serie-card {
-  display: flex;
-  align-items: center;
-  gap: 0.875rem;
-  padding: 1rem 1.125rem;
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 0.875rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.serie-card--accessible:hover {
-  border-color: var(--color-primary-300);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.07);
-}
-
-.serie-card--locked {
-  opacity: 0.65;
-  cursor: default;
-}
-
-.serie-card__icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 0.625rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.serie-card--accessible .serie-card__icon {
-  background: var(--color-primary-50);
-}
-
-.serie-card--accessible .serie-card__icon i {
-  color: var(--color-primary-600);
-  font-size: 1rem;
-}
-
-.serie-card--locked .serie-card__icon {
-  background: var(--bg-ground);
-}
-
-.serie-card--locked .serie-card__icon i {
-  color: var(--text-tertiary);
-  font-size: 1rem;
-}
-
-.serie-card__body {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.125rem;
-}
-
-.serie-card__title {
-  font-size: 0.9rem;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-.serie-card__sub {
-  font-size: 0.8125rem;
-  color: var(--text-tertiary);
-}
-
-.serie-card__btn {
-  border: none !important;
-  border-radius: 0.5rem !important;
-  font-size: 0.8125rem !important;
-  font-weight: 600 !important;
-  white-space: nowrap;
-}
-
-.serie-card__btn--locked {
-  border-radius: 0.5rem !important;
-  font-size: 0.8125rem !important;
-  font-weight: 600 !important;
-  white-space: nowrap;
-  border-color: var(--border-color) !important;
-  color: var(--text-secondary) !important;
-}
-
-/* ── Upgrade banner ────────────────────────────────────────── */
-.series-upgrade {
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-  padding: 1.5rem;
-  background: #0f172a;
-  border-radius: 1rem;
-}
-
-.series-upgrade__icon {
-  font-size: 1.5rem;
-  color: var(--color-primary-400);
-  flex-shrink: 0;
-}
-
-.series-upgrade__text {
-  flex: 1;
-}
-
-.series-upgrade__text h3 {
-  font-size: 1rem;
-  font-weight: 700;
-  color: #ffffff;
-  margin: 0 0 0.25rem;
-}
-
-.series-upgrade__text p {
-  font-size: 0.875rem;
-  color: rgba(255, 255, 255, 0.65);
-  margin: 0;
-  line-height: 1.5;
-}
-
-.series-upgrade__btn {
-  border: none !important;
-  border-radius: 0.75rem !important;
-  font-weight: 700 !important;
-  white-space: nowrap;
-}
-
-/* ── Responsive ────────────────────────────────────────────── */
-@media (max-width: 1024px) {
-  .series-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 640px) {
-  .series-grid {
-    grid-template-columns: 1fr;
-  }
-  .series-upgrade {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-}
-</style>

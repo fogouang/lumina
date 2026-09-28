@@ -1,53 +1,45 @@
 <template>
-  <div class="min-h-screen bg-(--bg-ground)">
-    <!-- Loading -->
+  <div class="min-h-screen bg-canvas">
+    <!-- Chargement -->
     <div
       v-if="loading"
-      class="flex flex-col items-center justify-center min-h-screen gap-4 text-(--text-secondary)"
+      class="flex min-h-screen flex-col items-center justify-center gap-4"
     >
-      <ProgressSpinner style="width: 48px; height: 48px" />
-      <p class="text-sm">Chargement des sujets…</p>
+      <span class="grid size-14 place-items-center rounded-leaf brand-gradient text-white shadow-brand">
+        <i class="pi pi-spin pi-spinner text-xl" />
+      </span>
+      <p class="text-sm font-medium text-muted">Chargement des sujets…</p>
     </div>
 
     <template v-else-if="session && combo">
-      <!-- Header sticky -->
-      <header
-        class="sticky top-0 z-50 bg-(--bg-card) border-b border-(--border-color)"
-      >
-        <div class="flex items-center justify-between gap-3 px-5 h-14">
+      <!-- En-tête sticky -->
+      <header class="sticky top-0 z-50 border-b border-line bg-card/90 backdrop-blur-md">
+        <div class="flex h-14 items-center justify-between gap-3 px-4 sm:px-5">
           <!-- Gauche -->
-          <div class="flex items-center gap-3 min-w-0">
+          <div class="flex min-w-0 items-center gap-3">
             <NuxtLink
               :to="`/simulateur/expression-ecrite/${sessionId}`"
-              class="w-8 h-8 flex items-center justify-center rounded-lg text-(--text-tertiary) hover:bg-(--bg-hover) hover:text-primary-700 transition-colors shrink-0"
+              aria-label="Retour aux sujets"
+              class="grid size-9 shrink-0 place-items-center rounded-xl text-muted transition-colors hover:bg-card-2 hover:text-primary"
             >
               <i class="pi pi-arrow-left text-sm" />
             </NuxtLink>
             <div class="min-w-0">
-              <p
-                class="text-sm font-bold text-(--text-primary) truncate leading-tight"
-              >
-                {{ session.name }}
-              </p>
-              <p class="text-xs text-(--text-tertiary) truncate">
-                {{ combo.title }}
-              </p>
+              <p class="truncate text-sm font-bold leading-tight text-ink">{{ session.name }}</p>
+              <p class="truncate text-xs text-muted">{{ combo.title }}</p>
             </div>
           </div>
 
-          <!-- Centre : timer -->
-          <div
-            v-if="simulating && !combinedCorrection"
-            class="flex-1 flex justify-center"
-          >
+          <!-- Centre : chrono -->
+          <div v-if="simulating && !combinedCorrection" class="flex flex-1 justify-center">
             <div
-              class="flex items-center gap-1.5 text-sm font-mono font-bold px-3 py-1 rounded-full border-1.5"
+              class="flex items-center gap-1.5 rounded-full border px-3 py-1 font-mono text-sm font-bold tabular-nums"
               :class="{
-                'text-green-600 border-green-200 bg-green-50':
+                'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300':
                   timeLeft > 20 * 60,
-                'text-amber-600 border-amber-200 bg-amber-50':
+                'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300':
                   timeLeft <= 20 * 60 && timeLeft > 10 * 60,
-                'text-red-600 border-red-200 bg-red-50 animate-pulse':
+                'animate-pulse border-red-200 bg-red-50 text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300':
                   timeLeft <= 10 * 60,
               }"
             >
@@ -58,64 +50,62 @@
           <div v-else class="flex-1" />
 
           <!-- Crédits -->
-          <div
-            class="flex items-center gap-1.5 text-sm font-semibold px-3 py-1 rounded-full border"
+          <span
+            class="inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1 text-sm font-bold"
             :class="
               sub.aiCreditsRemaining > 0
-                ? 'text-purple-600 border-purple-200 bg-purple-50'
-                : 'text-amber-600 border-amber-200 bg-amber-50'
+                ? 'bg-accent-100 text-accent-800 dark:bg-accent-500/15 dark:text-accent-300'
+                : 'bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-300'
             "
           >
-            <i class="pi pi-sparkles text-xs" />
-            <span
-              >{{ sub.aiCreditsRemaining }} crédit{{
-                sub.aiCreditsRemaining > 1 ? "s" : ""
-              }}</span
-            >
-          </div>
+            <i class="pi pi-bolt text-xs" />
+            {{ sub.aiCreditsRemaining }} crédit{{ sub.aiCreditsRemaining > 1 ? "s" : "" }}
+          </span>
         </div>
       </header>
 
-      <!-- MODE LECTURE -->
+      <!-- ── MODE LECTURE ───────────────────────────────────── -->
       <template v-if="!simulating">
-        <div class="max-w-3xl mx-auto px-4 py-8 flex flex-col gap-6">
+        <div class="mx-auto flex max-w-3xl flex-col gap-5 px-4 py-8">
           <!-- Bannière -->
           <div
-            class="bg-(--bg-card) border border-(--border-color) rounded-2xl p-6 flex flex-col md:flex-row items-start md:items-center gap-4"
+            class="flex flex-col items-start gap-4 rounded-card border border-line bg-card p-5 shadow-soft sm:p-6 md:flex-row md:items-center"
           >
+            <span
+              class="grid size-12 shrink-0 place-items-center rounded-leaf"
+              :class="
+                sub.aiCreditsRemaining > 0
+                  ? 'brand-gradient text-white shadow-brand'
+                  : 'bg-card-2 text-muted'
+              "
+            >
+              <i :class="sub.aiCreditsRemaining > 0 ? 'pi pi-play' : 'pi pi-book'" />
+            </span>
             <div class="flex-1">
-              <h2 class="text-base font-bold text-(--text-primary) mb-1">
-                {{
-                  sub.aiCreditsRemaining > 0
-                    ? "Prêt à simuler ?"
-                    : "Mode lecture"
-                }}
+              <h2 class="mb-1 font-heading text-base font-bold text-ink">
+                {{ sub.aiCreditsRemaining > 0 ? "Prêt à simuler ?" : "Mode lecture" }}
               </h2>
-              <p class="text-sm text-(--text-secondary) leading-relaxed">
+              <p class="text-sm leading-relaxed text-muted">
                 <span v-if="sub.aiCreditsRemaining > 0">
-                  Lisez les 3 sujets puis cliquez sur
-                  <strong>Démarrer</strong> pour lancer le chrono.
-                  <strong>1 crédit IA</strong> sera utilisé à la soumission.
+                  Lisez les 3 sujets puis cliquez sur <strong class="text-ink">Démarrer</strong>
+                  pour lancer le chrono. <strong class="text-ink">1 crédit IA</strong> sera utilisé à la soumission.
                 </span>
-                <span v-else
-                  >Vous pouvez lire les sujets mais pas obtenir de correction
-                  IA.</span
-                >
+                <span v-else>Vous pouvez lire les sujets mais pas obtenir de correction IA.</span>
               </p>
             </div>
             <div class="shrink-0">
-              <Button
+              <AppButton
                 v-if="sub.aiCreditsRemaining > 0"
                 label="Démarrer le simulateur"
                 icon="pi pi-play"
-                class="bg-gradient-primary border-none font-bold"
+                variant="gradient"
                 @click="startSimulation"
               />
-              <Button
+              <AppButton
                 v-else
                 label="Acheter des crédits"
-                icon="pi pi-sparkles"
-                severity="warning"
+                icon="pi pi-bolt"
+                variant="accent"
                 @click="buyCreditsVisible = true"
               />
             </div>
@@ -132,6 +122,7 @@
             description="Rédigez un message, un courriel ou une annonce adressé à un ou plusieurs destinataires."
             :correction="combo.task1_correction"
           />
+
           <!-- Tâche 2 -->
           <TaskReadCard
             number="2"
@@ -145,283 +136,204 @@
           />
 
           <!-- Tâche 3 -->
-          <div
-            class="bg-(--bg-card) border border-(--border-color) rounded-2xl overflow-hidden"
-          >
-            <div
-              class="px-5 py-4 border-b border-(--border-color) flex items-center justify-between"
-            >
+          <section class="overflow-hidden rounded-card border border-line bg-card shadow-soft">
+            <div class="flex items-center justify-between gap-3 border-b border-line bg-card-2/50 px-5 py-4">
               <div class="flex items-center gap-3">
-                <div
-                  class="w-8 h-8 rounded-full bg-gradient-primary flex items-center justify-center text-white font-bold text-sm shrink-0"
-                >
+                <span class="grid size-9 shrink-0 place-items-center rounded-leaf brand-gradient text-sm font-bold text-white shadow-brand">
                   3
-                </div>
+                </span>
                 <div>
-                  <p class="text-sm font-bold text-(--text-primary)">
-                    Tâche 3 - Argumentation
-                  </p>
-                  <p class="text-xs text-(--text-tertiary)">
-                    {{ combo.task3_word_min }}–{{ combo.task3_word_max }} mots
-                    recommandés
+                  <p class="text-sm font-bold text-ink">Tâche 3 - Argumentation</p>
+                  <p class="text-xs text-muted">
+                    {{ combo.task3_word_min }}–{{ combo.task3_word_max }} mots recommandés
                   </p>
                 </div>
               </div>
-              <Tag
-                :value="`${combo.task3_word_min}–${combo.task3_word_max} mots`"
-                severity="warning"
-              />
+              <span class="shrink-0 rounded-full bg-accent-100 px-2.5 py-1 text-xs font-bold tabular-nums text-accent-800 dark:bg-accent-500/15 dark:text-accent-300">
+                {{ combo.task3_word_min }}–{{ combo.task3_word_max }} mots
+              </span>
             </div>
-            <div class="px-5 py-4 flex flex-col gap-3">
-              <p class="text-xs text-(--text-tertiary) italic">
-                Rédigez un article argumentatif comparant deux points de vue
-                opposés.
+
+            <div class="flex flex-col gap-3 px-5 py-4">
+              <p class="text-xs italic text-muted">
+                Rédigez un article argumentatif comparant deux points de vue opposés.
               </p>
-              <h3 class="text-base font-bold text-(--text-primary)">
-                {{ combo.task3_title }}
-              </h3>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div class="bg-amber-50 border border-amber-200 rounded-xl p-4">
-                  <p
-                    class="text-xs font-bold text-amber-700 uppercase tracking-wide mb-2"
-                  >
-                    Document 1
-                  </p>
-                  <p class="text-sm text-(--text-primary) leading-relaxed">
-                    {{ combo.task3_document_1 }}
-                  </p>
+              <h3 class="font-heading text-base font-bold text-ink">{{ combo.task3_title }}</h3>
+              <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
+                <div class="rounded-2xl border border-accent-200 bg-accent-50 p-4 dark:border-accent-500/25 dark:bg-accent-500/10">
+                  <p class="mb-2 text-xs font-bold uppercase tracking-wider text-accent-800 dark:text-accent-300">Document 1</p>
+                  <p class="text-sm leading-relaxed text-ink">{{ combo.task3_document_1 }}</p>
                 </div>
-                <div class="bg-blue-50 border border-blue-200 rounded-xl p-4">
-                  <p
-                    class="text-xs font-bold text-blue-700 uppercase tracking-wide mb-2"
-                  >
-                    Document 2
-                  </p>
-                  <p class="text-sm text-(--text-primary) leading-relaxed">
-                    {{ combo.task3_document_2 }}
-                  </p>
-                </div>
-              </div>
-              <!-- après le grid Document 1 / Document 2 -->
-              <div
-                v-if="combo.task3_correction"
-                class="border-t border-(--border-color) -mx-5 mt-3"
-              >
-                <button
-                  class="w-full flex items-center justify-between px-5 py-3 text-left hover:bg-(--bg-hover) transition-colors"
-                  @click="showTask3Correction = !showTask3Correction"
-                >
-                  <span
-                    class="flex items-center gap-2 text-sm font-semibold text-primary-600"
-                  >
-                    <i class="pi pi-eye text-xs" />
-                    Voir la proposition de correction
-                  </span>
-                  <i
-                    class="pi text-xs text-(--text-tertiary) transition-transform duration-200"
-                    :class="
-                      showTask3Correction ? 'pi-chevron-up' : 'pi-chevron-down'
-                    "
-                  />
-                </button>
-                <div v-if="showTask3Correction" class="px-5 pb-4">
-                  <p
-                    class="text-sm text-(--text-primary) leading-relaxed whitespace-pre-wrap bg-primary-50 border border-primary-100 rounded-xl p-4"
-                  >
-                    {{ combo.task3_correction }}
-                  </p>
+                <div class="rounded-2xl border border-primary/20 bg-primary/5 p-4">
+                  <p class="mb-2 text-xs font-bold uppercase tracking-wider text-primary">Document 2</p>
+                  <p class="text-sm leading-relaxed text-ink">{{ combo.task3_document_2 }}</p>
                 </div>
               </div>
             </div>
-          </div>
+
+            <!-- Proposition de correction -->
+            <div v-if="combo.task3_correction" class="border-t border-line">
+              <button
+                type="button"
+                class="flex w-full items-center justify-between px-5 py-3 text-left transition-colors hover:bg-card-2/60"
+                :aria-expanded="showTask3Correction"
+                @click="showTask3Correction = !showTask3Correction"
+              >
+                <span class="flex items-center gap-2 text-sm font-semibold text-primary">
+                  <i class="pi pi-eye text-xs" />
+                  Voir la proposition de correction
+                </span>
+                <i
+                  class="pi pi-chevron-down text-xs text-faint transition-transform duration-200"
+                  :class="showTask3Correction ? 'rotate-180' : ''"
+                />
+              </button>
+              <div v-if="showTask3Correction" class="px-5 pb-4">
+                <p class="whitespace-pre-wrap rounded-2xl border border-primary/15 bg-primary/5 p-4 text-sm leading-relaxed text-ink">
+                  {{ combo.task3_correction }}
+                </p>
+              </div>
+            </div>
+          </section>
 
           <!-- CTA bas -->
-          <div class="flex justify-center pt-2 pb-8">
-            <Button
+          <div class="flex justify-center pb-8 pt-2">
+            <AppButton
               v-if="sub.aiCreditsRemaining > 0"
               label="Démarrer le simulateur"
               icon="pi pi-play"
+              variant="gradient"
               size="large"
-              class="bg-gradient-primary border-none font-bold px-8"
               @click="startSimulation"
             />
-            <Button
+            <AppButton
               v-else
               label="Acheter des crédits"
-              icon="pi pi-sparkles"
-              severity="warning"
+              icon="pi pi-bolt"
+              variant="accent"
               @click="buyCreditsVisible = true"
             />
           </div>
         </div>
       </template>
 
-      <!-- MODE SIMULATION -->
+      <!-- ── MODE SIMULATION ────────────────────────────────── -->
       <template v-else>
-        <div class="flex min-h-[calc(100vh-56px)]">
+        <div class="flex min-h-[calc(100vh-3.5rem)]">
           <!-- Sidebar gauche -->
           <aside
-            class="hidden lg:flex flex-col w-56 bg-(--bg-card) border-r border-(--border-color) sticky top-14 h-[calc(100vh-56px)] overflow-y-auto shrink-0"
+            class="sticky top-14 hidden h-[calc(100vh-3.5rem)] w-60 shrink-0 flex-col overflow-y-auto border-r border-line bg-card lg:flex"
           >
-            <p
-              class="text-[10px] font-bold uppercase tracking-widest text-(--text-tertiary) px-4 pt-4 pb-2"
-            >
-              Navigation
-            </p>
-            <button
-              v-for="(t, i) in tasks"
-              :key="t.key"
-              class="flex items-center gap-2.5 px-3 py-2.5 mx-2 rounded-xl border text-left transition-all"
-              :class="
-                activeTask === i
-                  ? 'bg-primary-50 border-primary-200'
-                  : 'border-transparent hover:bg-(--bg-hover)'
-              "
-              @click="activeTask = i"
-            >
-              <div
-                class="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
+            <p class="px-4 pb-2 pt-4 text-[0.65rem] font-bold uppercase tracking-widest text-faint">Navigation</p>
+            <div class="flex flex-col gap-1 px-2">
+              <button
+                v-for="(t, i) in tasks"
+                :key="t.key"
+                type="button"
+                class="flex items-center gap-2.5 rounded-xl border px-3 py-2.5 text-left transition-all"
                 :class="
-                  isTaskDone(t.key) ? 'bg-green-500' : 'bg-gradient-primary'
+                  activeTask === i
+                    ? 'border-primary/30 bg-primary/5'
+                    : 'border-transparent hover:bg-card-2'
                 "
+                @click="activeTask = i"
               >
-                <i v-if="isTaskDone(t.key)" class="pi pi-check text-[10px]" />
-                <span v-else>{{ i + 1 }}</span>
-              </div>
-              <div class="min-w-0">
-                <p class="text-xs font-semibold text-(--text-primary) truncate">
-                  {{ t.shortLabel }}
-                </p>
-                <p class="text-[10px] text-(--text-tertiary) font-mono">
-                  {{ wordCount(answers[t.key]) }}/{{ t.max }}
-                </p>
-              </div>
-            </button>
+                <span
+                  class="grid size-8 shrink-0 place-items-center rounded-full text-xs font-bold text-white"
+                  :class="
+                    isTaskDone(t.key)
+                      ? 'bg-linear-to-b from-emerald-400 to-emerald-600 shadow-[inset_0_-2px_0_rgb(0_0_0/0.2)]'
+                      : 'brand-gradient shadow-[inset_0_-2px_0_rgb(0_0_0/0.2)]'
+                  "
+                >
+                  <i v-if="isTaskDone(t.key)" class="pi pi-check text-[0.65rem]" />
+                  <span v-else>{{ i + 1 }}</span>
+                </span>
+                <div class="min-w-0">
+                  <p class="truncate text-xs font-semibold text-ink">{{ t.shortLabel }}</p>
+                  <p class="font-mono text-[0.65rem] tabular-nums text-faint">
+                    {{ wordCount(answers[t.key]) }}/{{ t.max }}
+                  </p>
+                </div>
+              </button>
+            </div>
 
-            <div
-              v-if="!combinedCorrection"
-              class="mt-auto p-3 border-t border-(--border-color)"
-            >
-              <Button
+            <div v-if="!combinedCorrection" class="mt-auto border-t border-line p-3">
+              <AppButton
                 label="Soumettre"
-                icon="pi pi-sparkles"
+                icon="pi pi-bolt"
                 icon-pos="right"
+                variant="gradient"
+                block
                 :loading="submitting"
                 :disabled="!allAnswered || sub.aiCreditsRemaining === 0"
-                class="bg-gradient-primary border-none font-bold w-full text-sm"
                 @click="submitAll"
               />
-              <p
-                class="text-[10px] text-(--text-tertiary) text-center mt-1.5 leading-snug"
-              >
+              <p class="mt-1.5 text-center text-[0.65rem] leading-snug text-faint">
                 <span v-if="!allAnswered">Complétez les 3 tâches</span>
-                <span v-else>Prêt · <strong>1 crédit IA</strong></span>
+                <span v-else>Prêt · <strong class="text-ink">1 crédit IA</strong></span>
               </p>
             </div>
           </aside>
 
           <!-- Zone centrale -->
-          <main class="flex-1 min-w-0 px-4 lg:px-6 py-5 flex flex-col gap-4">
+          <main class="flex min-w-0 flex-1 flex-col gap-4 px-4 py-5 lg:px-6">
+            <!-- Plus de crédits -->
             <div
               v-if="sub.aiCreditsRemaining === 0 && !combinedCorrection"
-              class="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl p-4"
+              class="flex flex-col gap-3 rounded-2xl border border-accent-200 bg-accent-50 p-4 sm:flex-row sm:items-center dark:border-accent-500/25 dark:bg-accent-500/10"
             >
-              <i
-                class="pi pi-exclamation-triangle text-amber-500 shrink-0 mt-0.5"
-              />
-              <div class="flex-1">
-                <p class="font-bold text-amber-800 text-sm mb-0.5">
-                  Plus de crédits IA
-                </p>
-                <p class="text-sm text-amber-700">
-                  Vous pouvez continuer à rédiger mais la soumission nécessite
-                  au moins 1 crédit.
+              <i class="pi pi-exclamation-triangle shrink-0 text-accent-700 dark:text-accent-300" />
+              <div class="flex-1 text-sm">
+                <p class="font-bold text-ink">Plus de crédits IA</p>
+                <p class="text-muted">
+                  Vous pouvez continuer à rédiger mais la soumission nécessite au moins 1 crédit.
                 </p>
               </div>
-              <Button
+              <AppButton
                 label="Acheter"
                 icon="pi pi-plus"
-                severity="warning"
+                variant="accent"
                 size="small"
+                class="shrink-0"
                 @click="buyCreditsVisible = true"
               />
             </div>
 
             <!-- Tâche active -->
             <template v-if="!combinedCorrection">
-              <div
-                class="bg-(--bg-card) border border-(--border-color) rounded-2xl overflow-hidden"
-              >
-                <div
-                  class="flex items-center gap-3 px-5 py-3.5 border-b border-(--border-color) bg-(--bg-ground)"
-                >
-                  <div
-                    class="w-8 h-8 rounded-full bg-gradient-primary flex items-center justify-center text-white font-bold text-sm shrink-0"
-                  >
+              <section class="overflow-hidden rounded-card border border-line bg-card shadow-soft">
+                <div class="flex items-center gap-3 border-b border-line bg-card-2/50 px-5 py-3.5">
+                  <span class="grid size-9 shrink-0 place-items-center rounded-leaf brand-gradient text-sm font-bold text-white shadow-brand">
                     {{ activeTask + 1 }}
+                  </span>
+                  <div class="min-w-0 flex-1">
+                    <p class="text-sm font-bold text-ink">{{ currentTask.label }}</p>
+                    <p class="text-xs text-muted">{{ currentTask.min }}–{{ currentTask.max }} mots recommandés</p>
                   </div>
-                  <div class="flex-1 min-w-0">
-                    <p class="text-sm font-bold text-(--text-primary)">
-                      {{ currentTask.label }}
-                    </p>
-                    <p class="text-xs text-(--text-tertiary)">
-                      {{ currentTask.min }}–{{ currentTask.max }} mots
-                      recommandés
-                    </p>
-                  </div>
-                  <Tag
-                    :value="currentTask.typeLabel"
-                    severity="warning"
-                    class="shrink-0"
-                  />
+                  <span class="shrink-0 rounded-full bg-accent-100 px-2.5 py-1 text-xs font-bold text-accent-800 dark:bg-accent-500/15 dark:text-accent-300">
+                    {{ currentTask.typeLabel }}
+                  </span>
                 </div>
 
                 <!-- Consigne -->
-                <div class="px-5 py-4 border-b border-(--border-color)">
-                  <p
-                    v-if="activeTask === 0"
-                    class="text-sm text-(--text-primary) leading-relaxed"
-                  >
+                <div class="border-b border-line px-5 py-4">
+                  <p v-if="activeTask === 0" class="text-sm leading-relaxed text-ink">
                     {{ combo.task1_instruction }}
                   </p>
-                  <p
-                    v-else-if="activeTask === 1"
-                    class="text-sm text-(--text-primary) leading-relaxed"
-                  >
+                  <p v-else-if="activeTask === 1" class="text-sm leading-relaxed text-ink">
                     {{ combo.task2_instruction }}
                   </p>
                   <template v-else>
-                    <h3 class="text-base font-bold text-(--text-primary) mb-3">
-                      {{ combo.task3_title }}
-                    </h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <div
-                        class="bg-amber-50 border border-amber-200 rounded-xl p-3.5"
-                      >
-                        <p
-                          class="text-[10px] font-bold text-amber-700 uppercase tracking-wide mb-1.5"
-                        >
-                          Document 1
-                        </p>
-                        <p
-                          class="text-sm text-(--text-primary) leading-relaxed"
-                        >
-                          {{ combo.task3_document_1 }}
-                        </p>
+                    <h3 class="mb-3 font-heading text-base font-bold text-ink">{{ combo.task3_title }}</h3>
+                    <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
+                      <div class="rounded-2xl border border-accent-200 bg-accent-50 p-3.5 dark:border-accent-500/25 dark:bg-accent-500/10">
+                        <p class="mb-1.5 text-[0.65rem] font-bold uppercase tracking-wider text-accent-800 dark:text-accent-300">Document 1</p>
+                        <p class="text-sm leading-relaxed text-ink">{{ combo.task3_document_1 }}</p>
                       </div>
-                      <div
-                        class="bg-blue-50 border border-blue-200 rounded-xl p-3.5"
-                      >
-                        <p
-                          class="text-[10px] font-bold text-blue-700 uppercase tracking-wide mb-1.5"
-                        >
-                          Document 2
-                        </p>
-                        <p
-                          class="text-sm text-(--text-primary) leading-relaxed"
-                        >
-                          {{ combo.task3_document_2 }}
-                        </p>
+                      <div class="rounded-2xl border border-primary/20 bg-primary/5 p-3.5">
+                        <p class="mb-1.5 text-[0.65rem] font-bold uppercase tracking-wider text-primary">Document 2</p>
+                        <p class="text-sm leading-relaxed text-ink">{{ combo.task3_document_2 }}</p>
                       </div>
                     </div>
                   </template>
@@ -431,387 +343,295 @@
                   v-model="answers[currentTask.key]"
                   :rows="11"
                   fluid
+                  :aria-label="`Votre réponse, ${currentTask.label}`"
                   :placeholder="`Rédigez votre ${currentTask.typeLabel.toLowerCase()} ici…`"
-                  class="text-sm leading-relaxed rounded-none border-x-0 border-b-0"
+                  class="rounded-none border-x-0 border-b-0 text-[0.9375rem] leading-relaxed"
                   :disabled="!!combinedCorrection"
                 />
 
-                <div
-                  class="flex items-center justify-between px-5 py-2.5 border-t border-(--border-color) bg-(--bg-ground)"
-                >
+                <div class="flex items-center justify-between gap-3 border-t border-line bg-card-2/50 px-5 py-2.5">
                   <span
-                    class="text-xs font-mono font-semibold"
-                    :class="
-                      wordCountClass(
-                        wordCount(answers[currentTask.key]),
-                        currentTask.min,
-                        currentTask.max,
-                      )
-                    "
+                    class="font-mono text-xs font-semibold tabular-nums"
+                    :class="wordCountClass(wordCount(answers[currentTask.key]), currentTask.min, currentTask.max)"
                   >
-                    {{ wordCount(answers[currentTask.key]) }} /
-                    {{ currentTask.max }} mots
+                    {{ wordCount(answers[currentTask.key]) }} / {{ currentTask.max }} mots
                   </span>
                   <span
-                    v-if="
-                      wordCount(answers[currentTask.key]) >= currentTask.min
-                    "
-                    class="text-xs text-green-600 flex items-center gap-1"
+                    v-if="wordCount(answers[currentTask.key]) >= currentTask.min"
+                    class="flex items-center gap-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400"
                   >
                     <i class="pi pi-check-circle" /> Minimum atteint
                   </span>
                 </div>
-              </div>
+              </section>
 
               <!-- Navigation mobile -->
               <div class="flex items-center justify-between gap-3 lg:hidden">
-                <Button
+                <AppButton
+                  label="Précédent"
                   icon="pi pi-chevron-left"
-                  outlined
+                  variant="secondary"
                   :disabled="activeTask === 0"
                   @click="activeTask--"
                 />
-                <span class="text-sm font-semibold text-(--text-secondary)"
-                  >Tâche {{ activeTask + 1 }} / 3</span
-                >
-                <Button
+                <span class="font-heading text-sm font-bold tabular-nums text-muted">
+                  Tâche {{ activeTask + 1 }} / 3
+                </span>
+                <AppButton
                   v-if="activeTask < 2"
                   label="Suivant"
                   icon="pi pi-chevron-right"
                   icon-pos="right"
-                  outlined
+                  variant="secondary"
                   @click="activeTask++"
                 />
-                <Button
+                <AppButton
                   v-else
                   label="Soumettre"
-                  icon="pi pi-sparkles"
+                  icon="pi pi-bolt"
                   icon-pos="right"
+                  variant="gradient"
                   :loading="submitting"
                   :disabled="!allAnswered || sub.aiCreditsRemaining === 0"
-                  class="bg-gradient-primary border-none font-bold"
                   @click="submitAll"
                 />
               </div>
             </template>
 
-            <!-- Résultats -->
+            <!-- ── Résultats ─────────────────────────────────── -->
             <template v-else>
-              <div
-                class="bg-gradient-primary rounded-2xl p-8 text-center text-white flex flex-col items-center gap-2"
-              >
-                <i class="pi pi-check-circle text-5xl opacity-90" />
-                <p class="text-6xl font-extrabold leading-none">
-                  {{ combinedCorrection.global_assessment.overall_score
-                  }}<span class="text-2xl opacity-60">/20</span>
-                </p>
-                <p class="text-lg font-semibold opacity-80">
-                  Niveau {{ combinedCorrection.global_assessment.cecrl_level }}
-                </p>
-                <p class="text-sm opacity-70 max-w-sm leading-relaxed">
-                  {{ combinedCorrection.global_assessment.appreciation }}
-                </p>
+              <!-- Score -->
+              <div class="featured-panel relative overflow-hidden rounded-card p-8 text-center text-white shadow-brand">
+                <div class="relative z-10 flex flex-col items-center gap-2">
+                  <span class="mb-1 grid size-14 place-items-center rounded-full bg-white/15 backdrop-blur">
+                    <i class="pi pi-check-circle text-2xl" />
+                  </span>
+                  <p class="font-heading text-6xl font-extrabold leading-none tabular-nums">
+                    {{ combinedCorrection.global_assessment.overall_score }}<span class="text-2xl opacity-60">/20</span>
+                  </p>
+                  <span class="mt-1 rounded-full bg-accent-400 px-3 py-1 font-heading text-sm font-extrabold text-primary-950">
+                    Niveau {{ combinedCorrection.global_assessment.cecrl_level }}
+                  </span>
+                  <p class="mt-1 max-w-md text-sm leading-relaxed text-white/80">
+                    {{ combinedCorrection.global_assessment.appreciation }}
+                  </p>
+                </div>
               </div>
 
-              <div
-                class="bg-(--bg-card) border border-(--border-color) rounded-2xl p-5"
-              >
-                <h3
-                  class="font-bold text-(--text-primary) mb-4 flex items-center gap-2 text-sm"
-                >
-                  <i class="pi pi-chart-bar text-primary-500" /> Scores par
-                  critère
+              <!-- Scores par critère -->
+              <section class="rounded-card border border-line bg-card p-5 shadow-soft">
+                <h3 class="mb-4 flex items-center gap-2 border-b border-line pb-3.5 font-heading text-sm font-bold text-ink">
+                  <i class="pi pi-chart-bar text-primary" /> Scores par critère
                 </h3>
-                <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   <div
                     v-for="item in criteriaItems"
                     :key="item.label"
-                    class="bg-(--bg-ground) rounded-xl p-3 text-center"
+                    class="rounded-2xl border border-line bg-card-2/50 p-4"
                   >
-                    <p class="text-xl font-extrabold text-primary-600 mb-0.5">
-                      {{ item.score
-                      }}<span class="text-sm opacity-60">/{{ item.max }}</span>
-                    </p>
-                    <p
-                      class="text-xs font-semibold text-(--text-secondary) mb-1"
-                    >
-                      {{ item.label }}
-                    </p>
-                    <p class="text-xs text-(--text-primary) leading-relaxed">
-                      {{ item.feedback }}
-                    </p>
+                    <div class="mb-1 flex items-baseline justify-between gap-2">
+                      <p class="text-xs font-semibold text-muted">{{ item.label }}</p>
+                      <p class="font-heading text-xl font-extrabold tabular-nums text-primary">
+                        {{ item.score }}<span class="text-sm font-semibold text-faint">/{{ item.max }}</span>
+                      </p>
+                    </div>
+                    <div class="mb-2 h-1.5 overflow-hidden rounded-full bg-line">
+                      <div
+                        class="h-full rounded-full bg-linear-to-r from-primary-400 to-primary-700"
+                        :style="{ width: `${Math.min(100, (item.score / item.max) * 100)}%` }"
+                      />
+                    </div>
+                    <p class="text-xs leading-relaxed text-ink">{{ item.feedback }}</p>
                   </div>
                 </div>
-              </div>
+              </section>
 
-              <div
+              <!-- Versions corrigées -->
+              <section
                 v-if="combinedCorrection.task_feedbacks"
-                class="bg-(--bg-card) border border-(--border-color) rounded-2xl p-5"
+                class="rounded-card border border-line bg-card p-5 shadow-soft"
               >
-                <h3
-                  class="font-bold text-(--text-primary) mb-4 flex items-center gap-2 text-sm"
-                >
-                  <i class="pi pi-file-edit text-primary-500" /> Versions
-                  corrigées par tâche
+                <h3 class="mb-4 flex items-center gap-2 border-b border-line pb-3.5 font-heading text-sm font-bold text-ink">
+                  <i class="pi pi-file-edit text-primary" /> Versions corrigées par tâche
                 </h3>
                 <div class="flex flex-col gap-4">
-                  <div
-                    v-for="(taskKey, idx) in ['task1', 'task2', 'task3']"
-                    :key="taskKey"
-                  >
+                  <template v-for="(taskKey, idx) in ['task1', 'task2', 'task3']" :key="taskKey">
                     <div
                       v-if="combinedCorrection.task_feedbacks[taskKey]"
-                      class="border border-(--border-color) rounded-xl overflow-hidden"
+                      class="overflow-hidden rounded-2xl border border-line"
                     >
-                      <div
-                        class="flex items-center gap-2 px-4 py-3 bg-(--bg-ground) border-b border-(--border-color)"
-                      >
-                        <div
-                          class="w-6 h-6 rounded-full bg-gradient-primary flex items-center justify-center text-white text-xs font-bold shrink-0"
-                        >
+                      <div class="flex items-center gap-2.5 border-b border-line bg-card-2/50 px-4 py-3">
+                        <span class="grid size-7 shrink-0 place-items-center rounded-full brand-gradient text-xs font-bold text-white">
                           {{ idx + 1 }}
-                        </div>
-                        <span
-                          class="font-semibold text-sm text-(--text-primary)"
-                          >{{
-                            [
-                              "Tâche 1 - Message",
-                              "Tâche 2 - Narration",
-                              "Tâche 3 - Argumentation",
-                            ][idx]
-                          }}</span
-                        >
+                        </span>
+                        <span class="text-sm font-semibold text-ink">
+                          {{ ["Tâche 1 - Message", "Tâche 2 - Narration", "Tâche 3 - Argumentation"][idx] }}
+                        </span>
                       </div>
-                      <div
-                        class="px-4 py-3 grid grid-cols-1 md:grid-cols-2 gap-3 border-b border-(--border-color)"
-                      >
-                        <div
-                          v-if="
-                            combinedCorrection.task_feedbacks[taskKey]
-                              .main_strengths?.length
-                          "
-                        >
-                          <p class="text-xs font-semibold text-green-700 mb-1">
-                            Points forts
-                          </p>
+
+                      <div class="grid grid-cols-1 gap-3 border-b border-line px-4 py-3 md:grid-cols-2">
+                        <div v-if="combinedCorrection.task_feedbacks[taskKey].main_strengths?.length">
+                          <p class="mb-1.5 text-xs font-bold text-emerald-700 dark:text-emerald-400">Points forts</p>
                           <ul class="flex flex-col gap-1">
                             <li
-                              v-for="s in combinedCorrection.task_feedbacks[
-                                taskKey
-                              ].main_strengths"
+                              v-for="s in combinedCorrection.task_feedbacks[taskKey].main_strengths"
                               :key="s"
-                              class="text-xs text-green-700 flex items-start gap-1"
+                              class="flex items-start gap-1.5 text-xs text-emerald-700 dark:text-emerald-300"
                             >
-                              <i class="pi pi-check shrink-0 mt-0.5" />{{ s }}
+                              <i class="pi pi-check mt-0.5 shrink-0 text-[0.65rem]" />{{ s }}
                             </li>
                           </ul>
                         </div>
-                        <div
-                          v-if="
-                            combinedCorrection.task_feedbacks[taskKey]
-                              .main_weaknesses?.length
-                          "
-                        >
-                          <p class="text-xs font-semibold text-red-700 mb-1">
-                            Points à améliorer
-                          </p>
+                        <div v-if="combinedCorrection.task_feedbacks[taskKey].main_weaknesses?.length">
+                          <p class="mb-1.5 text-xs font-bold text-red-700 dark:text-red-400">Points à améliorer</p>
                           <ul class="flex flex-col gap-1">
                             <li
-                              v-for="w in combinedCorrection.task_feedbacks[
-                                taskKey
-                              ].main_weaknesses"
+                              v-for="w in combinedCorrection.task_feedbacks[taskKey].main_weaknesses"
                               :key="w"
-                              class="text-xs text-red-700 flex items-start gap-1"
+                              class="flex items-start gap-1.5 text-xs text-red-700 dark:text-red-300"
                             >
-                              <i class="pi pi-times shrink-0 mt-0.5" />{{ w }}
+                              <i class="pi pi-times mt-0.5 shrink-0 text-[0.65rem]" />{{ w }}
                             </li>
                           </ul>
                         </div>
                       </div>
-                      <div
-                        v-if="
-                          combinedCorrection.task_feedbacks[taskKey]
-                            .corrected_text
-                        "
-                        class="px-4 py-4"
-                      >
-                        <p
-                          class="text-[10px] font-bold text-primary-600 uppercase tracking-wide mb-2"
-                        >
+
+                      <div v-if="combinedCorrection.task_feedbacks[taskKey].corrected_text" class="px-4 py-4">
+                        <p class="mb-2 text-[0.65rem] font-bold uppercase tracking-wider text-primary">
                           Proposition de correction
                         </p>
-                        <p
-                          class="text-sm text-(--text-primary) leading-relaxed whitespace-pre-wrap bg-(--bg-ground) rounded-lg p-3"
-                        >
-                          {{
-                            combinedCorrection.task_feedbacks[taskKey]
-                              .corrected_text
-                          }}
+                        <p class="whitespace-pre-wrap rounded-xl bg-card-2 p-3.5 text-sm leading-relaxed text-ink">
+                          {{ combinedCorrection.task_feedbacks[taskKey].corrected_text }}
                         </p>
                       </div>
                     </div>
-                  </div>
+                  </template>
                 </div>
-              </div>
+              </section>
 
-              <div
+              <!-- Erreurs -->
+              <section
                 v-if="combinedCorrection.corrections?.length"
-                class="bg-(--bg-card) border border-(--border-color) rounded-2xl p-5"
+                class="rounded-card border border-line bg-card p-5 shadow-soft"
               >
-                <h3
-                  class="font-bold text-(--text-primary) mb-4 flex items-center gap-2 text-sm"
-                >
-                  <i class="pi pi-pencil text-primary-500" /> Erreurs
-                  identifiées
+                <h3 class="mb-4 flex items-center gap-2 border-b border-line pb-3.5 font-heading text-sm font-bold text-ink">
+                  <i class="pi pi-pencil text-primary" /> Erreurs identifiées
                 </h3>
                 <div class="flex flex-col gap-3">
                   <div
                     v-for="(c, i) in combinedCorrection.corrections"
                     :key="i"
-                    class="bg-red-50 border border-red-100 rounded-xl p-4"
+                    class="rounded-2xl border border-red-200 bg-red-50/60 p-4 dark:border-red-500/20 dark:bg-red-500/5"
                   >
-                    <div class="flex items-center gap-2 flex-wrap mb-2">
-                      <Tag
-                        v-if="c.task"
-                        :value="`Tâche ${c.task}`"
-                        severity="danger"
-                      />
+                    <div class="mb-2 flex flex-wrap items-center gap-2">
                       <span
-                        class="text-sm font-bold text-red-700 line-through"
-                        >{{ c.error }}</span
+                        v-if="c.task"
+                        class="rounded-full bg-red-100 px-2 py-0.5 text-xs font-bold text-red-700 dark:bg-red-500/15 dark:text-red-300"
                       >
-                      <i class="pi pi-arrow-right text-red-400 text-xs" />
-                      <span class="text-sm font-bold text-green-700">{{
-                        c.correction
-                      }}</span>
+                        Tâche {{ c.task }}
+                      </span>
+                      <span class="text-sm font-bold text-red-700 line-through dark:text-red-400">{{ c.error }}</span>
+                      <i class="pi pi-arrow-right text-xs text-faint" />
+                      <span class="text-sm font-bold text-emerald-700 dark:text-emerald-400">{{ c.correction }}</span>
                     </div>
-                    <p class="text-xs text-(--text-secondary) leading-relaxed">
-                      {{ c.explanation }}
-                    </p>
+                    <p class="text-xs leading-relaxed text-muted">{{ c.explanation }}</p>
                   </div>
                 </div>
-              </div>
+              </section>
 
-              <div
+              <!-- Conseils -->
+              <section
                 v-if="combinedCorrection.suggestions?.length"
-                class="bg-(--bg-card) border border-(--border-color) rounded-2xl p-5"
+                class="rounded-card border border-line bg-card p-5 shadow-soft"
               >
-                <h3
-                  class="font-bold text-(--text-primary) mb-4 flex items-center gap-2 text-sm"
-                >
-                  <i class="pi pi-lightbulb text-primary-500" /> Conseils pour
-                  progresser
+                <h3 class="mb-4 flex items-center gap-2 border-b border-line pb-3.5 font-heading text-sm font-bold text-ink">
+                  <i class="pi pi-lightbulb text-accent-600 dark:text-accent-400" /> Conseils pour progresser
                 </h3>
-                <div class="flex flex-col gap-2">
-                  <div
+                <ol class="flex flex-col gap-2">
+                  <li
                     v-for="(s, i) in combinedCorrection.suggestions"
                     :key="i"
-                    class="flex items-start gap-3 bg-(--bg-ground) rounded-xl p-3"
+                    class="flex items-start gap-3 rounded-2xl bg-card-2/60 p-3"
                   >
-                    <div
-                      class="w-6 h-6 rounded-full bg-gradient-primary flex items-center justify-center text-white text-xs font-bold shrink-0"
-                    >
+                    <span class="grid size-6 shrink-0 place-items-center rounded-full brand-gradient text-xs font-bold text-white">
                       {{ i + 1 }}
-                    </div>
-                    <p class="text-sm text-(--text-secondary) leading-relaxed">
-                      {{ s }}
-                    </p>
-                  </div>
-                </div>
-              </div>
+                    </span>
+                    <p class="text-sm leading-relaxed text-ink">{{ s }}</p>
+                  </li>
+                </ol>
+              </section>
 
-              <div class="flex flex-col sm:flex-row gap-3 justify-center pb-8">
-                <Button
+              <!-- Actions -->
+              <div class="flex flex-col justify-center gap-3 pb-8 sm:flex-row">
+                <AppButton
                   label="Refaire une simulation"
                   icon="pi pi-refresh"
-                  outlined
+                  variant="gradient"
                   @click="resetSimulation"
                 />
-                <NuxtLink :to="`/simulateur/expression-ecrite/${sessionId}`">
-                  <Button label="Autres sujets" icon="pi pi-arrow-left" text />
+                <NuxtLink
+                  :to="`/simulateur/expression-ecrite/${sessionId}`"
+                  class="inline-flex items-center justify-center gap-2 rounded-xl border border-line bg-card px-4 py-2.5 text-sm font-semibold text-ink transition-colors hover:border-primary/40 hover:text-primary"
+                >
+                  <i class="pi pi-arrow-left text-xs" />
+                  Autres sujets
                 </NuxtLink>
               </div>
             </template>
           </main>
 
-          <!-- Panel droit -->
+          <!-- Panneau droit -->
           <aside
-            class="hidden xl:flex flex-col w-52 bg-(--bg-card) border-l border-(--border-color) sticky top-14 h-[calc(100vh-56px)] overflow-y-auto shrink-0 p-4 gap-5"
+            class="sticky top-14 hidden h-[calc(100vh-3.5rem)] w-56 shrink-0 flex-col gap-5 overflow-y-auto border-l border-line bg-card p-4 xl:flex"
           >
-            <p
-              class="text-[10px] font-bold uppercase tracking-widest text-(--text-tertiary)"
-            >
-              Outils
-            </p>
+            <p class="text-[0.65rem] font-bold uppercase tracking-widest text-faint">Outils</p>
+
             <div class="flex flex-col gap-2">
-              <p class="text-xs font-semibold text-(--text-secondary)">
-                Caractères spéciaux
-              </p>
+              <p class="text-xs font-semibold text-muted">Caractères spéciaux</p>
               <div class="flex flex-wrap gap-1.5">
                 <button
                   v-for="ch in specialChars"
                   :key="ch"
-                  class="w-8 h-8 text-sm flex items-center justify-center bg-(--bg-ground) border border-(--border-color) rounded-md text-(--text-primary) hover:bg-primary-50 hover:border-primary-300 hover:text-primary-700 transition-colors font-medium"
+                  type="button"
+                  :aria-label="`Insérer ${ch}`"
+                  class="grid size-8 place-items-center rounded-lg border border-line bg-card-2 text-sm font-medium text-ink shadow-[inset_0_-2px_0_rgb(15_23_42/0.06)] transition-all hover:-translate-y-px hover:border-primary/40 hover:text-primary active:translate-y-px"
                   @click="insertChar(ch)"
                 >
                   {{ ch }}
                 </button>
               </div>
             </div>
+
             <div class="flex flex-col gap-3">
-              <p class="text-xs font-semibold text-(--text-secondary)">
-                Progression
-              </p>
-              <div
-                v-for="(t, i) in tasks"
-                :key="t.key"
-                class="flex flex-col gap-1"
-              >
-                <div class="flex justify-between items-center">
-                  <span class="text-xs text-(--text-secondary)"
-                    >Tâche {{ i + 1 }}</span
-                  >
+              <p class="text-xs font-semibold text-muted">Progression</p>
+              <div v-for="(t, i) in tasks" :key="t.key" class="flex flex-col gap-1">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs text-muted">Tâche {{ i + 1 }}</span>
                   <span
-                    class="text-[10px] font-mono font-semibold"
-                    :class="
-                      wordCountClass(wordCount(answers[t.key]), t.min, t.max)
-                    "
+                    class="font-mono text-[0.65rem] font-semibold tabular-nums"
+                    :class="wordCountClass(wordCount(answers[t.key]), t.min, t.max)"
                   >
                     {{ wordCount(answers[t.key]) }}/{{ t.max }}
                   </span>
                 </div>
-                <div
-                  class="h-1.5 rounded-full bg-(--bg-ground) border border-(--border-color) overflow-hidden"
-                >
+                <div class="h-1.5 overflow-hidden rounded-full bg-line">
                   <div
                     class="h-full rounded-full transition-all duration-300"
                     :class="{
                       'bg-red-400': wordCount(answers[t.key]) < t.min,
-                      'bg-green-500':
-                        wordCount(answers[t.key]) >= t.min &&
-                        wordCount(answers[t.key]) <= t.max,
+                      'bg-emerald-500': wordCount(answers[t.key]) >= t.min && wordCount(answers[t.key]) <= t.max,
                       'bg-amber-400': wordCount(answers[t.key]) > t.max,
                     }"
-                    :style="{
-                      width:
-                        Math.min(
-                          100,
-                          (wordCount(answers[t.key]) / t.max) * 100,
-                        ) + '%',
-                    }"
+                    :style="{ width: Math.min(100, (wordCount(answers[t.key]) / t.max) * 100) + '%' }"
                   />
                 </div>
               </div>
             </div>
-            <div
-              class="mt-auto flex gap-2 bg-amber-50 border border-amber-200 rounded-xl p-3"
-            >
-              <i
-                class="pi pi-info-circle text-amber-500 text-xs shrink-0 mt-0.5"
-              />
-              <p class="text-[10px] text-amber-800 leading-snug">
-                Laisser une tâche vide entraîne automatiquement une note
-                éliminatoire de 0/20.
+
+            <div class="mt-auto flex gap-2 rounded-2xl border border-accent-200 bg-accent-50 p-3 dark:border-accent-500/25 dark:bg-accent-500/10">
+              <i class="pi pi-info-circle mt-0.5 shrink-0 text-xs text-accent-700 dark:text-accent-300" />
+              <p class="text-[0.65rem] leading-snug text-ink">
+                Laisser une tâche vide entraîne automatiquement une note éliminatoire de 0/20.
               </p>
             </div>
           </aside>
@@ -819,17 +639,21 @@
       </template>
     </template>
 
-    <!-- Session/combo introuvable -->
+    <!-- Combinaison introuvable -->
     <div
       v-else-if="!loading"
-      class="flex flex-col items-center justify-center min-h-[60vh] gap-3 text-(--text-tertiary)"
+      class="flex min-h-[60vh] flex-col items-center justify-center gap-3 px-4 text-center"
     >
-      <i class="pi pi-exclamation-circle text-5xl opacity-30" />
-      <p class="text-lg font-semibold">
-        Aucun sujet disponible pour cette combinaison.
-      </p>
-      <NuxtLink :to="`/simulateur/expression-ecrite/${sessionId}`">
-        <Button label="Retour" icon="pi pi-arrow-left" outlined />
+      <span class="grid size-16 place-items-center rounded-leaf bg-card-2 text-faint">
+        <i class="pi pi-exclamation-circle text-3xl" />
+      </span>
+      <p class="font-heading text-lg font-bold text-ink">Aucun sujet disponible pour cette combinaison.</p>
+      <NuxtLink
+        :to="`/simulateur/expression-ecrite/${sessionId}`"
+        class="inline-flex items-center gap-2 rounded-xl border border-line bg-card px-4 py-2.5 text-sm font-semibold text-ink transition-colors hover:border-primary/40 hover:text-primary"
+      >
+        <i class="pi pi-arrow-left text-xs" />
+        Retour
       </NuxtLink>
     </div>
 

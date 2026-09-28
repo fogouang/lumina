@@ -2,6 +2,7 @@
 Base Repository Pattern pour opérations CRUD génériques.
 """
 
+import logging
 from typing import Any, Generic, Sequence, Type, TypeVar
 from uuid import UUID
 
@@ -11,6 +12,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.shared.database.base import BaseModel
 from app.shared.exceptions.base import DatabaseException
 from app.shared.exceptions.http import NotFoundException
+
+logger = logging.getLogger("tcf_canada")
 
 # Type générique pour les models
 ModelType = TypeVar("ModelType", bound=BaseModel)
@@ -75,6 +78,7 @@ class BaseRepository(Generic[ModelType]):
         
         except Exception as e:
             await self.db.rollback()
+            logger.exception(f"Erreur création {self.model.__name__}: {e}")
             raise DatabaseException(
                 message=f"Erreur lors de la création de {self.model.__name__}",
                 original_error=e
@@ -100,6 +104,7 @@ class BaseRepository(Generic[ModelType]):
             return result.scalar_one_or_none()
         
         except Exception as e:
+            logger.exception(f"Erreur récupération {self.model.__name__} {id}: {e}")
             raise DatabaseException(
                 message=f"Erreur lors de la récupération de {self.model.__name__}",
                 original_error=e
@@ -158,6 +163,7 @@ class BaseRepository(Generic[ModelType]):
             return result.scalars().all()
         
         except Exception as e:
+            logger.exception(f"Erreur récupération liste {self.model.__name__}: {e}")
             raise DatabaseException(
                 message=f"Erreur lors de la récupération de {self.model.__name__}",
                 original_error=e
@@ -180,6 +186,7 @@ class BaseRepository(Generic[ModelType]):
             return result.scalar_one()
         
         except Exception as e:
+            logger.exception(f"Erreur comptage {self.model.__name__}: {e}")
             raise DatabaseException(
                 message=f"Erreur lors du comptage de {self.model.__name__}",
                 original_error=e
@@ -229,6 +236,7 @@ class BaseRepository(Generic[ModelType]):
         
         except Exception as e:
             await self.db.rollback()
+            logger.exception(f"Erreur mise à jour {self.model.__name__} {id}: {e}")
             raise DatabaseException(
                 message=f"Erreur lors de la mise à jour de {self.model.__name__}",
                 original_error=e
@@ -261,6 +269,7 @@ class BaseRepository(Generic[ModelType]):
         
         except Exception as e:
             await self.db.rollback()
+            logger.exception(f"Erreur suppression {self.model.__name__} {id}: {e}")
             raise DatabaseException(
                 message=f"Erreur lors de la suppression de {self.model.__name__}",
                 original_error=e

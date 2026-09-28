@@ -49,11 +49,15 @@ class ExpressionOraleAttempt(Base):
         PG_UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True
     )
     series_id: Mapped[uuid.UUID] = mapped_column(
-        PG_UUID(as_uuid=True), ForeignKey("series.id"), nullable=False, index=True
+        PG_UUID(as_uuid=True),
+        ForeignKey("series.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
-    # TODO: confirmer le nom de la table cible (expression_tasks ?)
     task_id: Mapped[uuid.UUID] = mapped_column(
-        PG_UUID(as_uuid=True), ForeignKey("expression_tasks.id"), nullable=False
+        PG_UUID(as_uuid=True),
+        ForeignKey("expression_tasks.id", ondelete="CASCADE"),
+        nullable=False,
     )
     task_number: Mapped[int] = mapped_column(Integer, nullable=False)  # 1 | 2 | 3
 
@@ -85,5 +89,5 @@ class ExpressionOraleAttempt(Base):
     def __repr__(self) -> str:  # pragma: no cover
         return (
             f"<ExpressionOraleAttempt id={self.id} student={self.student_id} "
-            f"task_number={self.task_number} score={self.score} level={self.estimated_level}>"
+            f"task_number={self.task_number} total_score={self.total_score}>"
         )

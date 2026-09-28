@@ -1,21 +1,17 @@
 <template>
   <div class="flex items-center gap-4">
-    <!-- Numéro badge -->
-    <div
-      :class="`bg-linear-to-br ${color} w-11 h-11 rounded-xl flex items-center justify-center shrink-0 shadow-md`"
+    <span
+      class="brand-gradient grid size-12 shrink-0 place-items-center rounded-leaf font-heading text-lg font-extrabold text-white shadow-brand"
     >
-      <span class="text-white font-extrabold text-lg leading-none">{{
-        number
-      }}</span>
-    </div>
+      {{ number }}
+    </span>
 
-    <!-- Title + meta -->
-    <div class="flex-1 min-w-0">
-      <h2 class="text-lg font-bold text-(--text-primary) leading-tight">
-        Tâche {{ number }} — {{ title }}
+    <div class="min-w-0 flex-1">
+      <h2 class="font-heading text-xl font-bold leading-tight text-ink">
+        Tâche {{ number }} : {{ title }}
       </h2>
-      <p class="text-(--text-secondary) text-sm flex items-center gap-1 mt-0.5">
-        <i :class="`pi ${icon} text-xs`" />
+      <p class="mt-0.5 inline-flex items-center gap-1.5 text-sm text-muted">
+        <i :class="['pi', icon, 'text-xs']" />
         {{ duration }}
       </p>
     </div>
@@ -28,6 +24,6 @@ defineProps<{
   title: string;
   duration: string;
   icon: string;
-  color: string;
+  color?: string; 
 }>();
 </script>

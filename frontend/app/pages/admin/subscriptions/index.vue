@@ -1,45 +1,139 @@
 <template>
   <div>
-    <!-- Header -->
-    <div class="flex items-center justify-between mb-6">
+    <!-- En-tête -->
+    <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div>
-        <h1 class="text-xl font-bold text-(--text-primary)">Abonnements</h1>
-        <p class="text-sm text-(--text-tertiary) mt-0.5">
+        <h1 class="font-heading text-2xl font-extrabold tracking-tight text-ink">Abonnements</h1>
+        <p class="mt-0.5 text-sm text-muted">
           Activer manuellement un abonnement après paiement reçu
         </p>
       </div>
-      <Button
+      <AppButton
         label="Activer un abonnement"
         icon="pi pi-plus"
-        class="bg-gradient-primary border-none font-bold"
+        variant="gradient"
         @click="formVisible = true"
       />
     </div>
 
-    <!-- Info banner -->
-    <Message severity="warn" :closable="false" class="mb-6">
-      <span>
+    <!-- Info -->
+    <div
+      class="mb-6 flex items-start gap-3 rounded-card border border-accent-200 bg-accent-50 p-4 dark:border-accent-500/25 dark:bg-accent-500/10"
+    >
+      <span class="grid size-9 shrink-0 place-items-center rounded-leaf bg-accent-100 text-accent-800 dark:bg-accent-500/15 dark:text-accent-300">
+        <i class="pi pi-info-circle" />
+      </span>
+      <p class="pt-1.5 text-sm leading-relaxed text-ink">
         Cette page permet d'activer manuellement un abonnement pour un client
         ayant payé hors plateforme (virement, espèces, etc.).
-      </span>
-    </Message>
+      </p>
+    </div>
+
+    <!-- Abonnements actifs -->
+    <section class="rounded-card border border-line bg-card p-5 shadow-soft sm:p-6">
+      <header class="mb-4 flex items-center justify-between gap-3 border-b border-line pb-3.5">
+        <div class="flex items-center gap-2.5">
+          <span class="grid size-8 place-items-center rounded-lg bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">
+            <i class="pi pi-crown text-sm" />
+          </span>
+          <h2 class="font-heading text-base font-bold text-ink">
+            Abonnements actifs
+            <span v-if="!loadingSubs" class="ml-1 font-medium tabular-nums text-faint">
+              ({{ subscriptions.length }})
+            </span>
+          </h2>
+        </div>
+        <Button
+          icon="pi pi-refresh"
+          text
+          rounded
+          aria-label="Actualiser"
+          :loading="loadingSubs"
+          @click="fetchSubscriptions"
+        />
+      </header>
+
+      <!-- Chargement -->
+      <div v-if="loadingSubs" class="space-y-2.5">
+        <div v-for="n in 4" :key="n" class="h-17 animate-pulse rounded-2xl bg-card-2" />
+      </div>
+
+      <!-- Liste -->
+      <div v-else-if="subscriptions.length" class="space-y-2.5">
+        <div
+          v-for="sub in subscriptions"
+          :key="sub.id"
+          class="flex items-center justify-between gap-3 rounded-2xl border border-line bg-card-2/50 p-4 transition-colors hover:bg-card-2"
+        >
+          <div class="flex min-w-0 items-center gap-3">
+            <span class="grid size-10 shrink-0 place-items-center rounded-leaf bg-emerald-100 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300">
+              <i class="pi pi-crown text-sm" />
+            </span>
+            <div class="min-w-0">
+              <p class="truncate text-sm font-semibold text-ink">
+                {{ sub.user_email ?? sub.user_id }}
+              </p>
+              <p class="flex flex-wrap items-center gap-x-2 text-xs text-muted">
+                <span class="inline-flex items-center gap-1">
+                  <i class="pi pi-calendar text-[0.65rem]" />
+                  Expire le {{ formatDate(sub.end_date) }}
+                </span>
+                <span class="text-faint">·</span>
+                <span class="inline-flex items-center gap-1">
+                  <i class="pi pi-sparkles text-[0.65rem]" />
+                  {{ sub.ai_credits_remaining }} crédits IA
+                </span>
+              </p>
+            </div>
+          </div>
+          <span
+            class="inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold"
+            :class="
+              sub.is_active
+                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300'
+                : 'bg-card-2 text-muted'
+            "
+          >
+            <span class="size-1.5 rounded-full" :class="sub.is_active ? 'bg-emerald-500' : 'bg-faint'" />
+            {{ sub.is_active ? "Actif" : "Inactif" }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Vide -->
+      <div v-else class="flex flex-col items-center py-10 text-center">
+        <span class="mb-3 grid size-14 place-items-center rounded-leaf bg-card-2 text-faint">
+          <i class="pi pi-crown text-2xl" />
+        </span>
+        <p class="text-sm font-medium text-muted">Aucun abonnement actif trouvé.</p>
+      </div>
+    </section>
 
     <!-- Dialog activation manuelle -->
     <Dialog
       v-model:visible="formVisible"
-      header="Activer un abonnement manuellement"
       modal
-      :style="{ width: '520px' }"
       :draggable="false"
+      :style="{ width: '34rem' }"
+      :breakpoints="{ '640px': '94vw' }"
+      :pt="{ mask: { class: 'backdrop-blur-sm' } }"
     >
-      <div class="flex flex-col gap-4 pt-2">
-        <!-- Recherche user -->
+      <template #header>
+        <div class="flex items-center gap-3">
+          <span class="grid size-10 place-items-center rounded-leaf bg-primary/10 text-primary">
+            <i class="pi pi-crown" />
+          </span>
+          <h3 class="font-heading text-lg font-bold text-ink">Activer un abonnement manuellement</h3>
+        </div>
+      </template>
+
+      <div class="flex flex-col gap-4 pt-1">
+        <!-- Utilisateur -->
         <div class="flex flex-col gap-1.5">
-          <label class="text-sm font-semibold text-(--text-secondary)"
-            >Utilisateur</label
-          >
+          <label for="sub-user" class="text-sm font-semibold text-ink">Utilisateur</label>
           <Select
             v-model="form.user_id"
+            input-id="sub-user"
             :options="users"
             option-label="label"
             option-value="value"
@@ -47,18 +141,17 @@
             filter
             fluid
           />
-          <small v-if="form.user_id" class="text-green-600">
-            <i class="pi pi-check" /> Utilisateur sélectionné
+          <small v-if="form.user_id" class="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
+            <i class="pi pi-check text-xs" /> Utilisateur sélectionné
           </small>
         </div>
 
         <!-- Plan -->
         <div class="flex flex-col gap-1.5">
-          <label class="text-sm font-semibold text-(--text-secondary)"
-            >Plan</label
-          >
+          <label for="sub-plan" class="text-sm font-semibold text-ink">Plan</label>
           <Select
             v-model="form.plan_id"
+            input-id="sub-plan"
             :options="planOptions"
             option-label="label"
             option-value="value"
@@ -67,206 +160,124 @@
           />
           <div
             v-if="selectedPlan"
-            class="bg-(--bg-ground) rounded-lg p-3 flex items-center justify-between"
+            class="mt-1 flex items-center justify-between gap-3 rounded-2xl border border-line bg-card-2 p-3.5"
           >
-            <div>
-              <p class="text-sm font-semibold text-(--text-primary)">
-                {{ selectedPlan.name }}
-              </p>
-              <p class="text-xs text-(--text-tertiary)">
-                {{ selectedPlan.duration_days }} jours ·
-                {{ selectedPlan.ai_credits }} crédits IA
+            <div class="min-w-0">
+              <p class="truncate text-sm font-semibold text-ink">{{ selectedPlan.name }}</p>
+              <p class="text-xs text-muted">
+                {{ selectedPlan.duration_days }} jours · {{ selectedPlan.ai_credits }} crédits IA
               </p>
             </div>
-            <div class="text-right">
-              <p class="text-lg font-bold text-primary-600">
+            <div class="shrink-0 text-right">
+              <p class="font-heading text-lg font-extrabold tabular-nums text-primary">
                 {{ finalPrice.toLocaleString("fr-FR") }} FCFA
               </p>
-              <p
-                v-if="promoValidation?.is_valid"
-                class="text-xs text-green-600 line-through"
-              >
+              <p v-if="promoValidation?.is_valid" class="text-xs tabular-nums text-faint line-through">
                 {{ selectedPlan.price.toLocaleString("fr-FR") }} FCFA
               </p>
             </div>
           </div>
         </div>
 
-        <!-- Code promo -->
+        <!-- Partenaire -->
         <div class="flex flex-col gap-1.5">
-          <label class="text-sm font-semibold text-(--text-secondary)">
-            Code partenaire (optionnel)
+          <label for="sub-partner" class="text-sm font-semibold text-ink">
+            Partenaire <span class="font-normal text-faint">(optionnel)</span>
           </label>
-          <!-- Remplacer le bloc "Code partenaire" par -->
-          <div class="flex flex-col gap-1.5">
-            <label class="text-sm font-semibold text-(--text-secondary)">
-              Partenaire (optionnel)
-            </label>
-            <div class="flex gap-2">
-              <Select
-                v-model="form.partner_id"
-                :options="partnerOptions"
-                option-label="label"
-                option-value="value"
-                placeholder="Sélectionner un partenaire"
-                filter
-                fluid
-                :disabled="!form.plan_id"
-                @change="onPartnerSelect"
-              />
-              <Button
-                label="Valider"
-                :loading="validatingPromo"
-                :disabled="!form.promo_code || !form.plan_id"
-                outlined
-                @click="onValidatePromo"
-              />
-            </div>
-            <!-- Code détecté -->
-            <small v-if="form.promo_code" class="text-(--text-tertiary)">
-              Code : <strong>{{ form.promo_code }}</strong>
-            </small>
-            <!-- Résultat validation -->
-            <div v-if="promoValidation" class="mt-1">
-              <small
-                v-if="promoValidation.is_valid"
-                class="text-green-600 flex items-center gap-1"
-              >
-                <i class="pi pi-check-circle" />
-                {{ promoValidation.message }} — réduction de
-                {{ promoValidation.discount_amount?.toLocaleString("fr-FR") }}
-                FCFA
-              </small>
-              <small v-else class="text-red-500 flex items-center gap-1">
-                <i class="pi pi-times-circle" />
-                {{ promoValidation.message }}
-              </small>
-            </div>
+          <div class="flex gap-2">
+            <Select
+              v-model="form.partner_id"
+              input-id="sub-partner"
+              :options="partnerOptions"
+              option-label="label"
+              option-value="value"
+              placeholder="Sélectionner un partenaire"
+              filter
+              fluid
+              :disabled="!form.plan_id"
+              @change="onPartnerSelect"
+            />
+            <Button
+              label="Valider"
+              outlined
+              class="shrink-0"
+              :loading="validatingPromo"
+              :disabled="!form.promo_code || !form.plan_id"
+              @click="onValidatePromo"
+            />
           </div>
 
+          <!-- Code détecté -->
+          <small v-if="form.promo_code" class="text-muted">
+            Code : <strong class="font-semibold text-ink">{{ form.promo_code }}</strong>
+          </small>
+
           <!-- Résultat validation -->
-          <div v-if="promoValidation" class="mt-1">
+          <template v-if="promoValidation">
             <small
               v-if="promoValidation.is_valid"
-              class="text-green-600 flex items-center gap-1"
+              class="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400"
             >
-              <i class="pi pi-check-circle" />
-              {{ promoValidation.message }} — réduction de
-              {{ promoValidation.discount_amount?.toLocaleString("fr-FR") }}
-              FCFA
+              <i class="pi pi-check-circle text-xs" />
+              {{ promoValidation.message }}, réduction de
+              {{ promoValidation.discount_amount?.toLocaleString("fr-FR") }} FCFA
             </small>
-            <small v-else class="text-red-500 flex items-center gap-1">
-              <i class="pi pi-times-circle" />
+            <small v-else class="flex items-center gap-1.5 text-red-600 dark:text-red-400">
+              <i class="pi pi-times-circle text-xs" />
               {{ promoValidation.message }}
             </small>
-          </div>
+          </template>
         </div>
 
         <!-- Note -->
         <div class="flex flex-col gap-1.5">
-          <label class="text-sm font-semibold text-(--text-secondary)"
-            >Note interne (optionnel)</label
-          >
+          <label for="sub-note" class="text-sm font-semibold text-ink">
+            Note interne <span class="font-normal text-faint">(optionnel)</span>
+          </label>
           <Textarea
+            id="sub-note"
             v-model="form.note"
             rows="2"
+            auto-resize
             fluid
-            placeholder="Ex: Paiement reçu par virement le 02/05/2026..."
+            placeholder="Ex : Paiement reçu par virement le 02/05/2026..."
           />
         </div>
 
         <!-- Récapitulatif -->
         <div
           v-if="form.user_id && form.plan_id"
-          class="bg-green-50 border border-green-200 rounded-xl p-4"
+          class="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-500/25 dark:bg-emerald-500/10"
         >
-          <p class="text-sm font-semibold text-green-800 mb-1">Récapitulatif</p>
-          <p class="text-sm text-green-700">
+          <p class="mb-1 flex items-center gap-1.5 text-sm font-bold text-emerald-800 dark:text-emerald-300">
+            <i class="pi pi-list-check text-xs" />
+            Récapitulatif
+          </p>
+          <p class="text-sm leading-relaxed text-emerald-700 dark:text-emerald-200">
             L'abonnement <strong>{{ selectedPlan?.name }}</strong> sera activé
             immédiatement. Il expirera dans
             <strong>{{ selectedPlan?.duration_days }} jours</strong>.
           </p>
-          <p
-            v-if="promoValidation?.is_valid"
-            class="text-sm text-green-700 mt-1"
-          >
+          <p v-if="promoValidation?.is_valid" class="mt-1 text-sm text-emerald-700 dark:text-emerald-200">
             Montant payé :
-            <strong>{{ finalPrice.toLocaleString("fr-FR") }} FCFA</strong> (au
-            lieu de {{ selectedPlan?.price.toLocaleString("fr-FR") }} FCFA)
+            <strong>{{ finalPrice.toLocaleString("fr-FR") }} FCFA</strong>
+            (au lieu de {{ selectedPlan?.price.toLocaleString("fr-FR") }} FCFA)
           </p>
         </div>
       </div>
 
       <template #footer>
-        <Button label="Annuler" text @click="onCloseForm" />
-        <Button
+        <AppButton label="Annuler" variant="ghost" @click="onCloseForm" />
+        <AppButton
           label="Activer l'abonnement"
           icon="pi pi-check"
+          variant="gradient"
           :loading="saving"
           :disabled="!form.user_id || !form.plan_id"
-          class="bg-gradient-primary border-none font-bold"
           @click="onActivate"
         />
       </template>
     </Dialog>
-
-    <!-- Liste des abonnements actifs -->
-    <div class="bg-(--bg-card) border border-(--border-color) rounded-xl p-5">
-      <div class="flex items-center justify-between mb-4">
-        <h2 class="text-base font-bold text-(--text-primary)">
-          Abonnements actifs
-        </h2>
-        <Button
-          icon="pi pi-refresh"
-          text
-          rounded
-          :loading="loadingSubs"
-          @click="fetchSubscriptions"
-        />
-      </div>
-
-      <!-- Loading -->
-      <div v-if="loadingSubs" class="flex justify-center py-8">
-        <i class="pi pi-spin pi-spinner text-2xl text-(--text-tertiary)" />
-      </div>
-
-      <!-- Liste -->
-      <div v-else class="space-y-3">
-        <div
-          v-for="sub in subscriptions"
-          :key="sub.id"
-          class="flex items-center justify-between p-4 bg-(--bg-ground) rounded-xl"
-        >
-          <div class="flex items-center gap-3">
-            <div
-              class="w-9 h-9 rounded-full bg-green-50 flex items-center justify-center"
-            >
-              <i class="pi pi-crown text-green-600 text-sm" />
-            </div>
-            <div>
-              <p class="text-sm font-semibold text-(--text-primary)">
-                {{ sub.user_email ?? sub.user_id }}
-              </p>
-              <p class="text-xs text-(--text-tertiary)">
-                Expire le {{ formatDate(sub.end_date) }} ·
-                {{ sub.ai_credits_remaining }} crédits IA
-              </p>
-            </div>
-          </div>
-          <Tag
-            :value="sub.is_active ? 'Actif' : 'Inactif'"
-            :severity="sub.is_active ? 'success' : 'secondary'"
-          />
-        </div>
-
-        <p
-          v-if="!subscriptions.length"
-          class="text-sm text-(--text-tertiary) text-center py-4"
-        >
-          Aucun abonnement actif trouvé.
-        </p>
-      </div>
-    </div>
   </div>
 </template>
 

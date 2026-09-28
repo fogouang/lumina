@@ -1,292 +1,211 @@
 <template>
   <div v-if="epreuve">
-    <!-- ── Hero ─────────────────────────────────────────────── -->
-    <section class="relative bg-gradient-primary pb-24 pt-16 text-center">
-      <div class="container relative z-10 flex flex-col items-center gap-6">
+    <!-- Hero -->
+    <section class="featured-panel px-4 pb-36 pt-32 sm:px-6 lg:px-8 lg:pt-40">
+      <div
+        class="bg-grid animate-grid-drift pointer-events-none absolute inset-0"
+        style="--app-line: rgba(255, 255, 255, 0.06)"
+      />
+
+      <div class="relative mx-auto flex max-w-3xl flex-col items-center text-center">
+        <nav v-reveal aria-label="Fil d'Ariane" class="flex items-center gap-2 text-sm text-white/70">
+          <NuxtLink to="/" class="transition-colors hover:text-white">Accueil</NuxtLink>
+          <i class="pi pi-angle-right text-xs text-white/40" />
+          <span class="text-white/70">Épreuves</span>
+          <i class="pi pi-angle-right text-xs text-white/40" />
+          <span class="font-semibold text-white">{{ epreuve.title }}</span>
+        </nav>
+
         <h1
-          class="m-0 text-[clamp(1.75rem,4vw,2.75rem)] font-extrabold leading-[1.2] text-white"
+          v-reveal="{ delay: 100 }"
+          class="mt-6 font-heading text-[clamp(2rem,4.5vw,3.25rem)] font-extrabold leading-[1.1] tracking-tight text-white"
         >
-          {{ epreuve.title }} TCF Canada
+          {{ epreuve.title }}
+          <span class="text-accent-400">TCF Canada</span>
         </h1>
-        <p class="m-0 max-w-155 text-[1.0625rem] leading-[1.75] text-white/82">
+
+        <p v-reveal="{ delay: 200 }" class="mt-5 max-w-2xl text-lg leading-relaxed text-white/80">
           {{ epreuve.description }}
         </p>
-      </div>
-    </section>
 
-    <!-- ── Format ─────────────────────────────────────────────── -->
-    <section class="section bg-(--bg-ground) py-16">
-      <div class="container">
-        <div ref="formatRef">
-          <Transition name="p-collapsible">
-            <div v-if="formatVisible" class="grid">
-              <div
-                class="mx-auto grid max-w-160 grid-cols-3 gap-5 overflow-hidden"
-              >
-                <div
-                  v-for="stat in epreuve.format"
-                  :key="stat.label"
-                  class="flex flex-col items-center gap-2 rounded-2xl border border-(--border-color) bg-(--bg-card) px-4 py-7 text-center"
-                >
-                  <div
-                    class="mb-1 flex h-11 w-11 items-center justify-center rounded-xl bg-primary-50"
-                  >
-                    <i :class="stat.icon" class="text-lg text-primary-600" />
-                  </div>
-                  <span
-                    class="text-[1.625rem] font-extrabold leading-none text-(--text-primary)"
-                    >{{ stat.value }}</span
-                  >
-                  <span
-                    class="text-[0.8125rem] font-medium text-(--text-secondary)"
-                    >{{ stat.label }}</span
-                  >
-                </div>
-              </div>
-            </div>
-          </Transition>
+        <div v-reveal="{ delay: 300 }" class="mt-9 flex flex-col gap-3 sm:flex-row">
+          <AppCta
+            :to="epreuve.ctaFinal.to"
+            :label="epreuve.ctaFinal.label"
+            :icon="epreuve.ctaFinal.icon"
+            icon-pos="left"
+            variant="light"
+          />
+          <AppCta to="/tarifs" label="Voir les prix" icon="pi pi-arrow-right" variant="glass" />
         </div>
       </div>
     </section>
 
-    <!-- ── Ce que vous apprendrez ────────────────────────────── -->
-    <section class="section bg-(--bg-section) py-20">
-      <div class="container">
+    <!-- Format : chevauche le bas du hero -->
+    <section class="relative z-10 -mt-20 px-4 sm:px-6 lg:px-8">
+      <div class="mx-auto grid max-w-3xl grid-cols-3 gap-3 sm:gap-5">
         <div
-          ref="apprHeaderRef"
-          class="mx-auto max-w-2xl text-center transition-all duration-700"
-          :class="
-            apprHeaderVisible
-              ? 'opacity-100 translate-y-0'
-              : 'opacity-0 translate-y-6'
-          "
+          v-for="(stat, i) in epreuve.format"
+          :key="stat.label"
+          v-reveal="{ delay: 350 + i * 100 }"
         >
-          <Tag value="Objectifs" severity="success" class="rounded-full!" />
-          <h2
-            class="mt-4 font-display text-3xl font-extrabold tracking-tight text-(--text-primary) sm:text-4xl"
-          >
-            Ce que vous apprendrez
-          </h2>
-        </div>
-
-        <div ref="apprGridRef" class="mt-12">
-          <Transition name="p-collapsible">
-            <div v-if="apprGridVisible" class="grid">
-              <div
-                class="grid gap-5 overflow-hidden sm:grid-cols-2 lg:grid-cols-4"
-              >
-                <div
-                  v-for="item in epreuve.apprentissages"
-                  :key="item.title"
-                  class="rounded-2xl border border-(--border-color) bg-(--bg-card) p-6"
-                >
-                  <div
-                    class="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-primary-50"
-                  >
-                    <i :class="item.icon" class="text-lg text-primary-600" />
-                  </div>
-                  <h3
-                    class="m-0 mb-2 text-[0.9375rem] font-bold text-(--text-primary)"
-                  >
-                    {{ item.title }}
-                  </h3>
-                  <p class="m-0 text-sm leading-[1.6] text-(--text-secondary)">
-                    {{ item.desc }}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </Transition>
+          <div class="flex h-full flex-col items-center gap-2 rounded-card border border-line bg-card px-3 py-6 text-center shadow-lift sm:py-7">
+            <span class="mb-1 grid size-11 place-items-center rounded-leaf bg-primary-50 text-primary-700 dark:bg-primary-950 dark:text-primary-300">
+              <i :class="[stat.icon, 'text-lg']" />
+            </span>
+            <span class="font-heading text-2xl font-extrabold leading-none text-ink sm:text-[1.75rem]">
+              {{ stat.value }}
+            </span>
+            <span class="text-xs font-medium text-muted sm:text-sm">{{ stat.label }}</span>
+          </div>
         </div>
       </div>
     </section>
 
-    <!-- ── Structure du programme ────────────────────────────── -->
-    <section class="section bg-(--bg-ground) py-20">
-      <div class="container">
-        <div
-          ref="progHeaderRef"
-          class="mx-auto max-w-2xl text-center transition-all duration-700"
-          :class="
-            progHeaderVisible
-              ? 'opacity-100 translate-y-0'
-              : 'opacity-0 translate-y-6'
-          "
-        >
-          <Tag value="Programme" severity="warning" class="rounded-full!" />
-          <h2
-            class="mt-4 font-display text-3xl font-extrabold tracking-tight text-(--text-primary) sm:text-4xl"
-          >
-            Structure du programme
-          </h2>
-          <p class="mt-3 text-base leading-relaxed text-(--text-secondary)">
-            Un programme complet pour vous préparer efficacement à l’épreuve.
-          </p>
-        </div>
+    <!-- Ce que vous apprendrez -->
+    <section class="px-4 py-20 sm:px-6 lg:px-8 lg:py-28">
+      <div class="mx-auto max-w-7xl">
+        <SectionHeading eyebrow="Objectifs" title="Ce que vous apprendrez" />
 
-        <div ref="progGridRef" class="mt-12">
-          <Transition name="p-collapsible">
-            <div v-if="progGridVisible" class="grid">
-              <div
-                class="grid gap-5 overflow-hidden sm:grid-cols-2 lg:grid-cols-4"
+        <div class="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <div
+            v-for="(item, i) in epreuve.apprentissages"
+            :key="item.title"
+            v-reveal="{ delay: i * 100 }"
+            class="h-full"
+          >
+            <article
+              class="group flex h-full flex-col rounded-card border border-line bg-card p-7 shadow-soft transition-all duration-300 ease-spring hover:-translate-y-1.5 hover:border-primary-200 hover:shadow-lift dark:hover:border-primary-800"
+            >
+              <span
+                class="flex size-12 items-center justify-center rounded-leaf bg-primary-50 text-primary-700 transition-all duration-300 ease-spring group-hover:brand-gradient group-hover:text-white group-hover:shadow-brand dark:bg-primary-950 dark:text-primary-300"
               >
-                <div
-                  v-for="item in epreuve.programme"
-                  :key="item.title"
-                  class="rounded-2xl border border-(--border-color) bg-(--bg-card) p-6 transition-all duration-250 hover:-translate-y-1 hover:border-primary-300 hover:shadow-[0_12px_32px_-4px_rgba(0,0,0,0.1)]"
-                >
-                  <div
-                    class="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-primary-50"
-                  >
-                    <i :class="item.icon" class="text-lg text-primary-600" />
-                  </div>
-                  <h3
-                    class="m-0 mb-2 text-[0.9375rem] font-bold text-(--text-primary)"
-                  >
-                    {{ item.title }}
-                  </h3>
-                  <p class="m-0 text-sm leading-[1.6] text-(--text-secondary)">
-                    {{ item.desc }}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </Transition>
+                <i :class="[item.icon, 'text-xl']" />
+              </span>
+              <h3 class="mt-5 font-heading text-lg font-bold text-ink">{{ item.title }}</h3>
+              <p class="mt-2 text-sm leading-relaxed text-muted">{{ item.desc }}</p>
+            </article>
+          </div>
         </div>
       </div>
     </section>
 
-    <!-- ── Tâches détaillées (EE & EO) ──────────────────────── -->
-    <section v-if="epreuve.taches" class="section bg-(--bg-section) py-20">
-      <div class="container">
-        <div
-          ref="tachesHeaderRef"
-          class="mx-auto max-w-2xl text-center transition-all duration-700"
-          :class="
-            tachesHeaderVisible
-              ? 'opacity-100 translate-y-0'
-              : 'opacity-0 translate-y-6'
-          "
-        >
-          <Tag value="Détail" severity="success" class="rounded-full!" />
-          <h2
-            class="mt-4 font-display text-3xl font-extrabold tracking-tight text-(--text-primary) sm:text-4xl"
-          >
-            Les {{ epreuve.taches.length }} tâches de l’épreuve
-          </h2>
-          <p class="mt-3 text-base leading-relaxed text-(--text-secondary)">
-            Découvrez en détail chaque tâche et ce qui est attendu.
-          </p>
-        </div>
+    <!-- Structure du programme -->
+    <section class="border-y border-line bg-card px-4 py-20 sm:px-6 lg:px-8 lg:py-28">
+      <div class="mx-auto max-w-7xl">
+        <SectionHeading
+          eyebrow="Programme"
+          title="Structure du programme"
+          subtitle="Un programme complet pour vous préparer efficacement à l'épreuve."
+        />
 
-        <div ref="tachesGridRef" class="mt-12">
-          <Transition name="p-collapsible">
-            <div v-if="tachesGridVisible" class="grid">
-              <div class="flex flex-col gap-5 overflow-hidden">
-                <div
-                  v-for="tache in epreuve.taches"
-                  :key="tache.numero"
-                  class="flex gap-6 rounded-2xl border border-(--border-color) bg-(--bg-card) p-7 transition-all duration-250 hover:border-primary-300 hover:shadow-[0_8px_24px_rgba(0,0,0,0.07)]"
-                >
-                  <div
-                    class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-primary text-lg font-extrabold text-white"
-                  >
-                    {{ tache.numero }}
-                  </div>
-                  <div class="flex-1">
-                    <div
-                      class="mb-3 flex flex-wrap items-start justify-between gap-4"
+        <div class="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <div
+            v-for="(item, i) in epreuve.programme"
+            :key="item.title"
+            v-reveal="{ delay: i * 100 }"
+            class="h-full"
+          >
+            <article
+              class="group relative flex h-full flex-col overflow-hidden rounded-card border border-line bg-canvas p-7 transition-all duration-300 ease-spring hover:-translate-y-1.5 hover:border-primary-200 hover:bg-card hover:shadow-lift dark:hover:border-primary-800"
+            >
+              <span class="absolute right-5 top-4 font-heading text-5xl font-extrabold text-gradient opacity-30 transition-opacity duration-300 group-hover:opacity-100">
+                {{ String(i + 1).padStart(2, "0") }}
+              </span>
+              <span class="flex size-12 items-center justify-center rounded-leaf bg-primary-50 text-primary-700 dark:bg-primary-950 dark:text-primary-300">
+                <i :class="[item.icon, 'text-xl']" />
+              </span>
+              <h3 class="mt-5 font-heading text-lg font-bold text-ink">{{ item.title }}</h3>
+              <p class="mt-2 text-sm leading-relaxed text-muted">{{ item.desc }}</p>
+            </article>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tâches détaillées (EE et EO) -->
+    <section v-if="epreuve.taches" class="px-4 py-20 sm:px-6 lg:px-8 lg:py-28">
+      <div class="mx-auto max-w-5xl">
+        <SectionHeading
+          eyebrow="Détail"
+          :title="`Les ${epreuve.taches.length} tâches de l'épreuve`"
+          subtitle="Découvrez en détail chaque tâche et ce qui est attendu."
+        />
+
+        <div class="mt-14 flex flex-col gap-6">
+          <div
+            v-for="(tache, i) in epreuve.taches"
+            :key="tache.numero"
+            v-reveal="{ from: i % 2 === 0 ? 'left' : 'right' }"
+          >
+            <article
+              class="flex flex-col gap-6 rounded-[2rem_0.5rem] border border-line bg-card p-7 shadow-soft transition-all duration-300 ease-spring hover:border-primary-200 hover:shadow-lift sm:flex-row sm:p-8 dark:hover:border-primary-800"
+            >
+              <span
+                class="brand-gradient grid size-14 shrink-0 place-items-center rounded-leaf font-heading text-xl font-extrabold text-white shadow-brand"
+              >
+                {{ tache.numero }}
+              </span>
+
+              <div class="flex-1">
+                <h3 class="font-heading text-xl font-bold text-ink">{{ tache.title }}</h3>
+
+                <div class="mt-3 flex flex-wrap gap-2">
+                  <span class="inline-flex items-center gap-1.5 rounded-full bg-primary-50 px-3 py-1 text-xs font-semibold text-primary-700 dark:bg-primary-950 dark:text-primary-300">
+                    <i class="pi pi-tag text-[0.7rem]" />
+                    {{ tache.niveau }}
+                  </span>
+                  <span class="inline-flex items-center gap-1.5 rounded-full bg-card-2 px-3 py-1 text-xs font-medium text-muted">
+                    <i class="pi pi-align-left text-[0.7rem]" />
+                    {{ tache.longueur }}
+                  </span>
+                  <span class="inline-flex items-center gap-1.5 rounded-full bg-card-2 px-3 py-1 text-xs font-medium text-muted">
+                    <i class="pi pi-clock text-[0.7rem]" />
+                    {{ tache.temps }}
+                  </span>
+                </div>
+
+                <p class="mt-4 leading-relaxed text-muted">{{ tache.desc }}</p>
+
+                <div class="mt-5 rounded-2xl bg-canvas p-5">
+                  <p class="text-xs font-semibold uppercase tracking-widest text-faint">Exemples</p>
+                  <ul class="mt-3 flex flex-col gap-2">
+                    <li
+                      v-for="ex in tache.exemples"
+                      :key="ex"
+                      class="flex items-start gap-2.5 text-sm text-muted"
                     >
-                      <h3 class="m-0 text-base font-bold text-(--text-primary)">
-                        {{ tache.title }}
-                      </h3>
-                      <div
-                        class="flex flex-wrap gap-3.5 text-[0.8125rem] text-(--text-tertiary)"
-                      >
-                        <span
-                          ><i class="pi pi-tag mr-1 text-xs" />
-                          {{ tache.niveau }}</span
-                        >
-                        <span
-                          ><i class="pi pi-align-left mr-1 text-xs" />
-                          {{ tache.longueur }}</span
-                        >
-                        <span
-                          ><i class="pi pi-clock mr-1 text-xs" />
-                          {{ tache.temps }}</span
-                        >
-                      </div>
-                    </div>
-                    <p
-                      class="m-0 mb-4 text-[0.9375rem] leading-[1.7] text-(--text-secondary)"
-                    >
-                      {{ tache.desc }}
-                    </p>
-                    <div>
-                      <p
-                        class="m-0 mb-2 text-[0.8125rem] font-bold uppercase tracking-wide text-(--text-secondary)"
-                      >
-                        Exemples :
-                      </p>
-                      <ul class="m-0 flex list-none flex-col gap-1.5 p-0">
-                        <li
-                          v-for="ex in tache.exemples"
-                          :key="ex"
-                          class="relative pl-4 text-sm text-(--text-secondary)"
-                        >
-                          <span class="absolute left-0 text-primary-500"
-                            >→</span
-                          >
-                          {{ ex }}
-                        </li>
-                      </ul>
-                    </div>
-                  </div>
+                      <i class="pi pi-arrow-right mt-1 text-[0.7rem] text-primary" />
+                      <span>{{ ex }}</span>
+                    </li>
+                  </ul>
                 </div>
               </div>
-            </div>
-          </Transition>
+            </article>
+          </div>
         </div>
       </div>
     </section>
 
-    <!-- ── CTA Final ─────────────────────────────────────────── -->
-    <section class="section bg-(--bg-ground) py-20">
-      <div class="container">
-        <div
-          ref="ctaRef"
-          class="mx-auto max-w-160 rounded-3xl border border-(--border-color) bg-(--bg-card) px-6 py-12 text-center transition-all duration-700"
-          :class="
-            ctaVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
-          "
-        >
-          <h2
-            class="m-0 mb-3 text-[clamp(1.375rem,3vw,1.875rem)] font-extrabold text-(--text-primary)"
-          >
-            Prêt à maîtriser l’{{ epreuve.title.toLowerCase() }} ?
+    <!-- CTA final -->
+    <section class="px-4 pb-24 pt-8 sm:px-6 lg:px-8">
+      <div v-reveal="{ from: 'zoom' }" class="mx-auto max-w-5xl">
+        <div class="featured-panel rounded-[2.5rem_0.5rem] px-8 py-14 text-center shadow-brand sm:px-16">
+          <h2 class="font-heading text-[clamp(1.5rem,3vw,2.25rem)] font-extrabold tracking-tight text-white">
+            Prêt à vous lancer en {{ epreuve.title.toLowerCase() }} ?
           </h2>
-          <p class="m-0 mb-8 text-base leading-[1.6] text-(--text-secondary)">
-            Rejoignez des milliers de candidats qui se préparent avec Lumina
-            TCF.
+          <p class="mx-auto mt-4 max-w-xl text-lg text-white/80">
+            Rejoignez des milliers de candidats qui se préparent avec {{ site.name }}.
           </p>
-          <div class="flex flex-wrap justify-center gap-3.5">
-            <NuxtLink :to="epreuve.ctaFinal.to">
-              <Button
-                :label="epreuve.ctaFinal.label"
-                :icon="epreuve.ctaFinal.icon"
-                size="large"
-                class="bg-gradient-primary! border-none! rounded-xl! font-bold!"
-              />
-            </NuxtLink>
-            <NuxtLink to="/tarifs">
-              <Button
-                label="Voir les prix"
-                icon="pi pi-dollar"
-                size="large"
-                outlined
-                class="border-primary-600! text-primary-600! rounded-xl! font-semibold!"
-              />
-            </NuxtLink>
+          <div class="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <AppCta
+              :to="epreuve.ctaFinal.to"
+              :label="epreuve.ctaFinal.label"
+              :icon="epreuve.ctaFinal.icon"
+              icon-pos="left"
+              variant="light"
+            />
+            <AppCta to="/tarifs" label="Voir les prix" icon="pi pi-arrow-right" variant="glass" />
           </div>
         </div>
       </div>
@@ -294,27 +213,29 @@
   </div>
 
   <!-- 404 -->
-  <div v-else class="container py-20 text-center">
-    <h2 class="text-(--text-primary)">Épreuve introuvable.</h2>
-    <NuxtLink to="/">
-      <Button
-        label="Retour à l’accueil"
-        icon="pi pi-home"
-        class="bg-gradient-primary! border-none! rounded-xl! font-semibold!"
-      />
-    </NuxtLink>
-  </div>
+  <section v-else class="featured-panel flex min-h-[70vh] items-center px-4 pb-24 pt-32 sm:px-6 lg:px-8">
+    <div class="relative mx-auto flex max-w-xl flex-col items-center text-center">
+      <span class="grid size-14 place-items-center rounded-[1.2rem_0.4rem] bg-accent-400 text-accent-950 shadow-soft">
+        <i class="pi pi-search text-xl" />
+      </span>
+      <h1 class="mt-6 font-heading text-3xl font-extrabold text-white sm:text-4xl">Épreuve introuvable</h1>
+      <p class="mt-3 text-white/80">Cette épreuve n'existe pas ou a été déplacée.</p>
+      <AppCta to="/" label="Retour à l'accueil" icon="pi pi-home" icon-pos="left" variant="light" class="mt-8" />
+    </div>
+  </section>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from "vue";
 import { useEpreuve } from "~/composables/useEpreuve";
+import { site } from "~/config/site";
+
+definePageMeta({ navbarOverlay: true });
 
 const route = useRoute();
 const { epreuve } = useEpreuve(route.params.slug);
 
 useHead({
-  title: epreuve ? `${epreuve.title} TCF Canada | Lumina` : "Épreuve | Lumina",
+  title: epreuve ? `${epreuve.title} TCF Canada | ${site.name}` : `Épreuve | ${site.name}`,
   meta: [
     {
       name: "description",
@@ -322,57 +243,4 @@ useHead({
     },
   ],
 });
-
-const formatRef = ref(null);
-const apprHeaderRef = ref(null);
-const apprGridRef = ref(null);
-const progHeaderRef = ref(null);
-const progGridRef = ref(null);
-const tachesHeaderRef = ref(null);
-const tachesGridRef = ref(null);
-const ctaRef = ref(null);
-
-const formatVisible = ref(false);
-const apprHeaderVisible = ref(false);
-const apprGridVisible = ref(false);
-const progHeaderVisible = ref(false);
-const progGridVisible = ref(false);
-const tachesHeaderVisible = ref(false);
-const tachesGridVisible = ref(false);
-const ctaVisible = ref(false);
-
-const visibilityMap = [
-  [formatRef, formatVisible],
-  [apprHeaderRef, apprHeaderVisible],
-  [apprGridRef, apprGridVisible],
-  [progHeaderRef, progHeaderVisible],
-  [progGridRef, progGridVisible],
-  [tachesHeaderRef, tachesHeaderVisible],
-  [tachesGridRef, tachesGridVisible],
-  [ctaRef, ctaVisible],
-];
-
-let observer;
-
-onMounted(() => {
-  observer = new IntersectionObserver(
-    (entries) => {
-      entries.forEach((entry) => {
-        if (!entry.isIntersecting) return;
-        const match = visibilityMap.find(
-          ([elRef]) => elRef.value === entry.target,
-        );
-        if (match) match[1].value = true;
-        observer.unobserve(entry.target);
-      });
-    },
-    { threshold: 0.15 },
-  );
-
-  visibilityMap.forEach(([elRef]) => {
-    if (elRef.value) observer.observe(elRef.value);
-  });
-});
-
-onUnmounted(() => observer?.disconnect());
 </script>

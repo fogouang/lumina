@@ -1,142 +1,118 @@
 <template>
-  <div class="min-h-screen bg-(--bg-ground)">
+  <div class="min-h-screen bg-canvas">
     <!-- Hero -->
-    <div
-      class="relative bg-linear-to-br from-primary-700 to-primary-900 py-14 text-center overflow-hidden"
-    >
+    <section class="featured-panel px-4 pb-36 pt-32 text-center sm:px-6 lg:pt-40">
       <div
-        class="absolute inset-0 opacity-10"
-        style="
-          background-image:
-            linear-gradient(to right, white 1px, transparent 1px),
-            linear-gradient(to bottom, white 1px, transparent 1px);
-          background-size: 24px 24px;
-        "
+        class="bg-grid animate-grid-drift pointer-events-none absolute inset-0"
+        style="--app-line: rgba(255, 255, 255, 0.06)"
       />
-      <div class="relative z-10 container mx-auto px-4">
-        <h1 class="text-3xl lg:text-4xl font-extrabold text-white mb-3">
-          Expression Orale
-        </h1>
-        <p class="text-white/80 text-base max-w-xl mx-auto leading-relaxed">
-          Entraînez-vous sur les vrais sujets du mois. Préparez vos Tâche 2 et
-          Tâche 3 en enregistrant vos réponses, puis réécoutez-vous pour évaluer
-          vos performances.
-        </p>
-      </div>
-    </div>
-
-    <div class="container mx-auto px-4 py-10 max-w-5xl">
-      <!-- Loading -->
-      <div
-        v-if="loading"
-        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
-      >
-        <Skeleton v-for="i in 3" :key="i" height="220px" border-radius="16px" />
-      </div>
-
-      <!-- Empty -->
-      <div
-        v-else-if="!sessions.length"
-        class="text-center py-16 bg-(--bg-card) border border-(--border-color) rounded-2xl"
-      >
-        <i
-          class="pi pi-microphone text-5xl text-(--text-tertiary) mb-4 block opacity-30"
-        />
-        <h2 class="text-xl font-bold text-(--text-primary) mb-2">
-          Aucune session disponible
-        </h2>
-        <p class="text-(--text-secondary)">
-          Les sujets du mois apparaîtront ici dès leur publication.
-        </p>
-      </div>
-
-      <!-- Sessions grid -->
-      <div
-        v-else
-        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mt-4"
-      >
-        <div
-          v-for="session in sessions"
-          :key="session.id"
-          class="bg-(--bg-card) border border-(--border-color) rounded-2xl overflow-hidden hover:shadow-lg transition-all duration-200 hover:-translate-y-0.5 flex flex-col"
+      <div class="relative mx-auto flex max-w-2xl flex-col items-center">
+        <span
+          v-reveal
+          class="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-white backdrop-blur-md"
         >
-          <!-- Card header -->
-          <div
-            class="bg-linear-to-br from-primary-600 to-primary-800 px-5 py-6"
-          >
-            <div class="flex items-center justify-between mb-3">
-              <Tag
-                :value="session.is_active ? 'Actif' : 'Archivé'"
-                :severity="session.is_active ? 'success' : 'secondary'"
-              />
-              <i class="pi pi-microphone text-white/60 text-lg" />
-            </div>
-            <h3 class="text-xl font-extrabold text-white mb-1">
-              {{ session.name }}
-            </h3>
-            <p class="text-white/70 text-sm">
-              {{ formatMonth(session.month) }}
-            </p>
-          </div>
+          <i class="pi pi-microphone text-[0.7rem] text-accent-400" />
+          Sujets d'actualité
+        </span>
+        <h1
+          v-reveal="{ delay: 100 }"
+          class="mt-6 font-heading text-[clamp(2rem,4.5vw,3.25rem)] font-extrabold leading-[1.1] tracking-tight text-white"
+        >
+          Expression <span class="text-accent-400">orale</span>
+        </h1>
+        <p v-reveal="{ delay: 200 }" class="mt-5 text-lg leading-relaxed text-white/80">
+          Entraînez-vous sur les vrais sujets du mois. Préparez vos tâches 2 et 3 en enregistrant vos
+          réponses, puis réécoutez-vous pour évaluer vos performances.
+        </p>
+      </div>
+    </section>
 
-          <!-- Card body -->
-          <div class="px-5 py-4 flex-1 flex flex-col gap-3">
-            <!-- Tâche 2 count -->
-            <div
-              class="flex items-center gap-2 text-sm text-(--text-secondary)"
-            >
-              <i class="pi pi-comments text-primary-400" />
-              <span>
-                <template v-if="loadingCounts[session.id]">
-                  <i class="pi pi-spin pi-spinner text-xs" />
-                </template>
-                <template v-else>
-                  {{ taskCounts[session.id]?.task2 ?? 0 }} sujet{{
-                    (taskCounts[session.id]?.task2 ?? 0) > 1 ? "s" : ""
-                  }}
-                  Tâche 2
-                </template>
-              </span>
-            </div>
-            <!-- Tâche 3 count -->
-            <div
-              class="flex items-center gap-2 text-sm text-(--text-secondary)"
-            >
-              <i class="pi pi-users text-primary-400" />
-              <span>
-                <template v-if="loadingCounts[session.id]">
-                  <i class="pi pi-spin pi-spinner text-xs" />
-                </template>
-                <template v-else>
-                  {{ taskCounts[session.id]?.task3 ?? 0 }} sujet{{
-                    (taskCounts[session.id]?.task3 ?? 0) > 1 ? "s" : ""
-                  }}
-                  Tâche 3
-                </template>
-              </span>
-            </div>
-            <!-- Durée -->
-            <div
-              class="flex items-center gap-2 text-sm text-(--text-secondary)"
-            >
-              <i class="pi pi-clock text-primary-400" />
-              <span>~ 4 minutes par passage</span>
-            </div>
+    <!-- Sessions -->
+    <section class="relative z-10 -mt-24 px-4 pb-20 sm:px-6 lg:px-8">
+      <div class="mx-auto max-w-6xl">
+        <!-- Chargement -->
+        <div v-if="loading" class="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+          <Skeleton v-for="i in 3" :key="i" height="18rem" border-radius="2rem 0.5rem" />
+        </div>
 
-            <!-- CTA -->
-            <div class="mt-auto pt-2">
-              <Button
-                label="Commencer"
-                icon="pi pi-play"
-                class="w-full"
-                :disabled="!session.is_active"
-                @click="goToSession(session.id)"
-              />
-            </div>
+        <!-- Vide -->
+        <div
+          v-else-if="!sessions.length"
+          class="mx-auto flex max-w-lg flex-col items-center gap-3 rounded-card border border-line bg-card p-12 text-center shadow-lift"
+        >
+          <span class="grid size-14 place-items-center rounded-leaf bg-card-2 text-faint">
+            <i class="pi pi-microphone text-xl" />
+          </span>
+          <h2 class="font-heading text-xl font-bold text-ink">Aucune session disponible</h2>
+          <p class="text-muted">Les sujets du mois apparaîtront ici dès leur publication.</p>
+        </div>
+
+        <!-- Grille -->
+        <div v-else class="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+          <div v-for="(session, i) in sessions" :key="session.id" v-reveal="{ delay: 200 + i * 90 }" class="h-full">
+            <article
+              class="flex h-full flex-col overflow-hidden rounded-[2rem_0.5rem] border border-line bg-card shadow-lift transition-all duration-300 ease-spring hover:-translate-y-1.5"
+            >
+              <!-- En-tête -->
+              <div class="featured-panel px-6 py-6 text-white">
+                <div class="flex items-center justify-between">
+                  <span
+                    class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-bold"
+                    :class="session.is_active ? 'bg-green-400/20 text-green-200' : 'bg-white/15 text-white/70'"
+                  >
+                    <span class="size-1.5 rounded-full" :class="session.is_active ? 'bg-green-300' : 'bg-white/50'" />
+                    {{ session.is_active ? "Actif" : "Archivé" }}
+                  </span>
+                  <i class="pi pi-microphone text-lg text-white/50" />
+                </div>
+                <h3 class="mt-4 font-heading text-xl font-extrabold">{{ session.name }}</h3>
+                <p class="mt-1 text-sm text-white/70">{{ formatMonth(session.month) }}</p>
+              </div>
+
+              <!-- Contenu -->
+              <div class="flex flex-1 flex-col gap-3 px-6 py-5">
+                <div class="flex items-center gap-3 text-sm text-muted">
+                  <span class="grid size-8 place-items-center rounded-lg bg-primary-50 text-primary-700 dark:bg-primary-950 dark:text-primary-300">
+                    <i class="pi pi-comments text-xs" />
+                  </span>
+                  <i v-if="loadingCounts[session.id]" class="pi pi-spin pi-spinner text-xs" />
+                  <span v-else>
+                    <strong class="font-semibold text-ink">{{ taskCounts[session.id]?.task2 ?? 0 }}</strong>
+                    sujet{{ (taskCounts[session.id]?.task2 ?? 0) > 1 ? "s" : "" }} de tâche 2
+                  </span>
+                </div>
+                <div class="flex items-center gap-3 text-sm text-muted">
+                  <span class="grid size-8 place-items-center rounded-lg bg-primary-50 text-primary-700 dark:bg-primary-950 dark:text-primary-300">
+                    <i class="pi pi-users text-xs" />
+                  </span>
+                  <i v-if="loadingCounts[session.id]" class="pi pi-spin pi-spinner text-xs" />
+                  <span v-else>
+                    <strong class="font-semibold text-ink">{{ taskCounts[session.id]?.task3 ?? 0 }}</strong>
+                    sujet{{ (taskCounts[session.id]?.task3 ?? 0) > 1 ? "s" : "" }} de tâche 3
+                  </span>
+                </div>
+                <div class="flex items-center gap-3 text-sm text-muted">
+                  <span class="grid size-8 place-items-center rounded-lg bg-card-2 text-faint">
+                    <i class="pi pi-clock text-xs" />
+                  </span>
+                  Environ 4 minutes par passage
+                </div>
+
+                <AppButton
+                  label="Commencer"
+                  icon="pi pi-play"
+                  variant="gradient"
+                  block
+                  class="mt-auto"
+                  :disabled="!session.is_active"
+                  @click="goToSession(session.id)"
+                />
+              </div>
+            </article>
           </div>
         </div>
       </div>
-    </div>
+    </section>
   </div>
 </template>
 

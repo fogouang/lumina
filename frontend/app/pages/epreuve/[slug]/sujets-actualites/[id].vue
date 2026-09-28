@@ -1,262 +1,172 @@
 <template>
-  <div class="min-h-screen bg-(--bg-ground)">
+  <div class="min-h-screen bg-canvas">
     <!-- Hero -->
-    <div
-      class="relative bg-linear-to-br from-primary-700 to-primary-900 py-12 overflow-hidden"
-    >
+    <section class="featured-panel px-4 pb-16 pt-32 sm:px-6 lg:px-8 lg:pt-40">
       <div
-        class="absolute inset-0 opacity-10"
-        style="
-          background-image:
-            linear-gradient(to right, white 1px, transparent 1px),
-            linear-gradient(to bottom, white 1px, transparent 1px);
-          background-size: 24px 24px;
-        "
+        class="bg-grid animate-grid-drift pointer-events-none absolute inset-0"
+        style="--app-line: rgba(255, 255, 255, 0.06)"
       />
-      <div class="relative z-10 container mx-auto px-4 max-w-5xl">
-        <!-- Breadcrumb -->
-        <nav class="flex items-center gap-2 text-white/60 text-sm mb-6">
+      <div class="relative mx-auto max-w-5xl">
+        <nav aria-label="Fil d'Ariane" class="flex items-center gap-2 text-sm text-white/70">
           <NuxtLink
             to="/epreuve/expression-orale/sujets-actualites"
-            class="hover:text-white transition-colors flex items-center gap-1"
+            class="inline-flex items-center gap-1.5 transition-colors hover:text-white"
           >
             <i class="pi pi-arrow-left text-xs" />
-            Expression Orale
+            Expression orale
           </NuxtLink>
-          <i class="pi pi-angle-right text-xs" />
-          <span class="text-white/90 font-medium">{{
-            session ? session.name : "Chargement…"
-          }}</span>
+          <i class="pi pi-angle-right text-xs text-white/40" />
+          <span class="font-semibold text-white">{{ session ? session.name : "Chargement…" }}</span>
         </nav>
 
-        <div class="flex items-start justify-between gap-4 flex-wrap">
-          <div>
-            <div class="flex items-center gap-3 mb-2">
-              <i class="pi pi-microphone text-white/60 text-2xl" />
-              <h1 class="text-3xl font-extrabold text-white">
-                {{ session?.name ?? "…" }}
-              </h1>
+        <div class="mt-6 flex flex-wrap items-start justify-between gap-4">
+          <div class="flex items-center gap-4">
+            <span class="grid size-14 place-items-center rounded-[1.2rem_0.4rem] bg-accent-400 text-accent-950 shadow-soft">
+              <i class="pi pi-microphone text-xl" />
+            </span>
+            <div>
+              <h1 class="font-heading text-3xl font-extrabold tracking-tight text-white">{{ session?.name ?? "…" }}</h1>
+              <p class="mt-1 text-sm text-white/70">
+                {{ session ? formatMonth(session.month) : "" }} · 3 tâches · environ 12 minutes
+              </p>
             </div>
-            <p class="text-white/70 text-sm">
-              {{ session ? formatMonth(session.month) : "" }} · 3 tâches · ~18
-              minutes
-            </p>
           </div>
-          <Tag
+          <span
             v-if="session"
-            :value="session.is_active ? 'Actif' : 'Archivé'"
-            :severity="session.is_active ? 'success' : 'secondary'"
-            class="mt-1"
-          />
+            class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold"
+            :class="session.is_active ? 'bg-green-400/20 text-green-200' : 'bg-white/15 text-white/70'"
+          >
+            <span class="size-1.5 rounded-full" :class="session.is_active ? 'bg-green-300' : 'bg-white/50'" />
+            {{ session.is_active ? "Actif" : "Archivé" }}
+          </span>
         </div>
       </div>
-    </div>
+    </section>
 
-    <!-- Content -->
-    <div class="container mx-auto px-4 py-10 max-w-5xl">
-      <!-- Global loading -->
+    <!-- Contenu -->
+    <div class="mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:px-8">
+      <!-- Chargement -->
       <div v-if="loading" class="flex flex-col gap-6">
-        <Skeleton height="180px" border-radius="16px" />
-        <Skeleton height="240px" border-radius="16px" />
-        <Skeleton height="240px" border-radius="16px" />
+        <Skeleton height="12rem" border-radius="1rem" />
+        <Skeleton height="15rem" border-radius="1rem" />
+        <Skeleton height="15rem" border-radius="1rem" />
       </div>
 
-      <div v-else class="flex flex-col gap-8">
-        <!-- ═══════════════════════════════════════════
-             TÂCHE 1 — Entretien dirigé (statique)
-        ═══════════════════════════════════════════ -->
-        <section>
-          <div class="flex items-center gap-3 mb-5 mt-8">
-            <div
-              class="w-10 h-10 rounded-xl bg-linear-to-br from-red-600 to-red-800 flex items-center justify-center shadow-sm shrink-0"
-            >
-              <span class="text-white font-extrabold text-base leading-none"
-                >1</span
-              >
-            </div>
+      <div v-else class="flex flex-col gap-14">
+        <!-- Tâche 1 : entretien dirigé -->
+        <section v-reveal>
+          <div class="mb-5 flex items-center gap-4">
+            <span class="brand-gradient grid size-12 shrink-0 place-items-center rounded-leaf font-heading text-lg font-extrabold text-white shadow-brand">1</span>
             <div>
-              <h2 class="text-lg font-bold text-(--text-primary) leading-tight">
-                Tâche 1 — Entretien dirigé
-              </h2>
-              <p
-                class="text-(--text-secondary) text-sm flex items-center gap-1.5 mt-0.5"
-              >
+              <h2 class="font-heading text-xl font-bold text-ink">Tâche 1 : entretien dirigé</h2>
+              <p class="mt-0.5 inline-flex items-center gap-1.5 text-sm text-muted">
                 <i class="pi pi-clock text-xs" />
-                2 minutes · Sans préparation
+                2 minutes · sans préparation
               </p>
             </div>
           </div>
 
-          <div
-            class="bg-(--bg-card) border border-(--border-color) rounded-2xl overflow-hidden"
-          >
+          <div class="overflow-hidden rounded-[2rem_0.5rem] border border-line bg-card shadow-soft">
             <!-- Consigne -->
-            <div class="px-6 py-5 border-b border-(--border-color)">
-              <p
-                class="text-xs font-semibold text-(--text-tertiary) uppercase tracking-wide mb-2"
-              >
-                Consigne
-              </p>
-              <p class="text-(--text-primary) leading-relaxed">
-                Parlez de vous naturellement. L'examinateur engage une
-                conversation avec vous. Il peut vous poser des questions sur
-                votre vie, vos goûts, vos projets.
-                <span class="text-(--text-secondary)">
-                  Ne récitez pas, soyez naturel comme dans une vraie
-                  conversation.</span
-                >
+            <div class="border-b border-line px-6 py-5">
+              <p class="mb-2 text-[11px] font-semibold uppercase tracking-wider text-faint">Consigne</p>
+              <p class="leading-relaxed text-ink">
+                Parlez de vous naturellement. L'examinateur engage une conversation avec vous. Il peut vous
+                poser des questions sur votre vie, vos goûts, vos projets.
+                <span class="text-muted">Ne récitez pas, soyez naturel comme dans une vraie conversation.</span>
               </p>
             </div>
 
-            <!-- Structure recommandée -->
-            <div class="px-6 py-5 border-b border-(--border-color)">
-              <p
-                class="text-xs font-semibold text-(--text-tertiary) uppercase tracking-wide mb-4"
-              >
-                Structure recommandée
-              </p>
-              <div class="flex flex-col gap-3">
-                <div
-                  v-for="step in task1Steps"
-                  :key="step.num"
-                  class="flex items-start gap-3"
-                >
-                  <span
-                    class="w-6 h-6 rounded-full bg-primary-100 text-primary-700 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5"
-                  >
+            <!-- Structure -->
+            <div class="border-b border-line px-6 py-5">
+              <p class="mb-4 text-[11px] font-semibold uppercase tracking-wider text-faint">Structure recommandée</p>
+              <div class="grid gap-4 md:grid-cols-2">
+                <div v-for="step in task1Steps" :key="step.num" class="flex items-start gap-3">
+                  <span class="grid size-7 shrink-0 place-items-center rounded-[0.7rem_0.2rem] bg-primary-50 text-xs font-bold text-primary-700 dark:bg-primary-950 dark:text-primary-300">
                     {{ step.num }}
                   </span>
                   <div>
-                    <p class="font-semibold text-(--text-primary) text-sm">
-                      {{ step.title }}
-                    </p>
-                    <p class="text-(--text-secondary) text-sm leading-relaxed">
-                      {{ step.desc }}
-                    </p>
+                    <p class="text-sm font-semibold text-ink">{{ step.title }}</p>
+                    <p class="mt-0.5 text-sm leading-relaxed text-muted">{{ step.desc }}</p>
                   </div>
                 </div>
               </div>
             </div>
 
             <!-- Phrases d'amorce -->
-            <div
-              class="px-6 py-5 border-b border-(--border-color) bg-primary-50/40 dark:bg-primary-950/20"
-            >
-              <p
-                class="text-xs font-semibold text-(--text-tertiary) uppercase tracking-wide mb-3"
-              >
-                Phrases d'amorce
-              </p>
+            <div class="border-b border-line bg-primary-50/50 px-6 py-5 dark:bg-primary-950/30">
+              <p class="mb-3 text-[11px] font-semibold uppercase tracking-wider text-faint">Phrases d'amorce</p>
               <div class="flex flex-col gap-2">
-                <div
-                  v-for="phrase in task1Phrases"
-                  :key="phrase"
-                  class="flex items-start gap-2"
-                >
-                  <i
-                    class="pi pi-angle-right text-primary-500 text-xs mt-1 shrink-0"
-                  />
-                  <p class="text-(--text-primary) text-sm italic">
-                    {{ phrase }}
-                  </p>
+                <p v-for="phrase in task1Phrases" :key="phrase" class="flex items-start gap-2 text-sm italic text-ink">
+                  <i class="pi pi-angle-right mt-1 shrink-0 text-xs text-primary" />
+                  {{ phrase }}
+                </p>
+              </div>
+            </div>
+
+            <div class="grid border-b border-line md:grid-cols-2">
+              <!-- Thèmes -->
+              <div class="border-b border-line px-6 py-5 md:border-b-0 md:border-r">
+                <p class="mb-3 text-[11px] font-semibold uppercase tracking-wider text-faint">
+                  Thèmes que l'examinateur peut aborder
+                </p>
+                <div class="flex flex-wrap gap-2">
+                  <span
+                    v-for="theme in task1Themes"
+                    :key="theme"
+                    class="rounded-full bg-card-2 px-3 py-1 text-xs font-medium text-muted"
+                  >
+                    {{ theme }}
+                  </span>
                 </div>
               </div>
-            </div>
 
-            <!-- Thèmes possibles -->
-            <div class="px-6 py-5 border-b border-(--border-color)">
-              <p
-                class="text-xs font-semibold text-(--text-tertiary) uppercase tracking-wide mb-3"
-              >
-                Thèmes que l'examinateur peut aborder
-              </p>
-              <div class="flex flex-wrap gap-2">
-                <Tag
-                  v-for="theme in task1Themes"
-                  :key="theme"
-                  :value="theme"
-                  severity="secondary"
-                  class="text-xs"
-                />
+              <!-- Questions -->
+              <div class="px-6 py-5">
+                <p class="mb-3 text-[11px] font-semibold uppercase tracking-wider text-faint">
+                  Questions types de l'examinateur
+                </p>
+                <ul class="flex flex-col gap-2">
+                  <li v-for="q in task1Questions" :key="q" class="flex items-start gap-2 text-sm text-muted">
+                    <i class="pi pi-question-circle mt-0.5 shrink-0 text-xs text-primary" />
+                    {{ q }}
+                  </li>
+                </ul>
               </div>
-            </div>
-
-            <!-- Questions types -->
-            <div class="px-6 py-5 border-b border-(--border-color)">
-              <p
-                class="text-xs font-semibold text-(--text-tertiary) uppercase tracking-wide mb-3"
-              >
-                Questions types de l'examinateur
-              </p>
-              <ul class="flex flex-col gap-2">
-                <li
-                  v-for="q in task1Questions"
-                  :key="q"
-                  class="flex items-start gap-2 text-sm text-(--text-secondary)"
-                >
-                  <i
-                    class="pi pi-question-circle text-primary-400 text-xs mt-0.5 shrink-0"
-                  />
-                  {{ q }}
-                </li>
-              </ul>
             </div>
 
             <!-- Conseil -->
-            <div
-              class="px-6 py-4 bg-amber-50/60 dark:bg-amber-950/20 flex items-start gap-3"
-            >
-              <i
-                class="pi pi-exclamation-triangle text-amber-500 text-sm mt-0.5 shrink-0"
-              />
-              <p class="text-sm text-(--text-secondary) leading-relaxed">
-                Visez
-                <strong class="text-(--text-primary)"
-                  >minimum 1 minute 50 secondes</strong
-                >. En deçà, vous perdez des points. Terminez par
-                <span class="italic text-(--text-primary)"
-                  >"Je vous remercie."</span
-                >
+            <div class="flex items-start gap-3 bg-accent-50 px-6 py-4 dark:bg-accent-950">
+              <i class="pi pi-exclamation-triangle mt-0.5 shrink-0 text-sm text-accent-700 dark:text-accent-300" />
+              <p class="text-sm leading-relaxed text-accent-900 dark:text-accent-200">
+                Visez <strong class="font-bold">au minimum 1 minute 50 secondes</strong>. En deçà, vous perdez
+                des points. Terminez par <em>« Je vous remercie. »</em>
               </p>
             </div>
           </div>
         </section>
 
-        <!-- ═══════════════════════════════════════════
-             TÂCHE 2 — Monologue suivi (dynamique)
-        ═══════════════════════════════════════════ -->
-        <section>
-          <div class="flex items-center gap-3 mb-5 ">
-            <div
-              class="w-10 h-10 rounded-xl bg-linear-to-br from-primary-600 to-primary-800 flex items-center justify-center shadow-sm shrink-0"
-            >
-              <span class="text-white font-extrabold text-base leading-none"
-                >2</span
-              >
-            </div>
+        <!-- Tâche 2 -->
+        <section v-reveal>
+          <div class="mb-5 flex items-center gap-4">
+            <span class="brand-gradient grid size-12 shrink-0 place-items-center rounded-leaf font-heading text-lg font-extrabold text-white shadow-brand">2</span>
             <div>
-              <h2 class="text-lg font-bold text-(--text-primary) leading-tight">
-                Tâche 2 - Monologue suivi
-              </h2>
-              <p
-                class="text-(--text-secondary) text-sm flex items-center gap-1.5 mt-0.5"
-              >
+              <h2 class="font-heading text-xl font-bold text-ink">Tâche 2 : exercice en interaction</h2>
+              <p class="mt-0.5 inline-flex items-center gap-1.5 text-sm text-muted">
                 <i class="pi pi-clock text-xs" />
-                3 minutes · Préparation 1 minute
+                3 min 30 · préparation 2 minutes
               </p>
             </div>
           </div>
 
           <div
             v-if="!task2List.length"
-            class="bg-(--bg-card) border border-(--border-color) rounded-2xl p-10 text-center"
+            class="flex flex-col items-center gap-3 rounded-card border border-line bg-card p-10 text-center"
           >
-            <i
-              class="pi pi-inbox text-3xl text-(--text-tertiary) opacity-30 mb-3 block"
-            />
-            <p class="text-(--text-secondary) text-sm">
-              Aucun sujet Tâche 2 pour cette session.
-            </p>
+            <span class="grid size-12 place-items-center rounded-leaf bg-card-2 text-faint">
+              <i class="pi pi-inbox text-lg" />
+            </span>
+            <p class="text-sm text-muted">Aucun sujet de tâche 2 pour cette session.</p>
           </div>
 
           <div v-else class="flex flex-col gap-4">
@@ -271,41 +181,27 @@
           </div>
         </section>
 
-        <!-- ═══════════════════════════════════════════
-             TÂCHE 3 — Exercice en interaction (dynamique)
-        ═══════════════════════════════════════════ -->
-        <section class="mb-16">
-          <div class="flex items-center gap-3 mb-5">
-            <div
-              class="w-10 h-10 rounded-xl bg-linear-to-br from-teal-600 to-teal-800 flex items-center justify-center shadow-sm shrink-0"
-            >
-              <span class="text-white font-extrabold text-base leading-none"
-                >3</span
-              >
-            </div>
+        <!-- Tâche 3 -->
+        <section v-reveal class="mb-8">
+          <div class="mb-5 flex items-center gap-4">
+            <span class="brand-gradient grid size-12 shrink-0 place-items-center rounded-leaf font-heading text-lg font-extrabold text-white shadow-brand">3</span>
             <div>
-              <h2 class="text-lg font-bold text-(--text-primary) leading-tight">
-                Tâche 3 - Exercice en interaction
-              </h2>
-              <p
-                class="text-(--text-secondary) text-sm flex items-center gap-1.5 mt-0.5"
-              >
+              <h2 class="font-heading text-xl font-bold text-ink">Tâche 3 : expression d'un point de vue</h2>
+              <p class="mt-0.5 inline-flex items-center gap-1.5 text-sm text-muted">
                 <i class="pi pi-clock text-xs" />
-                4 minutes · Sans préparation
+                4 min 30 · sans préparation
               </p>
             </div>
           </div>
 
           <div
             v-if="!task3List.length"
-            class="bg-(--bg-card) border border-(--border-color) rounded-2xl p-10 text-center"
+            class="flex flex-col items-center gap-3 rounded-card border border-line bg-card p-10 text-center"
           >
-            <i
-              class="pi pi-inbox text-3xl text-(--text-tertiary) opacity-30 mb-3 block"
-            />
-            <p class="text-(--text-secondary) text-sm">
-              Aucun sujet Tâche 3 pour cette session.
-            </p>
+            <span class="grid size-12 place-items-center rounded-leaf bg-card-2 text-faint">
+              <i class="pi pi-inbox text-lg" />
+            </span>
+            <p class="text-sm text-muted">Aucun sujet de tâche 3 pour cette session.</p>
           </div>
 
           <div v-else class="flex flex-col gap-4">

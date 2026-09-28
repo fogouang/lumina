@@ -1,208 +1,252 @@
-/* app/assets/css/main.css */
 @import "tailwindcss";
-@import "tw-animate-css";
+@import "tailwindcss-primeui";
 
-/* ========================================
-   DESIGN TOKENS — TAILWIND THEME
-   Palette alignée sur SalaireCM : vert (marque) + bleu/jaune "Python"
-   (accents), remplace l'ancienne palette rouge "Canada".
-   ======================================== */
+@source "../../";
+
+@custom-variant dark (&:where(.app-dark, .app-dark *));
+
+/* 1. Rôles de l'interface : clair puis sombre */
+:root {
+  --app-bg: #f7f9fc;
+  --app-card: #ffffff;
+  --app-card-2: #eef3fa;
+  --app-line: #e2e8f2;
+  --app-ink: #1a2332;
+  --app-muted: #2f3b4d;
+  --app-faint: #93a0b4;
+
+  --app-shadow-soft: 0 8px 24px #08214e14, 0 2px 6px #08214e0a;
+  --app-shadow-lift: 0 16px 40px #08214e24, 0 6px 14px #08214e14;
+  --app-shadow-brand: 0 10px 28px #20509b52;
+  --app-shadow-brand-hover: 0 14px 34px rgba(32, 80, 155, 0.4);
+
+  --app-text-gradient: linear-gradient(120deg, #20509b 0%, #3d76c6 55%, #f4ae17 100%);
+}
+
+.app-dark {
+  --app-bg: #060d1a;
+  --app-card: #0c1528;
+  --app-card-2: #152238;
+  --app-line: #1e2f4a;
+  --app-ink: #e8eef7;
+  --app-muted: #c5d0e3;
+  --app-faint: #6b7d99;
+
+  --app-shadow-soft: 0 8px 24px #00000059, 0 2px 6px #0003;
+  --app-shadow-lift: 0 18px 44px #0000008c, 0 8px 16px #0000005c;
+  --app-shadow-brand: 0 10px 28px #3d76c666;
+  --app-shadow-brand-hover: 0 14px 34px rgba(61, 118, 198, 0.55); /* estimé */
+
+  --app-text-gradient: linear-gradient(120deg, #8ab1e3 0%, #6394d6 55%, #fdc035 100%);
+}
+
+/* 2. Classes Tailwind qui suivent ces variables (inline obligatoire) */
+@theme inline {
+  --color-canvas: var(--app-bg);
+  --color-card: var(--app-card);
+  --color-card-2: var(--app-card-2);
+  --color-line: var(--app-line);
+  --color-ink: var(--app-ink);
+  --color-muted: var(--app-muted);
+  --color-faint: var(--app-faint);
+
+  --color-accent-50: var(--p-accent-50);
+  --color-accent-100: var(--p-accent-100);
+  --color-accent-200: var(--p-accent-200);
+  --color-accent-300: var(--p-accent-300);
+  --color-accent-400: var(--p-accent-400);
+  --color-accent-500: var(--p-accent-500);
+  --color-accent-600: var(--p-accent-600);
+  --color-accent-700: var(--p-accent-700);
+  --color-accent-800: var(--p-accent-800);
+  --color-accent-900: var(--p-accent-900);
+  --color-accent-950: var(--p-accent-950);
+}
+
+/* 3. Valeurs fixes */
 @theme {
-  /* Marque — vert (identique à SalaireCM) */
-  --color-primary-50:  #f0fdf4;
-  --color-primary-100: #dcfce7;
-  --color-primary-200: #bbf7d0;
-  --color-primary-300: #86efac;
-  --color-primary-400: #4ade80;
-  --color-primary-500: #22c55e;
-  --color-primary-600: #16a34a;
-  --color-primary-700: #15803d;
-  --color-primary-800: #166534;
-  --color-primary-900: #14532d;
+  --font-sans: "Montserrat", ui-sans-serif, system-ui, sans-serif;
+  --font-heading: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --radius-card: 1rem;
+  --radius-leaf: 1.8rem 0.6rem;
+  --text-cta: 0.9375rem;
+  --text-cta--line-height: 1.4;
+  --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
 
-  /* Accent — bleu "Python" (identique à SalaireCM) */
-  --color-secondary-50:  #eef4f9;
-  --color-secondary-100: #dce9f3;
-  --color-secondary-200: #b9d3e7;
-  --color-secondary-300: #8fbbd9;
-  --color-secondary-400: #4b8bbe;
-  --color-secondary-500: #3f7aab;
-  --color-secondary-600: #306998;
-  --color-secondary-700: #285a80;
-  --color-secondary-800: #204864;
-  --color-secondary-900: #17364a;
+  --animate-float: float 7s ease-in-out infinite;
+  --animate-grid-drift: grid-drift 24s linear infinite;
 
-  /* Accent — jaune "Python" (identique à SalaireCM) */
-  --color-accent-50:  #fffdf0;
-  --color-accent-100: #fff8d6;
-  --color-accent-200: #ffefa8;
-  --color-accent-300: #ffe272;
-  --color-accent-400: #ffd43b;
-  --color-accent-500: #f0c020;
-  --color-accent-600: #d9a30f;
-  --color-accent-700: #b3800a;
-  --color-accent-800: #8c6208;
-  --color-accent-900: #664709;
-
-  /* Succès */
-  --color-success-50:  #f0fdf4;
-  --color-success-100: #dcfce7;
-  --color-success-500: #22c55e;
-  --color-success-600: #16a34a;
-  --color-success-700: #15803d;
-
-  /* Danger */
-  --color-danger-50:  #fef2f2;
-  --color-danger-100: #fee2e2;
-  --color-danger-500: #ef4444;
-  --color-danger-600: #dc2626;
-  --color-danger-700: #b91c1c;
-}
-
-/* ========================================
-   THÈME LIGHT (par défaut)
-   ======================================== */
-:root,
-.light-mode {
-  /* Surfaces */
-  --bg-ground:  #f8fafc;
-  --bg-section: #ffffff;
-  --bg-card:    #ffffff;
-  --bg-hover:   #f0fdf4;
-
-  /* Bordures & textes */
-  --border-color:   #e2e8f0;
-  --text-primary:   #0f172a;
-  --text-secondary: #475569;
-  --text-tertiary:  #94a3b8;
-
-  /* Gradients — vert marque, et dégradé vert -> bleu -> sombre pour le hero */
-  --gradient-primary: linear-gradient(135deg, #15803d 0%, #22c55e 100%);
-  --gradient-hero:    linear-gradient(135deg, rgba(21,128,61,0.88) 0%, rgba(48,105,152,0.82) 50%, rgba(10,10,20,0.75) 100%);
-
-  /* PrimeVue — Boutons */
-  --p-button-primary-background:        #16a34a;
-  --p-button-primary-hover-background:  #15803d;
-  --p-button-primary-active-background: #166534;
-  --p-button-primary-color:             #ffffff;
-
-  /* PrimeVue — Card */
-  --p-card-background:   var(--bg-card);
-  --p-card-border-color: var(--border-color);
-
-  /* PrimeVue — Inputs */
-  --p-inputtext-background:         #ffffff;
-  --p-inputtext-border-color:       var(--border-color);
-  --p-inputtext-focus-border-color: #16a34a;
-  --p-select-background:            #ffffff;
-  --p-select-border-color:          var(--border-color);
-
-  /* PrimeVue — Misc */
-  --p-progressbar-background:       #e2e8f0;
-  --p-progressbar-value-background: #16a34a;
-  --p-tag-primary-background:       #16a34a;
-  --p-tag-primary-color:            #ffffff;
-
-  .p-button-primary {
-    background: var(--gradient-primary) !important;
-    border: none !important;
+  @keyframes float {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-14px);
+    }
   }
-  .p-button-primary:hover {
-    background: linear-gradient(135deg, #15803d 0%, #166534 100%) !important;
+
+  @keyframes grid-drift {
+    to {
+      background-position: 56px 56px;
+    }
   }
 }
 
-/* ========================================
-   THÈME DARK
-   ======================================== */
-.dark-mode {
-  /* Surfaces */
-  --bg-ground:  #0f172a;
-  --bg-section: #1e293b;
-  --bg-card:    #1e293b;
-  --bg-hover:   #14301f;
-
-  /* Bordures & textes */
-  --border-color:   #334155;
-  --text-primary:   #f1f5f9;
-  --text-secondary: #94a3b8;
-  --text-tertiary:  #64748b;
-
-  /* Gradients */
-  --gradient-primary: linear-gradient(135deg, #15803d 0%, #22c55e 100%);
-  --gradient-hero:    linear-gradient(135deg, rgba(21,128,61,0.88) 0%, rgba(48,105,152,0.82) 50%, rgba(10,10,20,0.75) 100%);
-
-  /* PrimeVue — Boutons */
-  --p-button-primary-background:       #22c55e;
-  --p-button-primary-hover-background: #16a34a;
-  --p-button-primary-color:            #ffffff;
-
-  /* PrimeVue — Card */
-  --p-card-background:   var(--bg-card);
-  --p-card-border-color: var(--border-color);
-
-  /* PrimeVue — Inputs */
-  --p-inputtext-background:         #334155;
-  --p-inputtext-border-color:       var(--border-color);
-  --p-inputtext-focus-border-color: #22c55e;
-  --p-select-background:            #334155;
-  --p-select-border-color:          var(--border-color);
-
-  /* PrimeVue — Misc */
-  --p-progressbar-background:       #334155;
-  --p-progressbar-value-background: #22c55e;
-  --p-tag-primary-background:       #16a34a;
-  --p-tag-primary-color:            #ffffff;
+/* 4. Ombres, dégradés */
+@utility shadow-soft {
+  box-shadow: var(--app-shadow-soft);
 }
 
-/* ========================================
-   BASE
-   ======================================== */
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
+@utility shadow-lift {
+  box-shadow: var(--app-shadow-lift);
+}
+
+@utility shadow-brand {
+  box-shadow: var(--app-shadow-brand);
+}
+
+@utility shadow-brand-hover {
+  box-shadow: var(--app-shadow-brand-hover);
+}
+
+@utility brand-gradient {
+  background-image: linear-gradient(
+    140deg,
+    var(--p-brand-900) 0%,
+    var(--p-brand-700) 52%,
+    var(--p-brand-500) 100%
+  );
+}
+
+@utility text-gradient {
+  background-image: var(--app-text-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* 5. Panneau de marque avec rayons lumineux animés */
+@utility featured-panel {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background-image: linear-gradient(
+    140deg,
+    var(--p-brand-900) 0%,
+    var(--p-brand-700) 52%,
+    var(--p-brand-500) 100%
+  );
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: -20%;
+    z-index: -1;
+    pointer-events: none;
+    background: conic-gradient(
+      from 210deg at 70% 40%,
+      transparent 0deg,
+      color-mix(in srgb, var(--p-accent-500) 12%, transparent) 40deg,
+      transparent 90deg,
+      color-mix(in srgb, var(--p-brand-200) 10%, transparent) 160deg,
+      transparent 220deg
+    );
+    animation: featured-panel-spin 28s linear infinite;
+  }
+}
+
+@keyframes featured-panel-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 6. Fond quadrillé qui s'estompe vers les bords */
+@utility bg-grid {
+  background-image:
+    linear-gradient(to right, var(--app-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--app-line) 1px, transparent 1px);
+  background-size: 56px 56px;
+  -webkit-mask-image: radial-gradient(ellipse 75% 60% at 50% 0%, #000 35%, transparent 80%);
+  mask-image: radial-gradient(ellipse 75% 60% at 50% 0%, #000 35%, transparent 80%);
+}
+
+/* 7. Animation d'apparition (directive v-reveal) */
+[data-reveal] {
+  opacity: 0;
+  transition:
+    opacity 0.8s var(--ease-spring),
+    transform 0.8s var(--ease-spring);
+  transition-delay: var(--reveal-delay, 0ms);
+}
+
+[data-reveal="up"] {
+  transform: translateY(28px);
+}
+
+[data-reveal="down"] {
+  transform: translateY(-28px);
+}
+
+[data-reveal="left"] {
+  transform: translateX(-32px);
+}
+
+[data-reveal="right"] {
+  transform: translateX(32px);
+}
+
+[data-reveal="zoom"] {
+  transform: scale(0.94);
+}
+
+[data-reveal].is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-reveal] {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .animate-float,
+  .animate-grid-drift,
+  .featured-panel::after {
+    animation: none;
+  }
+}
+
+/* 8. Base de la page */
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  margin: 0;
-  padding: 0;
-  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  background: var(--bg-ground);
-  color: var(--text-primary);
-  transition: background 0.3s ease, color 0.3s ease;
-  -webkit-font-smoothing: antialiased;
+  background-color: var(--app-bg);
+  color: var(--app-ink);
 }
 
-a {
-  color: inherit;
-  text-decoration: none;
-}
+/* 9. Classes partagées de l'espace compte */
+@layer components {
+  .account-page-title {
+    @apply mb-6 font-heading text-2xl font-extrabold tracking-tight text-ink;
+  }
 
-/* ========================================
-   UTILITAIRES GRADIENT
-   ======================================== */
-@layer utilities {
-  .bg-gradient-primary { background: var(--gradient-primary); }
-  .bg-gradient-hero    { background: var(--gradient-hero); }
-  .text-gradient-primary {
-    background: var(--gradient-primary);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+  .account-section {
+    @apply rounded-card border border-line bg-card p-6 shadow-soft;
+  }
+
+  .account-section__title {
+    @apply mb-5 border-b border-line pb-3.5 font-heading text-base font-bold text-ink;
   }
 }
 
-/* ========================================
-   UTILITAIRES TRANSITION
-   ======================================== */
-.transition-all       { transition: all 0.2s ease; }
-.transition-colors    { transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease; }
-.transition-transform { transition: transform 0.2s ease; }
-
-
 /* ==========================================================================
-   Animations Dialog (PrimeVue)
+   PrimeVue transitions (dialog / overlay / collapsible)
    ========================================================================== */
 
 .p-dialog-enter-active {
@@ -273,181 +317,3 @@ a {
   }
 }
 
-/* ========================================
-   ANIMATIONS
-   ======================================== */
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes slideInLeft {
-  from { opacity: 0; transform: translateX(-20px); }
-  to   { opacity: 1; transform: translateX(0); }
-}
-
-@keyframes scaleIn {
-  from { opacity: 0; transform: scale(0.95); }
-  to   { opacity: 1; transform: scale(1); }
-}
-
-.anim-fade-up  { animation: fadeInUp 0.5s ease-out both; }
-.anim-slide-in { animation: slideInLeft 0.4s ease-out both; }
-.anim-scale-in { animation: scaleIn 0.3s ease-out both; }
-
-.anim-delay-100 { animation-delay: 0.1s; }
-.anim-delay-200 { animation-delay: 0.2s; }
-.anim-delay-300 { animation-delay: 0.3s; }
-
-/* ========================================
-   LAYOUT — CONTAINER & SECTIONS
-   ======================================== */
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 1.5rem;
-}
-
-.container--narrow {
-  max-width: 760px;
-  margin: 0 auto;
-  padding: 0 1.5rem;
-}
-
-.section        { padding: 5rem 0; }
-.section--light { background: var(--bg-ground); }
-.section--white { background: var(--bg-section); }
-.section--red   { background: var(--gradient-primary); }
-.section--dark  { background: #0f172a; }
-
-.section-header {
-  text-align: center;
-  margin-bottom: 3.5rem;
-}
-
-.section-title {
-  font-size: clamp(1.75rem, 3.5vw, 2.5rem);
-  font-weight: 800;
-  color: var(--text-primary);
-  line-height: 1.2;
-  margin: 0.5rem 0 1rem;
-}
-
-.section-subtitle {
-  font-size: 1.0625rem;
-  color: var(--text-secondary);
-  line-height: 1.7;
-  max-width: 560px;
-  margin: 0 auto;
-}
-
-/* ========================================
-   COMPOSANTS PARTAGÉS — CARDS
-   ======================================== */
-.card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 1rem;
-  transition: all 0.25s ease;
-}
-
-.card--hover:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 32px -4px rgba(0, 0, 0, 0.1);
-  border-color: var(--color-primary-300);
-}
-
-/* ========================================
-   COMPOSANTS PARTAGÉS — BADGES
-   ======================================== */
-.badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.375rem 0.875rem;
-  border-radius: 9999px;
-  font-size: 0.8125rem;
-  font-weight: 600;
-}
-
-.badge--primary {
-  background: var(--color-primary-50);
-  color: var(--color-primary-700);
-  border: 1px solid var(--color-primary-200);
-}
-
-/* ========================================
-   COMPOSANTS PARTAGÉS — SCORE / RÉSULTATS
-   ======================================== */
-.score-display {
-  text-align: center;
-  padding: 2rem;
-  background: var(--gradient-primary);
-  border-radius: 1rem;
-  color: #ffffff;
-}
-
-.score-percentage {
-  font-size: 4rem;
-  font-weight: 800;
-  line-height: 1;
-}
-
-@media (max-width: 768px) {
-  .score-percentage { font-size: 3rem; }
-}
-
-/* ========================================
-   OVERRIDES PRIMEVUE GLOBAUX
-   ======================================== */
-.p-card {
-  background: var(--bg-card) !important;
-  border: 1px solid var(--border-color) !important;
-}
-
-.p-button {
-  transition: all 0.2s ease !important;
-}
-
-.p-progressbar {
-  border-radius: 9999px !important;
-  overflow: hidden !important;
-}
-
-.p-tag {
-  font-weight: 600 !important;
-  border-radius: 0.375rem !important;
-}
-
-.p-dialog {
-  background: var(--bg-card) !important;
-  border: 1px solid var(--border-color) !important;
-}
-
-.p-dialog-header {
-  border-bottom: 1px solid var(--border-color) !important;
-}
-
-.p-datatable .p-datatable-thead > tr > th {
-  background: var(--bg-hover) !important;
-  border-color: var(--border-color) !important;
-  color: var(--text-secondary) !important;
-  font-weight: 600 !important;
-  font-size: 0.8125rem !important;
-}
-
-.p-datatable .p-datatable-tbody > tr > td {
-  border-color: var(--border-color) !important;
-  color: var(--text-primary) !important;
-}
-
-.p-accordion-header-link {
-  background: var(--bg-card) !important;
-  border-color: var(--border-color) !important;
-  color: var(--text-primary) !important;
-}
-
-.p-accordion-content {
-  background: var(--bg-card) !important;
-  border-color: var(--border-color) !important;
-}

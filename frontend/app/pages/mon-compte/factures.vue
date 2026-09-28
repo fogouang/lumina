@@ -3,66 +3,75 @@
     <h1 class="account-page-title">Mes factures</h1>
 
     <div class="account-section">
-
-      <div v-if="loading" style="display:flex;justify-content:center;padding:3rem">
-        <ProgressSpinner style="width:40px;height:40px" />
+      <!-- Chargement -->
+      <div v-if="loading" class="flex flex-col gap-3">
+        <Skeleton v-for="n in 4" :key="n" height="4.5rem" border-radius="1rem" />
       </div>
 
-      <div v-else-if="!payments.length" class="factures__empty">
-        <i class="pi pi-receipt" />
-        <p>Aucune facture disponible.</p>
+      <!-- Vide -->
+      <div v-else-if="!payments.length" class="flex flex-col items-center gap-3 py-12 text-center">
+        <span class="grid size-14 place-items-center rounded-leaf bg-card-2 text-faint">
+          <i class="pi pi-receipt text-xl" />
+        </span>
+        <p class="font-semibold text-ink">Aucune facture disponible</p>
+        <p class="max-w-sm text-sm text-faint">Vos factures apparaîtront ici après votre premier paiement.</p>
       </div>
 
-      <div v-else class="factures__list">
+      <!-- Liste -->
+      <div v-else class="flex flex-col divide-y divide-line">
         <div
           v-for="payment in payments"
           :key="payment.id"
-          class="facture-row"
+          class="flex flex-col gap-4 py-4 first:pt-0 last:pb-0 sm:flex-row sm:items-center"
         >
-          <!-- Icône -->
-          <div class="facture-row__icon" :class="`facture-row__icon--${payment.payment_status}`">
-            <i :class="paymentIcon(payment.payment_status)" />
-          </div>
-
-          <!-- Infos -->
-          <div class="facture-row__body">
-            <span class="facture-row__ref">{{ payment.invoice_number }}</span>
-            <div class="facture-row__meta">
-              <Tag
-                :value="statusLabel(payment.payment_status)"
-                :severity="statusSeverity(payment.payment_status)"
-              />
-              <span class="facture-row__method">{{ payment.payment_method }}</span>
-              <span class="facture-row__date">{{ formatDate(payment.created_at) }}</span>
+          <div class="flex min-w-0 flex-1 items-center gap-4">
+            <span class="grid size-11 shrink-0 place-items-center rounded-leaf bg-primary-50 text-primary-700 dark:bg-primary-950 dark:text-primary-300">
+              <i :class="paymentIcon(payment.payment_status)" />
+            </span>
+            <div class="min-w-0">
+              <p class="truncate font-semibold text-ink">{{ payment.invoice_number }}</p>
+              <div class="mt-1.5 flex flex-wrap items-center gap-2 text-xs text-faint">
+                <Tag
+                  :value="statusLabel(payment.payment_status)"
+                  :severity="statusSeverity(payment.payment_status)"
+                  rounded
+                />
+                <span class="capitalize">{{ payment.payment_method }}</span>
+                <span aria-hidden="true">·</span>
+                <span>{{ formatDate(payment.created_at) }}</span>
+              </div>
             </div>
           </div>
 
-          <!-- Montant -->
-          <span class="facture-row__amount">{{ formatPrice(payment.amount) }} FCFA</span>
-
-          <!-- Actions -->
-          <div class="facture-row__actions">
-            <a
+          <div class="flex items-center justify-between gap-4 sm:justify-end">
+            <p class="whitespace-nowrap font-heading text-lg font-extrabold text-ink">
+              {{ formatPrice(payment.amount) }}
+              <span class="text-xs font-semibold text-faint">FCFA</span>
+            </p>
+            <AppCta
               v-if="payment.invoice_url"
-              :href="payment.invoice_url"
+              :to="payment.invoice_url"
+              external
               target="_blank"
               rel="noopener"
-            >
-              <Button label="PDF" icon="pi pi-download" size="small" outlined />
-            </a>
-            <Button
+              label="PDF"
+              icon="pi pi-download"
+              icon-pos="left"
+              variant="outline"
+              size="md"
+            />
+            <AppButton
               v-else
               label="Générer"
               icon="pi pi-file-pdf"
+              variant="secondary"
               size="small"
-              outlined
               :loading="generatingId === payment.id"
               @click="generateInvoice(payment.id)"
             />
           </div>
         </div>
       </div>
-
     </div>
   </div>
 </template>
@@ -125,79 +134,3 @@ function formatPrice(n: number) {
 useHead({ title: 'Factures | Lumina TCF' })
 </script>
 
-<style scoped>
-.factures__empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 3rem 0;
-  color: var(--text-tertiary);
-  text-align: center;
-}
-
-.factures__empty i { font-size: 2.5rem; }
-.factures__empty p { margin: 0; font-size: 0.9rem; }
-
-.factures__list { display: flex; flex-direction: column; }
-
-.facture-row {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1rem 0;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.facture-row:last-child { border-bottom: none; }
-
-.facture-row__icon {
-  width: 40px; height: 40px;
-  border-radius: 0.625rem;
-  display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0;
-}
-
-.facture-row__icon--completed   { background: #f0fdf4; }
-.facture-row__icon--completed i { color: #16a34a; font-size: 1rem; }
-.facture-row__icon--pending   { background: #fffbeb; }
-.facture-row__icon--pending i { color: #d97706; font-size: 1rem; }
-.facture-row__icon--failed   { background: var(--color-danger-50); }
-.facture-row__icon--failed i { color: var(--color-danger-600); font-size: 1rem; }
-.facture-row__icon--refunded   { background: var(--bg-ground); }
-.facture-row__icon--refunded i { color: var(--text-tertiary); font-size: 1rem; }
-
-.facture-row__body { flex: 1; min-width: 0; }
-
-.facture-row__ref {
-  font-size: 0.9rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  display: block;
-  margin-bottom: 0.25rem;
-}
-
-.facture-row__meta {
-  display: flex;
-  align-items: center;
-  gap: 0.625rem;
-  flex-wrap: wrap;
-}
-
-.facture-row__method,
-.facture-row__date {
-  font-size: 0.8125rem;
-  color: var(--text-tertiary);
-  text-transform: capitalize;
-}
-
-.facture-row__amount {
-  font-size: 1rem;
-  font-weight: 800;
-  color: var(--text-primary);
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-.facture-row__actions { flex-shrink: 0; }
-</style>

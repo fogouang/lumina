@@ -2,38 +2,45 @@
   <Dialog
     v-model:visible="visible"
     modal
-    header="Navigation des questions"
-    :style="{ width: '92vw', maxWidth: '480px' }"
+    dismissable-mask
     :draggable="false"
+    :style="{ width: '92vw', maxWidth: '30rem' }"
+    :pt="{ mask: { class: 'backdrop-blur-sm' } }"
   >
-    <div class="nav-drawer">
-      <div class="nav-drawer__grid">
-        <button
-          v-for="(q, index) in questions"
-          :key="q.id"
-          class="nav-drawer__btn"
-          :class="{
-            'nav-drawer__btn--current':  index === currentIndex,
-            'nav-drawer__btn--answered': answeredIds.includes(q.id),
-          }"
-          @click="onGo(index)"
-        >
-          {{ q.question_number }}
-        </button>
+    <template #header>
+      <div class="flex items-center gap-3">
+        <span class="grid size-9 place-items-center rounded-leaf bg-primary-50 text-primary-700 dark:bg-primary-950 dark:text-primary-300">
+          <i class="pi pi-th-large text-sm" />
+        </span>
+        <div>
+          <h3 class="font-heading text-lg font-bold leading-tight text-ink">Navigation</h3>
+          <p class="text-xs font-semibold tabular-nums text-muted">
+            {{ answeredCount }} / {{ questions.length }} répondues
+          </p>
+        </div>
       </div>
+    </template>
 
-      <div class="nav-drawer__legend">
-        <span class="nav-drawer__legend-item">
-          <span class="nav-drawer__dot nav-drawer__dot--current" /> Actuelle
-        </span>
-        <span class="nav-drawer__legend-item">
-          <span class="nav-drawer__dot nav-drawer__dot--answered" /> Répondue
-        </span>
-        <span class="nav-drawer__legend-item">
-          <span class="nav-drawer__dot nav-drawer__dot--none" /> Non rép.
-        </span>
-      </div>
+    <div class="mb-4 h-1.5 overflow-hidden rounded-full bg-line">
+      <div
+        class="h-full rounded-full bg-linear-to-r from-emerald-400 to-emerald-600 transition-all duration-500"
+        :style="{ width: `${progress}%` }"
+      />
     </div>
+
+    <div class="grid grid-cols-6 gap-2.5 sm:grid-cols-8">
+      <ExamNavButton
+        v-for="(q, index) in questions"
+        :key="q.id"
+        :label="q.question_number"
+        :current="index === currentIndex"
+        :answered="answeredIds.includes(q.id)"
+        class="max-w-11 text-sm"
+        @click="onGo(index)"
+      />
+    </div>
+
+    <ExamNavLegend class="mt-5 border-t border-line pt-4" />
   </Dialog>
 </template>
 
@@ -57,75 +64,16 @@ const visible = computed({
   set: (v) => emit('update:modelValue', v),
 })
 
+// Progression du module en cours (affichage)
+const answeredCount = computed(
+  () => props.questions.filter((q) => props.answeredIds.includes(q.id)).length,
+)
+const progress = computed(() =>
+  props.questions.length ? (answeredCount.value / props.questions.length) * 100 : 0,
+)
+
 function onGo(index: number) {
   emit('go', index)
   visible.value = false
 }
 </script>
-
-<style scoped>
-.nav-drawer { display: flex; flex-direction: column; gap: 1rem; }
-
-.nav-drawer__grid {
-  display: grid;
-  grid-template-columns: repeat(8, 1fr);
-  gap: 0.375rem;
-}
-
-.nav-drawer__btn {
-  aspect-ratio: 1;
-  border-radius: 0.5rem;
-  border: 1px solid var(--border-color);
-  background: var(--bg-ground);
-  color: var(--text-secondary);
-  font-size: 0.75rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.nav-drawer__btn--current {
-  background: var(--gradient-primary);
-  border-color: transparent;
-  color: #ffffff;
-}
-
-.nav-drawer__btn--answered {
-  background: #f0fdf4;
-  border-color: #22c55e;
-  color: #15803d;
-}
-
-.nav-drawer__btn--current.nav-drawer__btn--answered {
-  background: var(--gradient-primary);
-  border-color: transparent;
-  color: #ffffff;
-}
-
-.nav-drawer__legend {
-  display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-
-.nav-drawer__legend-item {
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-  font-size: 0.75rem;
-  color: var(--text-tertiary);
-}
-
-.nav-drawer__dot {
-  width: 10px; height: 10px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.nav-drawer__dot--current  { background: var(--color-primary-500); }
-.nav-drawer__dot--answered { background: #22c55e; }
-.nav-drawer__dot--none     { background: transparent; border: 1px solid var(--border-color); }
-</style>

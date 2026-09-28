@@ -1,173 +1,220 @@
 <template>
   <div class="space-y-6">
-
-    <!-- Toolbar -->
-    <div class="flex items-center justify-between gap-4">
-      <InputText
-        v-model="search"
-        placeholder="Rechercher un partenaire..."
-        class="w-72"
-      />
-      <Button
-        label="Nouveau partenaire"
-        icon="pi pi-plus"
-        @click="openCreate"
-      />
+    <!-- Barre d'outils -->
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <IconField class="w-full sm:w-80">
+        <InputIcon class="pi pi-search" />
+        <InputText
+          v-model="search"
+          placeholder="Rechercher un partenaire..."
+          aria-label="Rechercher un partenaire"
+          fluid
+        />
+      </IconField>
+      <AppButton label="Nouveau partenaire" icon="pi pi-plus" variant="gradient" @click="openCreate" />
     </div>
 
-    <!-- Loading -->
-    <div v-if="store.loading" class="flex justify-center py-12">
-      <ProgressSpinner style="width: 50px; height: 50px" />
+    <!-- Chargement -->
+    <div v-if="store.loading" class="space-y-2">
+      <div v-for="n in 5" :key="n" class="h-16 animate-pulse rounded-2xl bg-card" />
     </div>
 
-    <!-- Table -->
-    <div v-else class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-      <table class="w-full text-sm">
-        <thead class="bg-gray-50 border-b border-gray-100">
-          <tr>
-            <th class="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase">Partenaire</th>
-            <th class="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase hidden sm:table-cell">Email</th>
-            <th class="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase hidden md:table-cell">Codes</th>
-            <th class="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase hidden md:table-cell">Utilisations</th>
-            <th class="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase hidden lg:table-cell">Commission due</th>
-            <th class="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase">Statut</th>
-            <th class="text-right px-5 py-3 text-xs font-semibold text-gray-500 uppercase">Actions</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-50">
-          <tr
-            v-for="partner in filteredPartners"
-            :key="partner.id"
-            class="hover:bg-gray-50 transition-colors"
-          >
-            <!-- Nom -->
-            <td class="px-5 py-4">
-              <div class="flex items-center gap-3">
-                <div class="w-9 h-9 bg-primary-100 rounded-lg flex items-center justify-center shrink-0">
-                  <i class="pi pi-building text-primary-600 text-sm"></i>
+    <!-- Tableau -->
+    <div v-else class="overflow-hidden rounded-card border border-line bg-card shadow-soft">
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="border-b border-line bg-card-2/60">
+            <tr>
+              <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-faint">Partenaire</th>
+              <th class="hidden px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-faint sm:table-cell">Contact</th>
+              <th class="hidden px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-faint md:table-cell">Codes</th>
+              <th class="hidden px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-faint md:table-cell">Utilisations</th>
+              <th class="hidden px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-faint lg:table-cell">Commission due</th>
+              <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-faint">Statut</th>
+              <th class="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wider text-faint">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-line">
+            <tr
+              v-for="partner in filteredPartners"
+              :key="partner.id"
+              class="transition-colors hover:bg-card-2/50"
+            >
+              <!-- Nom -->
+              <td class="px-5 py-3.5">
+                <div class="flex items-center gap-3">
+                  <span class="grid size-9 shrink-0 place-items-center rounded-leaf bg-primary/10 text-primary">
+                    <i class="pi pi-building text-sm" />
+                  </span>
+                  <div class="min-w-0">
+                    <p class="truncate font-semibold text-ink">{{ partner.name }}</p>
+                    <p class="text-xs text-faint">{{ formatDate(partner.created_at) }}</p>
+                  </div>
                 </div>
-                <div>
-                  <p class="font-medium text-gray-900">{{ partner.name }}</p>
-                  <p class="text-xs text-gray-400">{{ formatDate(partner.created_at) }}</p>
+              </td>
+
+              <!-- Contact -->
+              <td class="hidden px-5 py-3.5 sm:table-cell">
+                <p class="truncate text-muted">{{ partner.contact_email }}</p>
+                <p v-if="partner.phone" class="text-xs tabular-nums text-faint">{{ partner.phone }}</p>
+              </td>
+
+              <!-- Codes -->
+              <td class="hidden px-5 py-3.5 md:table-cell">
+                <span class="font-semibold tabular-nums text-ink">
+                  {{ stats[partner.id]?.total_codes ?? "—" }}
+                </span>
+                <span v-if="stats[partner.id]" class="ml-1 text-xs text-faint">
+                  ({{ stats[partner.id]?.active_codes }} actifs)
+                </span>
+              </td>
+
+              <!-- Utilisations -->
+              <td class="hidden px-5 py-3.5 md:table-cell">
+                <span class="font-semibold tabular-nums text-ink">
+                  {{ stats[partner.id]?.total_uses ?? "—" }}
+                </span>
+              </td>
+
+              <!-- Commission -->
+              <td class="hidden px-5 py-3.5 lg:table-cell">
+                <span
+                  v-if="stats[partner.id]"
+                  class="font-heading font-bold tabular-nums text-primary"
+                >
+                  {{ Math.round(stats[partner.id]?.total_commission_due ?? 0).toLocaleString("fr-FR") }} FCFA
+                </span>
+                <span v-else class="text-faint">—</span>
+              </td>
+
+              <!-- Statut -->
+              <td class="px-5 py-3.5">
+                <span
+                  class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold"
+                  :class="
+                    partner.is_active
+                      ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300'
+                      : 'bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-300'
+                  "
+                >
+                  <span class="size-1.5 rounded-full" :class="partner.is_active ? 'bg-emerald-500' : 'bg-red-500'" />
+                  {{ partner.is_active ? "Actif" : "Inactif" }}
+                </span>
+              </td>
+
+              <!-- Actions -->
+              <td class="px-5 py-3.5">
+                <div class="flex items-center justify-end gap-1">
+                  <Button
+                    v-tooltip.top="'Modifier'"
+                    icon="pi pi-pencil"
+                    text
+                    rounded
+                    size="small"
+                    severity="secondary"
+                    aria-label="Modifier"
+                    @click="openEdit(partner)"
+                  />
+                  <Button
+                    v-tooltip.top="'Supprimer'"
+                    icon="pi pi-trash"
+                    text
+                    rounded
+                    size="small"
+                    severity="danger"
+                    aria-label="Supprimer"
+                    @click="confirmDelete(partner)"
+                  />
                 </div>
-              </div>
-            </td>
+              </td>
+            </tr>
 
-            <!-- Email -->
-            <td class="px-5 py-4 text-gray-600 hidden sm:table-cell">
-              <div>
-                <p>{{ partner.contact_email }}</p>
-                <p v-if="partner.phone" class="text-xs text-gray-400">{{ partner.phone }}</p>
-              </div>
-            </td>
+            <!-- Vide -->
+            <tr v-if="filteredPartners.length === 0">
+              <td colspan="7" class="px-5 py-14">
+                <div class="flex flex-col items-center text-center">
+                  <span class="mb-3 grid size-14 place-items-center rounded-leaf bg-card-2 text-faint">
+                    <i class="pi pi-building text-2xl" />
+                  </span>
+                  <p class="text-sm font-medium text-muted">Aucun partenaire trouvé</p>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
-            <!-- Codes -->
-            <td class="px-5 py-4 hidden md:table-cell">
-              <span class="font-medium text-gray-900">
-                {{ stats[partner.id]?.total_codes ?? '—' }}
-              </span>
-              <span v-if="stats[partner.id]" class="text-xs text-gray-400 ml-1">
-                ({{ stats[partner.id]?.active_codes }} actifs)
-              </span>
-            </td>
-
-            <!-- Utilisations -->
-            <td class="px-5 py-4 hidden md:table-cell">
-              <span class="font-medium text-gray-900">
-                {{ stats[partner.id]?.total_uses ?? '—' }}
-              </span>
-            </td>
-
-            <!-- Commission -->
-            <td class="px-5 py-4 hidden lg:table-cell">
-              <span class="font-semibold text-primary-600">
-                {{ stats[partner.id]
-                  ? stats[partner.id]?.total_commission_due?.toFixed(0) + ' FCFA'
-                  : '—' }}
-              </span>
-            </td>
-
-            <!-- Statut -->
-            <td class="px-5 py-4">
-              <Tag
-                :value="partner.is_active ? 'Actif' : 'Inactif'"
-                :severity="partner.is_active ? 'success' : 'danger'"
-              />
-            </td>
-
-            <!-- Actions -->
-            <td class="px-5 py-4">
-              <div class="flex items-center justify-end gap-1">
-                <Button
-                  icon="pi pi-pencil"
-                  text
-                  rounded
-                  size="small"
-                  severity="secondary"
-                  v-tooltip.top="'Modifier'"
-                  @click="openEdit(partner)"
-                />
-                <Button
-                  icon="pi pi-trash"
-                  text
-                  rounded
-                  size="small"
-                  severity="danger"
-                  v-tooltip.top="'Supprimer'"
-                  @click="confirmDelete(partner)"
-                />
-              </div>
-            </td>
-          </tr>
-
-          <!-- Empty -->
-          <tr v-if="filteredPartners.length === 0">
-            <td colspan="7" class="px-5 py-12 text-center text-gray-400">
-              <i class="pi pi-building text-3xl mb-2 block"></i>
-              Aucun partenaire trouvé
-            </td>
-          </tr>
-        </tbody>
-      </table>
-
-      <!-- Footer -->
-      <div class="px-5 py-3 border-t border-gray-100 text-xs text-gray-400">
-        {{ filteredPartners.length }} partenaire(s) sur {{ store.partners.length }}
+      <!-- Pied -->
+      <div class="border-t border-line px-5 py-3 text-xs text-muted">
+        <span class="font-semibold tabular-nums text-ink">{{ filteredPartners.length }}</span>
+        partenaire(s) sur
+        <span class="font-semibold tabular-nums text-ink">{{ store.partners.length }}</span>
       </div>
     </div>
 
-    <!-- Dialog créer/modifier -->
+    <!-- Dialog créer / modifier -->
     <Dialog
       v-model:visible="formDialog"
-      :header="editingPartner ? 'Modifier le partenaire' : 'Nouveau partenaire'"
-      :modal="true"
-      :style="{ width: '90vw', maxWidth: '500px' }"
+      modal
+      :draggable="false"
+      :style="{ width: '30rem' }"
+      :breakpoints="{ '640px': '94vw' }"
+      :pt="{ mask: { class: 'backdrop-blur-sm' } }"
     >
-      <div class="space-y-4 mt-2">
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Nom *</label>
-          <InputText v-model="form.name" class="w-full" placeholder="Centre de langue Berlin" />
+      <template #header>
+        <div class="flex items-center gap-3">
+          <span class="grid size-10 place-items-center rounded-leaf bg-primary/10 text-primary">
+            <i :class="editingPartner ? 'pi pi-pencil' : 'pi pi-building'" />
+          </span>
+          <h3 class="font-heading text-lg font-bold text-ink">
+            {{ editingPartner ? "Modifier le partenaire" : "Nouveau partenaire" }}
+          </h3>
         </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Email de contact *</label>
-          <InputText v-model="form.contact_email" type="email" class="w-full" placeholder="contact@centre.com" />
+      </template>
+
+      <div class="space-y-4 pt-1">
+        <div class="flex flex-col gap-1.5">
+          <label for="partner-name" class="text-sm font-semibold text-ink">
+            Nom <span class="text-red-500">*</span>
+          </label>
+          <InputText id="partner-name" v-model="form.name" placeholder="Centre de langue Berlin" fluid />
         </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Téléphone</label>
-          <InputText v-model="form.phone" class="w-full" placeholder="+237 6XX XXX XXX" />
+        <div class="flex flex-col gap-1.5">
+          <label for="partner-email" class="text-sm font-semibold text-ink">
+            Email de contact <span class="text-red-500">*</span>
+          </label>
+          <InputText
+            id="partner-email"
+            v-model="form.contact_email"
+            type="email"
+            placeholder="contact@centre.com"
+            fluid
+          />
         </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Notes internes</label>
-          <Textarea v-model="form.notes" class="w-full" :rows="3" placeholder="Informations internes..." />
+        <div class="flex flex-col gap-1.5">
+          <label for="partner-phone" class="text-sm font-semibold text-ink">Téléphone</label>
+          <InputText id="partner-phone" v-model="form.phone" placeholder="+237 6XX XXX XXX" fluid />
+        </div>
+        <div class="flex flex-col gap-1.5">
+          <label for="partner-notes" class="text-sm font-semibold text-ink">Notes internes</label>
+          <Textarea
+            id="partner-notes"
+            v-model="form.notes"
+            :rows="3"
+            auto-resize
+            fluid
+            placeholder="Informations internes..."
+          />
         </div>
         <Message v-if="formError" severity="error" :closable="false">{{ formError }}</Message>
       </div>
 
       <template #footer>
-        <Button label="Annuler" text @click="formDialog = false" />
-        <Button
+        <AppButton label="Annuler" variant="ghost" @click="formDialog = false" />
+        <AppButton
           :label="editingPartner ? 'Enregistrer' : 'Créer'"
           icon="pi pi-check"
+          variant="gradient"
           :loading="saving"
           :disabled="!form.name || !form.contact_email"
           @click="handleSave"
@@ -178,19 +225,36 @@
     <!-- Dialog supprimer -->
     <Dialog
       v-model:visible="deleteDialog"
-      header="Supprimer le partenaire ?"
-      :modal="true"
-      :style="{ width: '90vw', maxWidth: '400px' }"
+      modal
+      :draggable="false"
+      :style="{ width: '26rem' }"
+      :breakpoints="{ '640px': '94vw' }"
+      :pt="{ mask: { class: 'backdrop-blur-sm' } }"
     >
-      <p v-if="selectedPartner">
-        Supprimer <strong>{{ selectedPartner.name }}</strong> ? Les codes promo associés seront aussi supprimés.
+      <template #header>
+        <div class="flex items-center gap-3">
+          <span class="grid size-10 place-items-center rounded-xl bg-red-100 text-red-600 dark:bg-red-950 dark:text-red-400">
+            <i class="pi pi-trash" />
+          </span>
+          <h3 class="font-heading text-lg font-bold text-ink">Supprimer le partenaire ?</h3>
+        </div>
+      </template>
+
+      <p v-if="selectedPartner" class="leading-relaxed text-muted">
+        Supprimer <strong class="text-ink">{{ selectedPartner.name }}</strong> ?
       </p>
+      <div
+        class="mt-3 flex items-start gap-2.5 rounded-2xl border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-700 dark:border-red-500/25 dark:bg-red-500/10 dark:text-red-300"
+      >
+        <i class="pi pi-exclamation-triangle mt-0.5 shrink-0" />
+        Les codes promo associés seront aussi supprimés.
+      </div>
+
       <template #footer>
-        <Button label="Annuler" text @click="deleteDialog = false" />
-        <Button label="Supprimer" severity="danger" :loading="deleting" @click="handleDelete" />
+        <AppButton label="Annuler" variant="ghost" @click="deleteDialog = false" />
+        <AppButton label="Supprimer" icon="pi pi-trash" variant="danger" :loading="deleting" @click="handleDelete" />
       </template>
     </Dialog>
-
   </div>
 </template>
 
