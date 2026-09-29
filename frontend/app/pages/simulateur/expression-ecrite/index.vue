@@ -2,22 +2,65 @@
 <template>
   <div>
     <!-- En-tête -->
-    <div class="mb-6 flex flex-wrap items-start justify-between gap-4">
-      <div>
-        <h1 class="account-page-title mb-1!">Expression Écrite</h1>
-        <p class="max-w-xl text-sm leading-relaxed text-muted">
-          Entraînez-vous sur les vrais sujets du mois. Rédigez vos 3 tâches et
-          obtenez une correction IA instantanée.
-        </p>
+    <header class="featured-panel relative mb-6 overflow-hidden rounded-card p-6 text-white shadow-brand sm:p-8">
+      <div class="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+        <div class="min-w-0 max-w-xl">
+          <p class="mb-2 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-white/70">
+            <i class="pi pi-pen-to-square text-[0.7rem] text-accent-400" />
+            Simulateur écrit
+          </p>
+          <h1 class="font-heading text-2xl font-extrabold tracking-tight sm:text-3xl">Expression Écrite</h1>
+          <p class="mt-1.5 text-sm leading-relaxed text-white/75">
+            Entraînez-vous sur les vrais sujets du mois. Rédigez vos 3 tâches et
+            obtenez une correction IA instantanée.
+          </p>
+          <ul class="mt-4 flex flex-wrap gap-2">
+            <li class="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/10 px-2.5 py-1 text-xs font-semibold">
+              <i class="pi pi-list text-[0.65rem] text-accent-400" /> 3 tâches
+            </li>
+            <li class="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/10 px-2.5 py-1 text-xs font-semibold">
+              <i class="pi pi-clock text-[0.65rem] text-accent-400" /> 60 minutes recommandées
+            </li>
+            <li class="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/10 px-2.5 py-1 text-xs font-semibold">
+              <i class="pi pi-bolt text-[0.65rem] text-accent-400" /> Correction IA
+            </li>
+          </ul>
+        </div>
+
+        <dl v-if="auth.isAuthenticated" class="grid grid-cols-3 gap-2 sm:gap-3 lg:min-w-md">
+          <div class="rounded-xl border border-white/15 bg-white/10 px-3 py-3 backdrop-blur sm:px-4">
+            <dt class="sr-only">Sessions</dt>
+            <i class="pi pi-calendar text-sm text-accent-400" aria-hidden="true" />
+            <dd class="mt-1.5 font-heading text-sm font-bold sm:text-base">
+              {{ loading ? "·" : `${sessions.length} sessions` }}
+            </dd>
+          </div>
+          <div class="rounded-xl border border-white/15 bg-white/10 px-3 py-3 backdrop-blur sm:px-4">
+            <dt class="sr-only">Sessions actives</dt>
+            <i class="pi pi-check-circle text-sm text-accent-400" aria-hidden="true" />
+            <dd class="mt-1.5 font-heading text-sm font-bold sm:text-base">
+              {{ loading ? "·" : `${activeCount} actives` }}
+            </dd>
+          </div>
+          <button
+            type="button"
+            class="rounded-xl border px-3 py-3 text-left backdrop-blur transition-colors sm:px-4"
+            :class="
+              sub.aiCreditsRemaining > 0
+                ? 'border-white/15 bg-white/10 hover:bg-white/15'
+                : 'border-accent-400/60 bg-accent-400/20 hover:bg-accent-400/30'
+            "
+            aria-label="Acheter des crédits IA"
+            @click="openBuyCredits()"
+          >
+            <i class="pi pi-bolt text-sm text-accent-400" aria-hidden="true" />
+            <span class="mt-1.5 block font-heading text-sm font-bold sm:text-base">
+              {{ sub.aiCreditsRemaining }} crédit{{ sub.aiCreditsRemaining > 1 ? "s" : "" }}
+            </span>
+          </button>
+        </dl>
       </div>
-      <span
-        v-if="auth.isAuthenticated"
-        class="inline-flex items-center gap-1.5 rounded-full bg-accent-100 px-3 py-1.5 text-sm font-bold text-accent-800 dark:bg-accent-500/15 dark:text-accent-300"
-      >
-        <i class="pi pi-bolt text-xs" />
-        {{ sub.aiCreditsRemaining }} crédit{{ sub.aiCreditsRemaining > 1 ? "s" : "" }} IA
-      </span>
-    </div>
+    </header>
 
     <!-- Non connecté -->
     <div
@@ -54,7 +97,7 @@
 
       <!-- Chargement -->
       <div v-if="loading" class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-        <div v-for="n in 3" :key="n" class="h-64 animate-pulse rounded-card bg-card" />
+        <div v-for="n in 3" :key="n" class="h-40 animate-pulse rounded-card bg-card" />
       </div>
 
       <!-- Erreur -->
@@ -94,57 +137,44 @@
         <article
           v-for="session in sessions"
           :key="session.id"
-          class="flex flex-col rounded-card border border-line bg-card p-5 shadow-soft transition-all duration-300 ease-spring hover:-translate-y-0.5 hover:shadow-lift"
+          class="group flex flex-col rounded-card border border-line bg-card p-5 shadow-soft transition-all duration-300 ease-spring hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-lift"
         >
-          <div class="mb-4 flex items-start justify-between gap-3">
-            <div class="flex min-w-0 items-center gap-3">
-              <span
-                class="grid size-11 shrink-0 place-items-center rounded-leaf"
-                :class="session.is_active ? 'brand-gradient text-white shadow-brand' : 'bg-card-2 text-faint'"
-              >
-                <i class="pi pi-calendar" />
-              </span>
-              <div class="min-w-0">
-                <h2 class="truncate font-heading text-base font-bold text-ink">{{ session.name }}</h2>
-                <p class="text-xs capitalize text-muted">{{ formatMonth(session.month) }}</p>
-              </div>
-            </div>
+          <div class="mb-5 flex items-start gap-4">
             <span
-              class="inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold"
-              :class="
-                session.is_active
-                  ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300'
-                  : 'bg-card-2 text-muted'
-              "
+              class="grid size-14 shrink-0 place-items-center rounded-leaf font-heading text-lg font-extrabold uppercase"
+              :class="session.is_active ? 'brand-gradient text-white shadow-brand' : 'bg-card-2 text-faint'"
             >
-              <span class="size-1.5 rounded-full" :class="session.is_active ? 'bg-emerald-500' : 'bg-faint'" />
-              {{ session.is_active ? "Actif" : "Archivé" }}
+              {{ formatMonth(session.month).charAt(0) }}
             </span>
+            <div class="min-w-0 flex-1">
+              <p class="text-xs font-semibold capitalize text-muted">{{ formatMonth(session.month) }}</p>
+              <h2 class="truncate font-heading text-base font-bold text-ink">{{ session.name }}</h2>
+              <span
+                class="mt-1.5 inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-semibold"
+                :class="
+                  session.is_active
+                    ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300'
+                    : 'bg-card-2 text-muted'
+                "
+              >
+                <span class="size-1.5 rounded-full" :class="session.is_active ? 'bg-emerald-500' : 'bg-faint'" />
+                {{ session.is_active ? "Actif" : "Archivé" }}
+              </span>
+            </div>
           </div>
-
-          <ul class="mb-5 flex-1 space-y-2 text-sm text-muted">
-            <li class="flex items-center gap-2.5">
-              <i class="pi pi-list text-xs text-primary" /> Plusieurs combinaisons de sujets
-            </li>
-            <li class="flex items-center gap-2.5">
-              <i class="pi pi-clock text-xs text-primary" /> 60 minutes recommandées
-            </li>
-            <li class="flex items-center gap-2.5">
-              <i class="pi pi-bolt text-xs text-primary" /> Correction IA disponible
-            </li>
-          </ul>
 
           <NuxtLink
             :to="`/simulateur/expression-ecrite/${session.id}`"
-            class="inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition-all duration-300 ease-spring"
+            class="mt-auto inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition-all duration-300 ease-spring"
             :class="
               sub.aiCreditsRemaining > 0
-                ? 'brand-gradient text-white shadow-brand hover:-translate-y-0.5 hover:shadow-brand-hover'
+                ? 'brand-gradient text-white shadow-brand hover:shadow-brand-hover'
                 : 'border border-line bg-card text-ink hover:border-primary/40 hover:text-primary'
             "
           >
             <i :class="sub.aiCreditsRemaining > 0 ? 'pi pi-play' : 'pi pi-eye'" class="text-xs" />
             {{ sub.aiCreditsRemaining > 0 ? "Voir les sujets" : "Lire les sujets" }}
+            <i class="pi pi-arrow-right ml-auto text-xs transition-transform group-hover:translate-x-0.5" />
           </NuxtLink>
         </article>
       </div>
@@ -192,6 +222,9 @@ const loading = ref(true);
 const error = ref<string | null>(null);
 const sessions = ref<MonthlySessionResponse[]>([]);
 const { open: openBuyCredits } = useBuyCreditsDialog();
+
+// ── En-tête (affichage) ──────────────────────────────────────
+const activeCount = computed(() => sessions.value.filter((s) => s.is_active).length);
 
 async function loadSessions() {
   loading.value = true;

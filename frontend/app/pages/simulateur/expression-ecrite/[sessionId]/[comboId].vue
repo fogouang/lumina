@@ -1,10 +1,7 @@
 <template>
-  <div class="min-h-screen bg-canvas">
+  <div>
     <!-- Chargement -->
-    <div
-      v-if="loading"
-      class="flex min-h-screen flex-col items-center justify-center gap-4"
-    >
+    <div v-if="loading" class="flex flex-col items-center justify-center gap-4 py-24">
       <span class="grid size-14 place-items-center rounded-leaf brand-gradient text-white shadow-brand">
         <i class="pi pi-spin pi-spinner text-xl" />
       </span>
@@ -12,106 +9,82 @@
     </div>
 
     <template v-else-if="session && combo">
-      <!-- En-tête sticky -->
-      <header class="sticky top-0 z-50 border-b border-line bg-card/90 backdrop-blur-md">
-        <div class="flex h-14 items-center justify-between gap-3 px-4 sm:px-5">
-          <!-- Gauche -->
-          <div class="flex min-w-0 items-center gap-3">
-            <NuxtLink
-              :to="`/simulateur/expression-ecrite/${sessionId}`"
-              aria-label="Retour aux sujets"
-              class="grid size-9 shrink-0 place-items-center rounded-xl text-muted transition-colors hover:bg-card-2 hover:text-primary"
-            >
-              <i class="pi pi-arrow-left text-sm" />
-            </NuxtLink>
-            <div class="min-w-0">
-              <p class="truncate text-sm font-bold leading-tight text-ink">{{ session.name }}</p>
-              <p class="truncate text-xs text-muted">{{ combo.title }}</p>
-            </div>
-          </div>
-
-          <!-- Centre : chrono -->
-          <div v-if="simulating && !combinedCorrection" class="flex flex-1 justify-center">
-            <div
-              class="flex items-center gap-1.5 rounded-full border px-3 py-1 font-mono text-sm font-bold tabular-nums"
-              :class="{
-                'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300':
-                  timeLeft > 20 * 60,
-                'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300':
-                  timeLeft <= 20 * 60 && timeLeft > 10 * 60,
-                'animate-pulse border-red-200 bg-red-50 text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300':
-                  timeLeft <= 10 * 60,
-              }"
-            >
-              <i class="pi pi-clock" />
-              {{ formattedTime }}
-            </div>
-          </div>
-          <div v-else class="flex-1" />
-
-          <!-- Crédits -->
-          <span
-            class="inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1 text-sm font-bold"
-            :class="
-              sub.aiCreditsRemaining > 0
-                ? 'bg-accent-100 text-accent-800 dark:bg-accent-500/15 dark:text-accent-300'
-                : 'bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-300'
-            "
-          >
-            <i class="pi pi-bolt text-xs" />
-            {{ sub.aiCreditsRemaining }} crédit{{ sub.aiCreditsRemaining > 1 ? "s" : "" }}
-          </span>
-        </div>
-      </header>
-
       <!-- ── MODE LECTURE ───────────────────────────────────── -->
       <template v-if="!simulating">
-        <div class="mx-auto flex max-w-3xl flex-col gap-5 px-4 py-8">
-          <!-- Bannière -->
-          <div
-            class="flex flex-col items-start gap-4 rounded-card border border-line bg-card p-5 shadow-soft sm:p-6 md:flex-row md:items-center"
-          >
-            <span
-              class="grid size-12 shrink-0 place-items-center rounded-leaf"
-              :class="
-                sub.aiCreditsRemaining > 0
-                  ? 'brand-gradient text-white shadow-brand'
-                  : 'bg-card-2 text-muted'
-              "
-            >
-              <i :class="sub.aiCreditsRemaining > 0 ? 'pi pi-play' : 'pi pi-book'" />
-            </span>
-            <div class="flex-1">
-              <h2 class="mb-1 font-heading text-base font-bold text-ink">
-                {{ sub.aiCreditsRemaining > 0 ? "Prêt à simuler ?" : "Mode lecture" }}
-              </h2>
-              <p class="text-sm leading-relaxed text-muted">
-                <span v-if="sub.aiCreditsRemaining > 0">
-                  Lisez les 3 sujets puis cliquez sur <strong class="text-ink">Démarrer</strong>
-                  pour lancer le chrono. <strong class="text-ink">1 crédit IA</strong> sera utilisé à la soumission.
-                </span>
-                <span v-else>Vous pouvez lire les sujets mais pas obtenir de correction IA.</span>
+        <!-- En-tête -->
+        <header class="featured-panel relative mb-6 overflow-hidden rounded-card p-6 text-white shadow-brand sm:p-8">
+          <div class="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+            <div class="min-w-0">
+              <NuxtLink
+                :to="`/simulateur/expression-ecrite/${sessionId}`"
+                class="mb-3 inline-flex items-center gap-2 text-sm font-medium text-white/75 transition-colors hover:text-white"
+              >
+                <i class="pi pi-arrow-left text-xs" />
+                {{ session.name }}
+              </NuxtLink>
+              <h1 class="font-heading text-2xl font-extrabold tracking-tight sm:text-3xl">{{ combo.title }}</h1>
+              <p class="mt-1.5 max-w-xl text-sm leading-relaxed text-white/75">
+                <template v-if="sub.aiCreditsRemaining > 0">
+                  Lisez les 3 sujets puis cliquez sur <strong class="text-white">Démarrer</strong> pour lancer le chrono.
+                  <strong class="text-white">1 crédit IA</strong> sera utilisé à la soumission.
+                </template>
+                <template v-else>Mode lecture : vous pouvez lire les sujets mais pas obtenir de correction IA.</template>
               </p>
+              <div class="mt-5">
+                <button
+                  v-if="sub.aiCreditsRemaining > 0"
+                  type="button"
+                  class="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-bold text-primary-900 shadow-lift transition-all duration-300 ease-spring hover:-translate-y-0.5"
+                  @click="startSimulation"
+                >
+                  <i class="pi pi-play text-xs" />
+                  Démarrer le simulateur
+                </button>
+                <button
+                  v-else
+                  type="button"
+                  class="inline-flex items-center gap-2 rounded-xl bg-accent-400 px-5 py-3 text-sm font-bold text-primary-950 shadow-lift transition-all duration-300 ease-spring hover:-translate-y-0.5 hover:bg-accent-300"
+                  @click="openBuyCredits()"
+                >
+                  <i class="pi pi-bolt text-xs" />
+                  Acheter des crédits
+                </button>
+              </div>
             </div>
-            <div class="shrink-0">
-              <AppButton
-                v-if="sub.aiCreditsRemaining > 0"
-                label="Démarrer le simulateur"
-                icon="pi pi-play"
-                variant="gradient"
-                @click="startSimulation"
-              />
-              <AppButton
-                v-else
-                label="Acheter des crédits"
-                icon="pi pi-bolt"
-                variant="accent"
-                @click="buyCreditsVisible = true"
-              />
-            </div>
-          </div>
 
-          <!-- Tâche 1 -->
+            <dl class="grid grid-cols-3 gap-2 sm:gap-3 lg:min-w-104">
+              <div class="rounded-xl border border-white/15 bg-white/10 px-3 py-3 backdrop-blur sm:px-4">
+                <dt class="sr-only">Nombre de tâches</dt>
+                <i class="pi pi-list text-sm text-accent-400" aria-hidden="true" />
+                <dd class="mt-1.5 font-heading text-sm font-bold sm:text-base">3 tâches</dd>
+              </div>
+              <div class="rounded-xl border border-white/15 bg-white/10 px-3 py-3 backdrop-blur sm:px-4">
+                <dt class="sr-only">Durée recommandée</dt>
+                <i class="pi pi-clock text-sm text-accent-400" aria-hidden="true" />
+                <dd class="mt-1.5 font-heading text-sm font-bold sm:text-base">60 min</dd>
+              </div>
+              <button
+                type="button"
+                class="rounded-xl border px-3 py-3 text-left backdrop-blur transition-colors sm:px-4"
+                :class="
+                  sub.aiCreditsRemaining > 0
+                    ? 'border-white/15 bg-white/10 hover:bg-white/15'
+                    : 'border-accent-400/60 bg-accent-400/20 hover:bg-accent-400/30'
+                "
+                aria-label="Acheter des crédits IA"
+                @click="openBuyCredits()"
+              >
+                <i class="pi pi-bolt text-sm text-accent-400" aria-hidden="true" />
+                <span class="mt-1.5 block font-heading text-sm font-bold sm:text-base">
+                  {{ sub.aiCreditsRemaining }} crédit{{ sub.aiCreditsRemaining > 1 ? "s" : "" }}
+                </span>
+              </button>
+            </dl>
+          </div>
+        </header>
+
+        <!-- Tâches 1 et 2 -->
+        <div class="mb-5 grid grid-cols-1 gap-5 xl:grid-cols-2">
           <TaskReadCard
             number="1"
             label="Tâche 1 - Message"
@@ -122,8 +95,6 @@
             description="Rédigez un message, un courriel ou une annonce adressé à un ou plusieurs destinataires."
             :correction="combo.task1_correction"
           />
-
-          <!-- Tâche 2 -->
           <TaskReadCard
             number="2"
             label="Tâche 2 - Narration / Blog"
@@ -134,92 +105,144 @@
             description="Rédigez un article, un billet de blog ou un récit à partir de la consigne donnée."
             :correction="combo.task2_correction"
           />
+        </div>
 
-          <!-- Tâche 3 -->
-          <section class="overflow-hidden rounded-card border border-line bg-card shadow-soft">
-            <div class="flex items-center justify-between gap-3 border-b border-line bg-card-2/50 px-5 py-4">
-              <div class="flex items-center gap-3">
-                <span class="grid size-9 shrink-0 place-items-center rounded-leaf brand-gradient text-sm font-bold text-white shadow-brand">
-                  3
-                </span>
-                <div>
-                  <p class="text-sm font-bold text-ink">Tâche 3 - Argumentation</p>
-                  <p class="text-xs text-muted">
-                    {{ combo.task3_word_min }}–{{ combo.task3_word_max }} mots recommandés
-                  </p>
-                </div>
-              </div>
-              <span class="shrink-0 rounded-full bg-accent-100 px-2.5 py-1 text-xs font-bold tabular-nums text-accent-800 dark:bg-accent-500/15 dark:text-accent-300">
-                {{ combo.task3_word_min }}–{{ combo.task3_word_max }} mots
+        <!-- Tâche 3 -->
+        <section class="mb-8 overflow-hidden rounded-card border border-line bg-card shadow-soft">
+          <div class="flex items-center justify-between gap-3 border-b border-line bg-card-2/50 px-5 py-4">
+            <div class="flex items-center gap-3">
+              <span class="grid size-10 shrink-0 place-items-center rounded-leaf brand-gradient text-sm font-bold text-white shadow-brand">
+                3
               </span>
-            </div>
-
-            <div class="flex flex-col gap-3 px-5 py-4">
-              <p class="text-xs italic text-muted">
-                Rédigez un article argumentatif comparant deux points de vue opposés.
-              </p>
-              <h3 class="font-heading text-base font-bold text-ink">{{ combo.task3_title }}</h3>
-              <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
-                <div class="rounded-2xl border border-accent-200 bg-accent-50 p-4 dark:border-accent-500/25 dark:bg-accent-500/10">
-                  <p class="mb-2 text-xs font-bold uppercase tracking-wider text-accent-800 dark:text-accent-300">Document 1</p>
-                  <p class="text-sm leading-relaxed text-ink">{{ combo.task3_document_1 }}</p>
-                </div>
-                <div class="rounded-2xl border border-primary/20 bg-primary/5 p-4">
-                  <p class="mb-2 text-xs font-bold uppercase tracking-wider text-primary">Document 2</p>
-                  <p class="text-sm leading-relaxed text-ink">{{ combo.task3_document_2 }}</p>
-                </div>
+              <div>
+                <p class="text-[0.65rem] font-bold uppercase tracking-wider text-faint">Argumentation</p>
+                <p class="text-sm font-bold text-ink">Tâche 3 - Argumentation</p>
               </div>
             </div>
-
-            <!-- Proposition de correction -->
-            <div v-if="combo.task3_correction" class="border-t border-line">
-              <button
-                type="button"
-                class="flex w-full items-center justify-between px-5 py-3 text-left transition-colors hover:bg-card-2/60"
-                :aria-expanded="showTask3Correction"
-                @click="showTask3Correction = !showTask3Correction"
-              >
-                <span class="flex items-center gap-2 text-sm font-semibold text-primary">
-                  <i class="pi pi-eye text-xs" />
-                  Voir la proposition de correction
-                </span>
-                <i
-                  class="pi pi-chevron-down text-xs text-faint transition-transform duration-200"
-                  :class="showTask3Correction ? 'rotate-180' : ''"
-                />
-              </button>
-              <div v-if="showTask3Correction" class="px-5 pb-4">
-                <p class="whitespace-pre-wrap rounded-2xl border border-primary/15 bg-primary/5 p-4 text-sm leading-relaxed text-ink">
-                  {{ combo.task3_correction }}
-                </p>
-              </div>
-            </div>
-          </section>
-
-          <!-- CTA bas -->
-          <div class="flex justify-center pb-8 pt-2">
-            <AppButton
-              v-if="sub.aiCreditsRemaining > 0"
-              label="Démarrer le simulateur"
-              icon="pi pi-play"
-              variant="gradient"
-              size="large"
-              @click="startSimulation"
-            />
-            <AppButton
-              v-else
-              label="Acheter des crédits"
-              icon="pi pi-bolt"
-              variant="accent"
-              @click="buyCreditsVisible = true"
-            />
+            <span class="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-accent-100 px-2.5 py-1 text-xs font-bold tabular-nums text-accent-800 dark:bg-accent-500/15 dark:text-accent-300">
+              <i class="pi pi-align-left text-[0.6rem]" />
+              {{ combo.task3_word_min }}–{{ combo.task3_word_max }} mots
+            </span>
           </div>
+
+          <div class="flex flex-col gap-4 px-5 py-5">
+            <p class="text-xs italic text-muted">
+              Rédigez un article argumentatif comparant deux points de vue opposés.
+            </p>
+            <h3 class="font-heading text-lg font-bold text-ink">{{ combo.task3_title }}</h3>
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div class="rounded-2xl border border-accent-200 bg-accent-50 p-5 dark:border-accent-500/25 dark:bg-accent-500/10">
+                <p class="mb-2 text-xs font-bold uppercase tracking-wider text-accent-800 dark:text-accent-300">Document 1</p>
+                <p class="text-[0.9375rem] leading-relaxed text-ink">{{ combo.task3_document_1 }}</p>
+              </div>
+              <div class="rounded-2xl border border-primary/20 bg-primary/5 p-5">
+                <p class="mb-2 text-xs font-bold uppercase tracking-wider text-primary">Document 2</p>
+                <p class="text-[0.9375rem] leading-relaxed text-ink">{{ combo.task3_document_2 }}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Proposition de correction -->
+          <div v-if="combo.task3_correction" class="border-t border-line">
+            <button
+              type="button"
+              class="flex w-full items-center justify-between px-5 py-3 text-left transition-colors hover:bg-card-2/60"
+              :aria-expanded="showTask3Correction"
+              @click="showTask3Correction = !showTask3Correction"
+            >
+              <span class="flex items-center gap-2 text-sm font-semibold text-primary">
+                <i class="pi pi-eye text-xs" />
+                Voir la proposition de correction
+              </span>
+              <i
+                class="pi pi-chevron-down text-xs text-faint transition-transform duration-200"
+                :class="showTask3Correction ? 'rotate-180' : ''"
+              />
+            </button>
+            <div v-if="showTask3Correction" class="px-5 pb-5">
+              <p class="whitespace-pre-wrap rounded-2xl border border-primary/15 bg-primary/5 p-4 text-sm leading-relaxed text-ink">
+                {{ combo.task3_correction }}
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- CTA bas -->
+        <div class="flex justify-center pb-8">
+          <AppButton
+            v-if="sub.aiCreditsRemaining > 0"
+            label="Démarrer le simulateur"
+            icon="pi pi-play"
+            variant="gradient"
+            size="large"
+            @click="startSimulation"
+          />
+          <AppButton
+            v-else
+            label="Acheter des crédits"
+            icon="pi pi-bolt"
+            variant="accent"
+            size="large"
+            @click="openBuyCredits()"
+          />
         </div>
       </template>
 
       <!-- ── MODE SIMULATION ────────────────────────────────── -->
       <template v-else>
-        <div class="flex min-h-[calc(100vh-3.5rem)]">
+        <!-- Barre sticky (chrono) -->
+        <header class="sticky top-0 z-50 -mx-5 mb-0 border-b border-line bg-card/90 backdrop-blur-md sm:-mx-8 xl:-mx-10 2xl:-mx-12">
+          <div class="flex h-14 items-center justify-between gap-3 px-4 sm:px-5">
+            <div class="flex min-w-0 items-center gap-3">
+              <NuxtLink
+                :to="`/simulateur/expression-ecrite/${sessionId}`"
+                aria-label="Retour aux sujets"
+                class="grid size-9 shrink-0 place-items-center rounded-xl text-muted transition-colors hover:bg-card-2 hover:text-primary"
+              >
+                <i class="pi pi-arrow-left text-sm" />
+              </NuxtLink>
+              <div class="min-w-0">
+                <p class="truncate text-sm font-bold leading-tight text-ink">{{ session.name }}</p>
+                <p class="truncate text-xs text-muted">{{ combo.title }}</p>
+              </div>
+            </div>
+
+            <div v-if="!combinedCorrection" class="flex flex-1 justify-center">
+              <div
+                class="flex items-center gap-1.5 rounded-full border px-3 py-1 font-mono text-sm font-bold tabular-nums"
+                :class="{
+                  'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300':
+                    timeLeft > 20 * 60,
+                  'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300':
+                    timeLeft <= 20 * 60 && timeLeft > 10 * 60,
+                  'animate-pulse border-red-200 bg-red-50 text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300':
+                    timeLeft <= 10 * 60,
+                }"
+              >
+                <i class="pi pi-clock" />
+                {{ formattedTime }}
+              </div>
+            </div>
+            <div v-else class="flex-1" />
+
+            <button
+              type="button"
+              class="inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1 text-sm font-bold transition-colors"
+              :class="
+                sub.aiCreditsRemaining > 0
+                  ? 'bg-accent-100 text-accent-800 hover:bg-accent-200 dark:bg-accent-500/15 dark:text-accent-300'
+                  : 'bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-500/15 dark:text-red-300'
+              "
+              aria-label="Acheter des crédits IA"
+              @click="openBuyCredits()"
+            >
+              <i class="pi pi-bolt text-xs" />
+              {{ sub.aiCreditsRemaining }} crédit{{ sub.aiCreditsRemaining > 1 ? "s" : "" }}
+            </button>
+          </div>
+        </header>
+
+        <div class="-mx-5 flex min-h-[calc(100vh-3.5rem)] sm:-mx-8 xl:-mx-10 2xl:-mx-12">
           <!-- Sidebar gauche -->
           <aside
             class="sticky top-14 hidden h-[calc(100vh-3.5rem)] w-60 shrink-0 flex-col overflow-y-auto border-r border-line bg-card lg:flex"
@@ -231,11 +254,7 @@
                 :key="t.key"
                 type="button"
                 class="flex items-center gap-2.5 rounded-xl border px-3 py-2.5 text-left transition-all"
-                :class="
-                  activeTask === i
-                    ? 'border-primary/30 bg-primary/5'
-                    : 'border-transparent hover:bg-card-2'
-                "
+                :class="activeTask === i ? 'border-primary/30 bg-primary/5' : 'border-transparent hover:bg-card-2'"
                 @click="activeTask = i"
               >
                 <span
@@ -296,7 +315,7 @@
                 variant="accent"
                 size="small"
                 class="shrink-0"
-                @click="buyCreditsVisible = true"
+                @click="openBuyCredits()"
               />
             </div>
 
@@ -657,7 +676,7 @@
       </NuxtLink>
     </div>
 
-    <BuyCreditsDialog v-model="buyCreditsVisible" />
+    <BuyCreditsDialog />
   </div>
 </template>
 
@@ -681,8 +700,8 @@ const session = ref<MonthlySessionResponse | null>(null);
 const combo = ref<EECombinationResponse | null>(null);
 const simulating = ref(false);
 const submitting = ref(false);
-const buyCreditsVisible = ref(false);
 const activeTask = ref(0);
+const { open: openBuyCredits } = useBuyCreditsDialog();
 
 const specialChars = [
   "é",

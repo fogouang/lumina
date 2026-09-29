@@ -16,6 +16,33 @@ const error = ref<string | null>(null);
 const oralTasks = ref<ExpressionTaskResponse[]>([]);
 const lastAttemptByTask = ref<Record<number, AttemptHistoryItem>>({});
 
+// Sujets dépliés (affichage complet du texte)
+const expanded = ref<Record<string, boolean>>({});
+
+// ── En-tête (affichage) ──────────────────────────────────────
+const attemptedCount = computed(
+  () => oralTasks.value.filter((t) => lastAttemptByTask.value[t.task_number]).length,
+);
+
+const totalMinutes = computed(() =>
+  Math.round(
+    oralTasks.value.reduce(
+      (sum, t) => sum + (t.preparation_time_seconds ?? 0) + (t.recording_time_seconds ?? 0),
+      0,
+    ) / 60,
+  ),
+);
+
+
+function toggleExpanded(id: string): void {
+  expanded.value[id] = !expanded.value[id];
+}
+
+// Texte du sujet
+function taskText(task: ExpressionTaskResponse): string {
+  return task.instruction_text ?? "";
+}
+
 function durationLabel(task: ExpressionTaskResponse): string {
   const prep = task.preparation_time_seconds ?? 0;
   const live = task.recording_time_seconds ?? 0;
@@ -63,11 +90,51 @@ function goToConversation(task: ExpressionTaskResponse): void {
 
 <template>
   <div>
-    <h1 class="account-page-title">Simulateur Expression Orale</h1>
+        <!-- En-tête -->
+    <header class="featured-panel relative mb-6 overflow-hidden rounded-card p-6 text-white shadow-brand sm:p-8">
+      <div class="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+        <div class="min-w-0">
+          <NuxtLink
+            to="/simulateur-oral"
+            class="mb-3 inline-flex items-center gap-2 text-sm font-medium text-white/75 transition-colors hover:text-white"
+          >
+            <i class="pi pi-arrow-left text-xs" />
+            Simulateur oral
+          </NuxtLink>
+          <h1 class="font-heading text-2xl font-extrabold tracking-tight sm:text-3xl">
+            Expression Orale
+          </h1>
+        </div>
+
+        <dl class="grid grid-cols-3 gap-2 sm:gap-3 lg:min-w-md">
+          <div class="rounded-xl border border-white/15 bg-white/10 px-3 py-3 backdrop-blur sm:px-4">
+            <dt class="sr-only">Nombre de tâches</dt>
+            <i class="pi pi-microphone text-sm text-accent-400" aria-hidden="true" />
+            <dd class="mt-1.5 font-heading text-sm font-bold sm:text-base">
+              {{ loading ? "·" : `${oralTasks.length} tâches` }}
+            </dd>
+          </div>
+          <div class="rounded-xl border border-white/15 bg-white/10 px-3 py-3 backdrop-blur sm:px-4">
+            <dt class="sr-only">Tâches déjà tentées</dt>
+            <i class="pi pi-history text-sm text-accent-400" aria-hidden="true" />
+            <dd class="mt-1.5 font-heading text-sm font-bold sm:text-base">
+              {{ loading ? "·" : `${attemptedCount}/${oralTasks.length} tentées` }}
+            </dd>
+          </div>
+          <div class="rounded-xl border border-white/15 bg-white/10 px-3 py-3 backdrop-blur sm:px-4">
+            <dt class="sr-only">Durée totale</dt>
+            <i class="pi pi-clock text-sm text-accent-400" aria-hidden="true" />
+            <dd class="mt-1.5 font-heading text-sm font-bold sm:text-base">
+              {{ loading ? "·" : `${totalMinutes} min` }}
+            </dd>
+          </div>
+        </dl>
+      </div>
+    </header>
 
     <!-- Chargement -->
-    <div v-if="loading" class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-      <div v-for="n in 3" :key="n" class="h-28 animate-pulse rounded-card border border-line bg-card" />
+    <div v-if="loading" class="space-y-3">
+      <div v-for="n in 3" :key="n" class="h-32 animate-pulse rounded-card border border-line bg-card" />
     </div>
 
     <!-- Erreur -->
@@ -95,55 +162,84 @@ function goToConversation(task: ExpressionTaskResponse): void {
     </div>
 
     <!-- Tâches -->
-    <div v-else class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-      <button
+    <div v-else class="space-y-3">
+      <article
         v-for="task in oralTasks"
         :key="task.id"
-        type="button"
-        class="group flex items-center gap-4 rounded-card border border-line bg-card p-4 text-left shadow-soft transition-all duration-300 ease-spring hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lift focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-        @click="goToConversation(task)"
+        class="grid grid-cols-1 gap-4 rounded-card border border-line bg-card p-4 shadow-soft transition-shadow duration-300 hover:shadow-lift sm:p-5 lg:grid-cols-[15rem_1fr_auto] lg:items-center lg:gap-6"
       >
-        <span class="relative grid size-12 shrink-0 place-items-center rounded-leaf brand-gradient text-white shadow-brand">
-          <i class="pi pi-microphone text-lg" />
-          <span
-            class="absolute -right-1.5 -top-1.5 grid size-5 place-items-center rounded-full border-2 border-card bg-accent-400 text-[0.6rem] font-extrabold text-primary-950"
-          >
-            {{ task.task_number }}
+        <!-- Infos -->
+        <div class="flex items-center gap-3.5 lg:self-start">
+          <span class="relative grid size-12 shrink-0 place-items-center rounded-leaf brand-gradient text-white shadow-brand">
+            <i class="pi pi-microphone text-lg" />
+            <span
+              class="absolute -right-1.5 -top-1.5 grid size-5 place-items-center rounded-full border-2 border-card bg-accent-400 text-[0.6rem] font-extrabold text-primary-950"
+            >
+              {{ task.task_number }}
+            </span>
           </span>
-        </span>
+          <div class="min-w-0">
+            <h2 class="truncate font-heading text-sm font-bold text-ink">
+              {{ task.title ?? `Tâche ${task.task_number}` }}
+            </h2>
+            <p class="mt-0.5 flex items-start gap-1.5 text-xs text-muted">
+              <i class="pi pi-clock mt-0.5 text-[0.65rem]" />
+              {{ durationLabel(task) }}
+            </p>
+            <span
+              v-if="lastAttemptFor(task.task_number)"
+              class="mt-1.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[0.7rem] font-semibold tabular-nums"
+              :class="
+                lastAttemptFor(task.task_number)?.capped
+                  ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300'
+                  : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300'
+              "
+            >
+              <i class="pi pi-history text-[0.6rem]" />
+              Dernier essai : {{ lastAttemptFor(task.task_number)?.total_score }}/20{{
+                lastAttemptFor(task.task_number)?.capped ? " (plafonné)" : ""
+              }}
+            </span>
+          </div>
+        </div>
 
-        <span class="min-w-0 flex-1">
-          <span class="block truncate font-heading text-sm font-bold text-ink">
-            {{ task.title ?? `Tâche ${task.task_number}` }}
-          </span>
-          <span class="mt-0.5 flex items-center gap-1.5 text-xs text-muted">
-            <i class="pi pi-clock text-[0.65rem]" />
-            {{ durationLabel(task) }}
-          </span>
-          <span
-            v-if="lastAttemptFor(task.task_number)"
-            class="mt-1.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[0.7rem] font-semibold tabular-nums"
-            :class="
-              lastAttemptFor(task.task_number)?.capped
-                ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300'
-                : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300'
-            "
-          >
-            <i class="pi pi-history text-[0.6rem]" />
-            Dernier essai : {{ lastAttemptFor(task.task_number)?.total_score }}/20{{
-              lastAttemptFor(task.task_number)?.capped ? " (plafonné)" : ""
-            }}
-          </span>
-        </span>
-
-        <span
-          class="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-bold text-primary transition-colors group-hover:bg-primary group-hover:text-primary-contrast"
+        <!-- Sujet -->
+        <div
+          class="min-w-0 rounded-2xl border border-line bg-card-2/50 px-4 py-3 lg:rounded-none lg:border-y-0 lg:border-r-0 lg:bg-transparent lg:py-1 lg:pl-6"
         >
-          <i class="pi pi-play text-[0.6rem]" />
-          Démarrer
-        </span>
-      </button>
+          <p class="mb-1 text-[0.65rem] font-bold uppercase tracking-wider text-faint">Sujet</p>
+          <template v-if="taskText(task)">
+            <p
+              class="whitespace-pre-line text-xl leading-relaxed text-ink lg:text-2xl"
+              :class="expanded[task.id] ? '' : 'line-clamp-4'"
+            >
+              {{ taskText(task) }}
+            </p>
+            <button
+              v-if="taskText(task).length > 220"
+              type="button"
+              class="mt-1.5 inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
+              :aria-expanded="!!expanded[task.id]"
+              @click="toggleExpanded(task.id)"
+            >
+              {{ expanded[task.id] ? "Réduire" : "Lire tout le sujet" }}
+              <i class="pi text-[0.6rem]" :class="expanded[task.id] ? 'pi-chevron-up' : 'pi-chevron-down'" />
+            </button>
+          </template>
+          <p v-else class="text-sm italic text-faint">
+            Le sujet vous sera présenté par l'examinateur au début de l'échange.
+          </p>
+        </div>
+
+        <!-- Action -->
+        <AppButton
+          label="Démarrer"
+          icon="pi pi-play"
+          variant="gradient"
+          class="w-full lg:w-auto"
+          @click="goToConversation(task)"
+        />
+      </article>
     </div>
   </div>
 </template>
-

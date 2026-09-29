@@ -60,7 +60,7 @@ class Settings(BaseSettings):
     GROK_BASE_URL: str = "https://api.x.ai/v1"
 
     # Gemini (Google)
-    GEMINI_API_KEY: str = "AIzaSyDyKck2azekj7dheha84Zx8QTAua5-cmcc"
+    GEMINI_API_KEY: str = ""
 
     # Claude (Anthropic)
     ANTHROPIC_API_KEY: str = ""

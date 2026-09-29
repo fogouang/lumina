@@ -404,6 +404,7 @@ onBeforeUnmount(() => {
     <template v-else-if="task">
       <!-- Barre d'appel -->
       <div
+        v-if="phase !== 'graded'"
         class="flex shrink-0 items-center gap-3 border-b px-4 py-3 backdrop-blur-md"
         :class="
           isCallTheme ? 'border-white/10 bg-white/5' : 'border-line bg-card/90'
@@ -708,156 +709,279 @@ onBeforeUnmount(() => {
       </div>
 
       <!-- Résultat -->
-      <div
-        v-else-if="phase === 'graded' && gradingResult"
-        class="flex-1 overflow-y-auto"
-      >
-        <div class="mx-auto max-w-2xl space-y-5 px-4 py-8">
-          <!-- Score -->
-          <div
-            class="relative overflow-hidden rounded-card text-white shadow-brand"
-            :class="
-              gradingResult.capped
-                ? 'bg-linear-to-br from-amber-500 to-orange-600'
-                : 'featured-panel'
-            "
-          >
-            <div
-              class="relative z-10 flex items-start justify-between gap-4 px-6 pb-5 pt-6"
+      <div v-else-if="phase === 'graded' && gradingResult" class="flex-1">
+        <!-- En-tête -->
+        <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
+          <div class="flex min-w-0 items-center gap-3">
+            <button
+              type="button"
+              aria-label="Retour aux tâches"
+              class="grid size-10 shrink-0 place-items-center rounded-xl border border-line bg-card text-muted shadow-soft transition-colors hover:border-primary/40 hover:text-primary"
+              @click="confirmLeave"
             >
-              <div>
-                <p
-                  class="mb-1 text-xs font-semibold uppercase tracking-widest text-white/70"
-                >
-                  TCF Canada · Tâche {{ gradingResult.task_number }}
-                </p>
-                <h2 class="font-heading text-2xl font-extrabold">
-                  {{ gradingResult.capped ? "Plafonné" : "Épreuve terminée" }}
-                </h2>
-              </div>
+              <i class="pi pi-arrow-left text-sm" />
+            </button>
+            <div class="min-w-0">
               <p
-                class="shrink-0 font-heading text-4xl font-extrabold leading-none tabular-nums"
+                class="text-xs font-semibold uppercase tracking-wider text-faint"
               >
-                {{ gradingResult.total_score
-                }}<span class="text-lg opacity-60">/20</span>
+                Simulateur oral · Résultat
               </p>
-            </div>
-            <div
-              v-if="gradingResult.capped"
-              class="relative z-10 border-t border-white/15 bg-black/10 px-6 py-4"
-            >
-              <p class="flex items-start gap-2 text-sm text-white/90">
-                <i class="pi pi-info-circle mt-0.5 shrink-0" />
-                {{ gradingResult.cap_reason }}
-              </p>
+              <h1
+                class="truncate font-heading text-xl font-extrabold tracking-tight text-ink sm:text-2xl"
+              >
+                {{ task.title ?? `Tâche ${task.task_number}` }}
+              </h1>
             </div>
           </div>
-
-          <!-- Critères -->
-          <section
-            class="overflow-hidden rounded-card border border-line bg-card shadow-soft"
-          >
-            <h3
-              class="flex items-center gap-2 border-b border-line px-5 py-4 font-heading text-sm font-bold text-ink"
-            >
-              <i class="pi pi-chart-bar text-primary" /> Détail par critère
-            </h3>
-            <div class="divide-y divide-line">
-              <div
-                v-for="c in gradingResult.criteria"
-                :key="c.name"
-                class="px-5 py-4"
-              >
-                <div class="mb-1.5 flex items-center justify-between gap-3">
-                  <span class="text-sm font-semibold text-ink">{{
-                    c.name
-                  }}</span>
-                  <span
-                    class="font-heading text-sm font-bold tabular-nums text-primary"
-                  >
-                    {{ c.score
-                    }}<span class="text-xs font-semibold text-faint">/4</span>
-                  </span>
-                </div>
-                <div class="mb-2 h-1.5 overflow-hidden rounded-full bg-line">
-                  <div
-                    class="h-full rounded-full bg-linear-to-r from-primary-400 to-primary-700"
-                    :style="{ width: `${Math.min(100, (c.score / 4) * 100)}%` }"
-                  />
-                </div>
-                <p v-if="c.comment" class="text-xs leading-relaxed text-muted">
-                  {{ c.comment }}
-                </p>
-              </div>
-            </div>
-          </section>
-
-          <!-- Points forts / axes -->
-          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div v-if="gradingResult.strengths.length">
-              <p
-                class="mb-2 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400"
-              >
-                <i class="pi pi-check-circle" /> Points forts
-              </p>
-              <ul class="space-y-1.5">
-                <li
-                  v-for="(s, i) in gradingResult.strengths"
-                  :key="i"
-                  class="flex items-start gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-ink dark:border-emerald-500/20 dark:bg-emerald-500/10"
-                >
-                  <i
-                    class="pi pi-check mt-0.5 shrink-0 text-xs text-emerald-600 dark:text-emerald-400"
-                  />
-                  <span>{{ s }}</span>
-                </li>
-              </ul>
-            </div>
-            <div v-if="gradingResult.improvement_areas.length">
-              <p
-                class="mb-2 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400"
-              >
-                <i class="pi pi-exclamation-circle" /> Axes d'amélioration
-              </p>
-              <ul class="space-y-1.5">
-                <li
-                  v-for="(a, i) in gradingResult.improvement_areas"
-                  :key="i"
-                  class="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-ink dark:border-amber-500/20 dark:bg-amber-500/10"
-                >
-                  <i
-                    class="pi pi-arrow-up-right mt-0.5 shrink-0 text-xs text-amber-600 dark:text-amber-400"
-                  />
-                  <span>{{ a }}</span>
-                </li>
-              </ul>
-            </div>
-          </div>
-
-          <!-- Synthèse -->
-          <p
-            v-if="gradingResult.summary"
-            class="rounded-2xl border-l-4 border-primary bg-card-2 px-4 py-3 text-sm italic leading-relaxed text-muted"
-          >
-            {{ gradingResult.summary }}
-          </p>
-
-          <!-- Actions -->
-          <div class="flex flex-col gap-3 pb-8 sm:flex-row">
+          <div class="flex gap-2.5">
             <AppButton
               label="Refaire"
               icon="pi pi-refresh"
               variant="secondary"
-              class="flex-1"
               @click="redo"
             />
             <AppButton
-              label="Choisir une autre tâche"
+              label="Autre tâche"
               icon="pi pi-list"
               variant="gradient"
-              class="flex-1"
               @click="goToList"
             />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 gap-5 lg:grid-cols-12">
+          <!-- ── Colonne gauche : score + aperçu ─────────────── -->
+          <aside class="lg:col-span-4 xl:col-span-3">
+            <div class="flex flex-col gap-4 lg:sticky lg:top-6">
+              <!-- Score -->
+              <div
+                class="relative overflow-hidden rounded-card text-white shadow-brand"
+                :class="
+                  gradingResult.capped
+                    ? 'bg-linear-to-br from-amber-500 to-orange-600'
+                    : 'featured-panel'
+                "
+              >
+                <div
+                  class="relative z-10 flex flex-col items-center px-6 pb-6 pt-5 text-center"
+                >
+                  <p
+                    class="text-xs font-semibold uppercase tracking-widest text-white/70"
+                  >
+                    TCF Canada · Tâche {{ gradingResult.task_number }}
+                  </p>
+
+                  <!-- Anneau -->
+                  <div class="relative my-4 size-36">
+                    <svg viewBox="0 0 120 120" class="size-full -rotate-90">
+                      <circle
+                        cx="60"
+                        cy="60"
+                        r="52"
+                        fill="none"
+                        stroke="rgb(255 255 255 / 0.15)"
+                        stroke-width="10"
+                      />
+                      <circle
+                        cx="60"
+                        cy="60"
+                        r="52"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="10"
+                        stroke-linecap="round"
+                        class="text-accent-400 transition-[stroke-dasharray] duration-1000 ease-out"
+                        :stroke-dasharray="`${Math.min(1, gradingResult.total_score / 20) * 326.7} 326.7`"
+                      />
+                    </svg>
+                    <div
+                      class="absolute inset-0 flex flex-col items-center justify-center"
+                    >
+                      <span
+                        class="font-heading text-4xl font-extrabold leading-none tabular-nums"
+                      >
+                        {{ gradingResult.total_score }}
+                      </span>
+                      <span class="mt-1 text-sm font-semibold text-white/60"
+                        >sur 20</span
+                      >
+                    </div>
+                  </div>
+
+                  <h2 class="font-heading text-xl font-extrabold">
+                    {{ gradingResult.capped ? "Plafonné" : "Épreuve terminée" }}
+                  </h2>
+                </div>
+
+                <div
+                  v-if="gradingResult.capped"
+                  class="relative z-10 border-t border-white/15 bg-black/10 px-5 py-3.5"
+                >
+                  <p
+                    class="flex items-start gap-2 text-left text-sm text-white/90"
+                  >
+                    <i class="pi pi-info-circle mt-0.5 shrink-0" />
+                    {{ gradingResult.cap_reason }}
+                  </p>
+                </div>
+              </div>
+
+              <!-- Aperçu des critères -->
+              <div
+                class="rounded-card border border-line bg-card p-4 shadow-soft"
+              >
+                <p
+                  class="mb-3 text-xs font-bold uppercase tracking-wider text-faint"
+                >
+                  Aperçu
+                </p>
+                <ul class="space-y-2.5">
+                  <li v-for="c in gradingResult.criteria" :key="c.name">
+                    <div
+                      class="mb-1 flex items-center justify-between gap-2 text-xs"
+                    >
+                      <span class="truncate font-medium text-muted">{{
+                        c.name
+                      }}</span>
+                      <span
+                        class="shrink-0 font-heading font-bold tabular-nums text-ink"
+                      >
+                        {{ c.score }}<span class="text-faint">/4</span>
+                      </span>
+                    </div>
+                    <div class="h-1.5 overflow-hidden rounded-full bg-line">
+                      <div
+                        class="h-full rounded-full"
+                        :class="
+                          c.score / 4 >= 0.75
+                            ? 'bg-emerald-500'
+                            : c.score / 4 >= 0.5
+                              ? 'bg-primary'
+                              : 'bg-amber-500'
+                        "
+                        :style="{
+                          width: `${Math.min(100, (c.score / 4) * 100)}%`,
+                        }"
+                      />
+                    </div>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </aside>
+
+          <!-- ── Colonne droite : détails ─────────────────────── -->
+          <div class="flex flex-col gap-5 lg:col-span-8 xl:col-span-9">
+            <!-- Synthèse -->
+            <div
+              v-if="gradingResult.summary"
+              class="flex items-start gap-3 rounded-card border border-primary/15 bg-primary/5 p-4"
+            >
+              <span
+                class="grid size-9 shrink-0 place-items-center rounded-leaf bg-primary/10 text-primary"
+              >
+                <i class="pi pi-comment" />
+              </span>
+              <p class="pt-1 text-sm leading-relaxed text-ink">
+                {{ gradingResult.summary }}
+              </p>
+            </div>
+
+            <!-- Critères -->
+            <section>
+              <h3
+                class="mb-3 flex items-center gap-2 font-heading text-sm font-bold text-ink"
+              >
+                <i class="pi pi-chart-bar text-primary" /> Détail par critère
+              </h3>
+              <div
+                class="grid grid-cols-1 gap-3 md:grid-cols-2 2xl:grid-cols-3"
+              >
+                <article
+                  v-for="c in gradingResult.criteria"
+                  :key="c.name"
+                  class="flex flex-col rounded-2xl border border-line bg-card p-4 shadow-soft"
+                >
+                  <div class="mb-2 flex items-center justify-between gap-3">
+                    <p class="text-sm font-bold text-ink">{{ c.name }}</p>
+                    <span
+                      class="shrink-0 rounded-full px-2.5 py-0.5 font-heading text-sm font-bold tabular-nums"
+                      :class="
+                        c.score / 4 >= 0.75
+                          ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300'
+                          : c.score / 4 >= 0.5
+                            ? 'bg-primary/10 text-primary'
+                            : 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300'
+                      "
+                    >
+                      {{ c.score }}/4
+                    </span>
+                  </div>
+                  <p
+                    v-if="c.comment"
+                    class="text-[0.8125rem] leading-relaxed text-muted"
+                  >
+                    {{ c.comment }}
+                  </p>
+                </article>
+              </div>
+            </section>
+
+            <!-- Points forts / axes -->
+            <div
+              v-if="
+                gradingResult.strengths.length ||
+                gradingResult.improvement_areas.length
+              "
+              class="grid grid-cols-1 gap-3 md:grid-cols-2"
+            >
+              <section
+                v-if="gradingResult.strengths.length"
+                class="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-4 dark:border-emerald-500/20 dark:bg-emerald-500/5"
+              >
+                <p
+                  class="mb-2.5 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400"
+                >
+                  <i class="pi pi-check-circle" /> Points forts
+                </p>
+                <ul class="space-y-2">
+                  <li
+                    v-for="(s, i) in gradingResult.strengths"
+                    :key="i"
+                    class="flex items-start gap-2 text-sm leading-relaxed text-ink"
+                  >
+                    <i
+                      class="pi pi-check mt-1 shrink-0 text-xs text-emerald-600 dark:text-emerald-400"
+                    />
+                    <span>{{ s }}</span>
+                  </li>
+                </ul>
+              </section>
+
+              <section
+                v-if="gradingResult.improvement_areas.length"
+                class="rounded-2xl border border-amber-200 bg-amber-50/60 p-4 dark:border-amber-500/20 dark:bg-amber-500/5"
+              >
+                <p
+                  class="mb-2.5 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400"
+                >
+                  <i class="pi pi-exclamation-circle" /> Axes d'amélioration
+                </p>
+                <ul class="space-y-2">
+                  <li
+                    v-for="(a, i) in gradingResult.improvement_areas"
+                    :key="i"
+                    class="flex items-start gap-2 text-sm leading-relaxed text-ink"
+                  >
+                    <i
+                      class="pi pi-arrow-up-right mt-1 shrink-0 text-xs text-amber-600 dark:text-amber-400"
+                    />
+                    <span>{{ a }}</span>
+                  </li>
+                </ul>
+              </section>
+            </div>
           </div>
         </div>
       </div>

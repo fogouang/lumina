@@ -112,43 +112,77 @@
         v-for="serie in filteredSeries"
         :key="serie.id"
         type="button"
-        class="group flex items-center gap-4 rounded-card border border-line bg-card p-4 text-left shadow-soft transition-all duration-300 ease-spring hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lift focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        class="group flex items-center gap-4 rounded-card border bg-card p-4 text-left shadow-soft transition-all duration-300 ease-spring hover:-translate-y-0.5 hover:shadow-lift focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        :class="
+          attemptStatus[serie.id] === 'done'
+            ? 'border-emerald-300/70 hover:border-emerald-400 dark:border-emerald-500/30'
+            : 'border-line hover:border-primary/40'
+        "
         @click="onSerieClick(serie)"
       >
-        <span
-          class="grid size-11 shrink-0 place-items-center rounded-leaf font-heading text-sm font-bold tabular-nums"
-          :class="
-            seriesStore.isAccessible(serie.number)
-              ? 'bg-primary/10 text-primary'
-              : 'bg-accent-100 text-accent-800 dark:bg-accent-500/15 dark:text-accent-300'
-          "
-        >
-          {{ serie.number }}
+        <span class="relative shrink-0">
+          <span
+            class="grid size-11 place-items-center rounded-leaf font-heading text-sm font-bold tabular-nums"
+            :class="
+              attemptStatus[serie.id] === 'done'
+                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300'
+                : seriesStore.isAccessible(serie.number)
+                  ? 'bg-primary/10 text-primary'
+                  : 'bg-accent-100 text-accent-800 dark:bg-accent-500/15 dark:text-accent-300'
+            "
+          >
+            {{ serie.number }}
+          </span>
+          <span
+            v-if="attemptStatus[serie.id] === 'done'"
+            class="absolute -bottom-1 -right-1 grid size-5 place-items-center rounded-full border-2 border-card bg-emerald-500 text-white"
+          >
+            <i class="pi pi-check text-[0.55rem]" />
+          </span>
         </span>
 
         <span class="min-w-0 flex-1">
           <span class="block font-heading text-sm font-bold text-ink"
             >Série {{ serie.number }}</span
           >
-          <span
-            class="mt-1 inline-flex items-center gap-1.5 text-xs font-medium"
-            :class="
-              seriesStore.isAccessible(serie.number)
-                ? 'text-emerald-600 dark:text-emerald-400'
-                : 'text-faint'
-            "
-          >
-            <i
-              class="pi text-[0.65rem]"
+          <span class="mt-1 flex flex-wrap items-center gap-1.5">
+            <!-- Statut de progression -->
+            <span
+              v-if="attemptStatus[serie.id] === 'done'"
+              class="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[0.7rem] font-bold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"
+            >
+              <i class="pi pi-check-circle text-[0.6rem]" /> Terminée
+            </span>
+            <span
+              v-else-if="attemptStatus[serie.id] === 'in_progress'"
+              class="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[0.7rem] font-bold text-amber-700 dark:bg-amber-500/15 dark:text-amber-300"
+            >
+              <i class="pi pi-hourglass text-[0.6rem]" /> En cours
+            </span>
+
+            <!-- Accès -->
+            <span
+              class="inline-flex items-center gap-1 text-xs font-medium"
               :class="
                 seriesStore.isAccessible(serie.number)
-                  ? 'pi-check-circle'
-                  : 'pi-lock'
+                  ? 'text-emerald-600 dark:text-emerald-400'
+                  : 'text-faint'
               "
-            />
-            {{
-              seriesStore.isAccessible(serie.number) ? "Disponible" : "Premium"
-            }}
+            >
+              <i
+                class="pi text-[0.65rem]"
+                :class="
+                  seriesStore.isAccessible(serie.number)
+                    ? 'pi-check-circle'
+                    : 'pi-lock'
+                "
+              />
+              {{
+                seriesStore.isAccessible(serie.number)
+                  ? "Disponible"
+                  : "Premium"
+              }}
+            </span>
           </span>
         </span>
 
@@ -195,6 +229,7 @@
 
 <script setup lang="ts">
 import type { SeriesListResponse } from "#shared/api/models/SeriesListResponse";
+import type { SuccessResponse_list_ExamAttemptResponse__ } from "#shared/api/models/SuccessResponse_list_ExamAttemptResponse__";
 import { site } from "~/config/site";
 
 definePageMeta({ layout: "account" });
@@ -204,6 +239,28 @@ const seriesStore = useSeriesStore();
 const subStore = useSubscriptionStore();
 const auth = useAuthStore();
 const ready = ref(false);
+
+// ── Tentatives (marqueur "Terminée" / "En cours") ────────────
+const { get } = useApi();
+const attemptStatus = ref<Record<string, "done" | "in_progress">>({});
+
+async function fetchAttempts(): Promise<void> {
+  try {
+    const res =
+      await get<SuccessResponse_list_ExamAttemptResponse__>(
+        "/v1/exam-attempts",
+      );
+    const map: Record<string, "done" | "in_progress"> = {};
+    for (const a of res.data ?? []) {
+      if (a.status === "completed") map[a.series_id] = "done";
+      else if (a.status === "in_progress" && !map[a.series_id])
+        map[a.series_id] = "in_progress";
+    }
+    attemptStatus.value = map;
+  } catch {
+    // Pas bloquant : la liste s'affiche sans marqueur.
+  }
+}
 
 // ── Données épreuve ──────────────────────────────────────────
 const epreuvesMeta: Record<
@@ -249,6 +306,7 @@ const epreuve = computed(
 onMounted(async () => {
   await Promise.all([seriesStore.fetchSeries(), seriesStore.fetchMyAccess()]);
   ready.value = true;
+  if (auth.isAuthenticated) fetchAttempts();
 });
 
 // ── Filtres ──────────────────────────────────────────────────
