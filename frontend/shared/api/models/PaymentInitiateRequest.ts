@@ -16,6 +16,10 @@ export type PaymentInitiateRequest = {
      */
     org_subscription_id?: (string | null);
     /**
+     * Abonnement sur mesure : nombre de jours (le prix est calculé par le backend)
+     */
+    custom_days?: (number | null);
+    /**
      * Méthode de paiement
      */
     payment_method: PaymentMethod;

@@ -9,6 +9,7 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.modules.payments import custom_pricing
 from app.modules.payments.models import Payment
 from app.modules.payments.pawapay import PawapayClient
 from app.modules.payments.repository import PaymentRepository
@@ -40,8 +41,23 @@ class PaymentService:
         data: PaymentInitiateRequest,
         current_user: User
     ) -> dict:
-        if not data.subscription_id and not data.org_subscription_id:
+        if not data.subscription_id and not data.org_subscription_id and data.custom_days is None:
             raise BadRequestException(detail="Une souscription est requise")
+
+        if data.custom_days is not None:
+            if data.subscription_id or data.org_subscription_id:
+                raise BadRequestException(
+                    detail="Choisissez soit une formule, soit un abonnement sur mesure, pas les deux."
+                )
+            if not custom_pricing.jours_valides(data.custom_days):
+                raise BadRequestException(
+                    detail=f"La durée doit être comprise entre {custom_pricing.JOURS_MIN} "
+                           f"et {custom_pricing.JOURS_MAX} jours."
+                )
+            if data.promo_code:
+                raise BadRequestException(
+                    detail="Les codes promo ne s'appliquent pas aux abonnements sur mesure."
+                )
 
         if data.payment_method != PaymentMethod.MOBILE_MONEY:
             raise BadRequestException(
@@ -61,7 +77,31 @@ class PaymentService:
         amount = 0.0
         reason = ""
 
-        if data.subscription_id:
+        if data.custom_days is not None:
+            # Souscription temporaire (inactive) : activée par le callback une fois le paiement confirmé.
+            # Prix et crédits IA calculés ici, jamais envoyés par le frontend.
+            jours = data.custom_days
+            temp_subscription = Subscription(
+                user_id=current_user.id,
+                organization_id=None,
+                plan_id=None,
+                start_date=date.today(),
+                end_date=date.today() + timedelta(days=jours),
+                is_active=False,
+                custom_duration_days=jours,
+                custom_ai_credits=custom_pricing.credits_ia(jours),
+                ai_credits_remaining=0,
+            )
+            self.db.add(temp_subscription)
+            await self.db.commit()
+            await self.db.refresh(temp_subscription)
+
+            user_id = current_user.id
+            subscription_id = temp_subscription.id
+            amount = custom_pricing.prix_fcfa(jours)
+            reason = f"Abonnement sur mesure ({jours} jours)"
+
+        elif data.subscription_id:
             subscription = await self.db.get(Subscription, data.subscription_id)
             if not subscription:
                 raise NotFoundException(resource="Subscription", identifier=str(data.subscription_id))
@@ -241,7 +281,7 @@ class PaymentService:
 
             temp_subscription = await self.db.get(Subscription, payment.subscription_id)
 
-            if temp_subscription and temp_subscription.plan_id:
+            if temp_subscription and (temp_subscription.plan_id or temp_subscription.custom_duration_days):
                 await self.db.execute(
                     update(Subscription)
                     .where(
@@ -251,19 +291,34 @@ class PaymentService:
                     .values(is_active=False)
                 )
 
-                plan = await self.db.get(Plan, temp_subscription.plan_id)
-
-                new_subscription = Subscription(
-                    user_id=temp_subscription.user_id,
-                    organization_id=None,
-                    plan_id=plan.id,
-                    start_date=date.today(),
-                    end_date=date.today() + timedelta(days=plan.duration_days),
-                    is_active=True,
-                    custom_duration_days=None,
-                    custom_ai_credits=None,
-                    ai_credits_remaining=plan.ai_credits
-                )
+                if temp_subscription.plan_id:
+                    plan = await self.db.get(Plan, temp_subscription.plan_id)
+                    new_subscription = Subscription(
+                        user_id=temp_subscription.user_id,
+                        organization_id=None,
+                        plan_id=plan.id,
+                        start_date=date.today(),
+                        end_date=date.today() + timedelta(days=plan.duration_days),
+                        is_active=True,
+                        custom_duration_days=None,
+                        custom_ai_credits=None,
+                        ai_credits_remaining=plan.ai_credits
+                    )
+                else:
+                    # Abonnement sur mesure : durée et crédits repris de la souscription temporaire
+                    jours = temp_subscription.custom_duration_days
+                    credits = temp_subscription.custom_ai_credits or 0
+                    new_subscription = Subscription(
+                        user_id=temp_subscription.user_id,
+                        organization_id=None,
+                        plan_id=None,
+                        start_date=date.today(),
+                        end_date=date.today() + timedelta(days=jours),
+                        is_active=True,
+                        custom_duration_days=jours,
+                        custom_ai_credits=credits,
+                        ai_credits_remaining=credits
+                    )
 
                 self.db.add(new_subscription)
                 await self.db.delete(temp_subscription)

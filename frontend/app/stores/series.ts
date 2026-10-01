@@ -2,7 +2,7 @@ import { defineStore } from "pinia";
 import type { SeriesListResponse } from "#shared/api/models/SeriesListResponse";
 import type { SuccessResponse_list_SeriesListResponse__ } from "#shared/api/models/SuccessResponse_list_SeriesListResponse__";
 
-const FREE_SERIES = [100, 148, 149];
+const FREE_SERIES = [100, 101, 102, 103];
 
 export const useSeriesStore = defineStore("series", () => {
   // ── State ────────────────────────────────────────────────────

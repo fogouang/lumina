@@ -17,7 +17,7 @@ export type { AnalyticsData } from './models/AnalyticsData';
 export type { app__modules__auth__schemas__UserResponse } from './models/app__modules__auth__schemas__UserResponse';
 export type { app__modules__users__schemas__UserResponse } from './models/app__modules__users__schemas__UserResponse';
 export type { app__shared__schemas__responses__SuccessResponse } from './models/app__shared__schemas__responses__SuccessResponse';
-export type { app__shared__schemas__responses__SuccessResponse_UserResponse___1 } from './models/app__shared__schemas__responses__SuccessResponse_UserResponse___1';
+export type { app__shared__schemas__responses__SuccessResponse_UserResponse___2 } from './models/app__shared__schemas__responses__SuccessResponse_UserResponse___2';
 export type { AttemptHistoryItem } from './models/AttemptHistoryItem';
 export type { AttemptHistoryListResponse } from './models/AttemptHistoryListResponse';
 export { AttemptStatus } from './models/AttemptStatus';
@@ -29,6 +29,7 @@ export type { Body_upload_multiple_audios_api_v1_upload_audio_batch_post } from 
 export type { Body_upload_multiple_images_api_v1_upload_images_batch_post } from './models/Body_upload_multiple_images_api_v1_upload_images_batch_post';
 export type { Body_upload_student_audio_api_v1_upload_student_audio_post } from './models/Body_upload_student_audio_api_v1_upload_student_audio_post';
 export type { CreditPricingResponse } from './models/CreditPricingResponse';
+export type { CustomPricingResponse } from './models/CustomPricingResponse';
 export type { EECombinationCreate } from './models/EECombinationCreate';
 export type { EECombinationResponse } from './models/EECombinationResponse';
 export type { EECombinationUpdate } from './models/EECombinationUpdate';
@@ -129,6 +130,7 @@ export type { SuccessResponse_AttemptHistoryListResponse_ } from './models/Succe
 export type { SuccessResponse_AuthResponse_ } from './models/SuccessResponse_AuthResponse_';
 export type { SuccessResponse_BatchUploadResponse_ } from './models/SuccessResponse_BatchUploadResponse_';
 export type { SuccessResponse_CreditPricingResponse_ } from './models/SuccessResponse_CreditPricingResponse_';
+export type { SuccessResponse_CustomPricingResponse_ } from './models/SuccessResponse_CustomPricingResponse_';
 export type { SuccessResponse_dict_ } from './models/SuccessResponse_dict_';
 export type { SuccessResponse_EECombinationResponse_ } from './models/SuccessResponse_EECombinationResponse_';
 export type { SuccessResponse_EOTask2Response_ } from './models/SuccessResponse_EOTask2Response_';

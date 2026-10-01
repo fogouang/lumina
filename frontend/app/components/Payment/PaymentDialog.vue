@@ -18,7 +18,7 @@
           </span>
           <div class="min-w-0">
             <h3 class="truncate font-heading text-lg font-bold text-ink">
-              Abonnement {{ plan?.name ?? "" }}
+              Abonnement {{ displayName }}
             </h3>
             <p class="text-xs text-faint">Paiement sécurisé par Mobile Money</p>
           </div>
@@ -70,13 +70,13 @@
       >
         <div class="min-w-0">
           <p class="truncate font-heading text-lg font-bold">
-            {{ plan?.name }}
+            {{ displayName }}
           </p>
           <p
             class="mt-0.5 inline-flex items-center gap-1.5 text-sm text-white/75"
           >
             <i class="pi pi-clock text-xs" />
-            {{ plan?.duration_days }} jours d'accès
+            {{ displayDays }} jours d'accès
           </p>
         </div>
         <div class="shrink-0 text-right">
@@ -84,7 +84,7 @@
             v-if="promoValidation?.is_valid"
             class="text-xs text-white/60 line-through"
           >
-            {{ plan?.price.toLocaleString("fr-FR") }} FCFA
+            {{ basePrice.toLocaleString("fr-FR") }} FCFA
           </p>
           <p class="font-heading text-2xl font-extrabold">
             {{ finalPrice.toLocaleString("fr-FR") }}
@@ -155,8 +155,8 @@
         </p>
       </div>
 
-      <!-- Code partenaire -->
-      <div class="flex flex-col gap-2">
+      <!-- Code partenaire (formules uniquement, pas sur mesure) -->
+      <div v-if="!isCustom" class="flex flex-col gap-2">
         <label for="payment-promo" class="text-sm font-semibold text-ink">
           Code partenaire
           <span class="font-normal text-faint">(optionnel)</span>
@@ -296,7 +296,7 @@
         </p>
         <p class="mt-1 text-sm text-muted">
           Votre abonnement
-          <strong class="font-semibold text-ink">{{ plan?.name }}</strong> est
+          <strong class="font-semibold text-ink">{{ displayName }}</strong> est
           maintenant actif.
         </p>
       </div>
@@ -388,6 +388,10 @@ import type { PromoCodeValidateResponse } from "#shared/api/models/PromoCodeVali
 const props = defineProps<{
   modelValue: boolean;
   plan: PlanListResponse | null;
+  // Abonnement sur mesure : nombre de jours choisi (null = formule classique)
+  customDays?: number | null;
+  // Prix par jour renvoyé par /payments/custom-pricing (affichage seulement, le backend recalcule)
+  pricePerDay?: number;
 }>();
 
 const emit = defineEmits<{
@@ -424,14 +428,31 @@ const validatingPromo = ref(false);
 const promoValidation = ref<PromoCodeValidateResponse | null>(null);
 let pollInterval: ReturnType<typeof setInterval> | null = null;
 
+const isCustom = computed(() => !!props.customDays);
+
+const displayName = computed(() =>
+  isCustom.value ? "Sur mesure" : (props.plan?.name ?? ""),
+);
+
+const displayDays = computed(() =>
+  isCustom.value ? props.customDays! : (props.plan?.duration_days ?? 0),
+);
+
+const basePrice = computed(() =>
+  isCustom.value
+    ? props.customDays! * (props.pricePerDay ?? 0)
+    : (props.plan?.price ?? 0),
+);
+
 const finalPrice = computed(() => {
   if (
+    !isCustom.value &&
     promoValidation.value?.is_valid &&
     promoValidation.value.amount_paid != null
   ) {
     return promoValidation.value.amount_paid;
   }
-  return props.plan?.price ?? 0;
+  return basePrice.value;
 });
 
 // Reset quand on ouvre / stop polling quand on ferme
@@ -498,30 +519,44 @@ async function validatePromo() {
 
 // ── Payer ─────────────────────────────────────────────────────
 async function onPay() {
-  if (!props.plan) return;
+  if (!props.plan && !isCustom.value) return;
   processing.value = true;
   step.value = "processing";
 
   try {
-    // 1. Créer la souscription
-    const subRes = await post<SuccessResponse_SubscriptionResponse_>(
-      "/v1/subscriptions/subscribe",
-      { plan_id: props.plan.id },
-    );
-    subscriptionId.value = subRes.data?.id ?? null;
-    if (!subscriptionId.value)
-      throw new Error("Impossible de créer la souscription.");
+    let payload: Record<string, unknown>;
 
-    // 2. Initier le paiement pawaPay
-    const payRes = await post<SuccessResponse_PaymentInitiateResponse_>(
-      "/v1/payments/initiate",
-      {
+    if (isCustom.value) {
+      // Sur mesure : le backend crée la souscription et calcule le prix à partir du nombre de jours
+      payload = {
+        custom_days: props.customDays,
+        payment_method: "mobile_money",
+        phone_number: phoneNumber.value,
+        operator: selectedOperator.value,
+      };
+    } else {
+      // 1. Créer la souscription
+      const subRes = await post<SuccessResponse_SubscriptionResponse_>(
+        "/v1/subscriptions/subscribe",
+        { plan_id: props.plan!.id },
+      );
+      subscriptionId.value = subRes.data?.id ?? null;
+      if (!subscriptionId.value)
+        throw new Error("Impossible de créer la souscription.");
+
+      payload = {
         subscription_id: subscriptionId.value,
         payment_method: "mobile_money",
         phone_number: phoneNumber.value,
         operator: selectedOperator.value,
         promo_code: promoCode.value || null,
-      },
+      };
+    }
+
+    // 2. Initier le paiement pawaPay
+    const payRes = await post<SuccessResponse_PaymentInitiateResponse_>(
+      "/v1/payments/initiate",
+      payload,
     );
     paymentResponse.value = payRes.data ?? null;
     step.value = "confirm";

@@ -14,6 +14,11 @@ class PaymentInitiateRequest(BaseSchema):
     subscription_id: UUID | None = Field(None, description="ID souscription B2C")
     org_subscription_id: UUID | None = Field(None, description="ID souscription organisation")
 
+    custom_days: int | None = Field(
+        None,
+        description="Abonnement sur mesure : nombre de jours (le prix est calculé par le backend)",
+    )
+
     payment_method: PaymentMethod = Field(..., description="Méthode de paiement")
 
     phone_number: str | None = Field(None, description="Numéro pour mobile money")
@@ -33,6 +38,15 @@ class PaymentInitiateResponse(BaseSchema):
     payment_status: PaymentStatus
     transaction_reference: str | None = None
     message: str = "Confirmez le paiement sur votre téléphone mobile."
+
+
+class CustomPricingResponse(BaseSchema):
+    """Paramètres de l'abonnement sur mesure (affichage frontend)."""
+
+    price_per_day: float
+    min_days: int
+    max_days: int
+    xaf_per_usd: float
 
 
 class PaymentResponse(BaseSchema):

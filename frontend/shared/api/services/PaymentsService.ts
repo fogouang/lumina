@@ -3,6 +3,7 @@
 /* tslint:disable */
 /* eslint-disable */
 import type { PaymentInitiateRequest } from '../models/PaymentInitiateRequest';
+import type { SuccessResponse_CustomPricingResponse_ } from '../models/SuccessResponse_CustomPricingResponse_';
 import type { SuccessResponse_list_AdminPaymentResponse__ } from '../models/SuccessResponse_list_AdminPaymentResponse__';
 import type { SuccessResponse_list_PaymentResponse__ } from '../models/SuccessResponse_list_PaymentResponse__';
 import type { SuccessResponse_PaymentInitiateResponse_ } from '../models/SuccessResponse_PaymentInitiateResponse_';
@@ -33,6 +34,17 @@ export class PaymentsService {
             errors: {
                 422: `Validation Error`,
             },
+        });
+    }
+    /**
+     * Tarif de l'abonnement sur mesure (public)
+     * @returns SuccessResponse_CustomPricingResponse_ Successful Response
+     * @throws ApiError
+     */
+    public static getCustomPricingApiV1PaymentsCustomPricingGet(): CancelablePromise<SuccessResponse_CustomPricingResponse_> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/payments/custom-pricing',
         });
     }
     /**

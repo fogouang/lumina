@@ -102,6 +102,13 @@
                   FCFA
                 </span>
               </div>
+              <p
+                v-if="customPricing"
+                class="mt-1 text-sm font-semibold"
+                :class="isFeatured(plan) ? 'text-white/70' : 'text-faint'"
+              >
+                soit {{ toUsd(plan.price) }} USD
+              </p>
 
               <div
                 class="mt-4 inline-flex w-fit items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold"
@@ -181,6 +188,60 @@
       </div>
     </section>
 
+    <!-- Abonnement sur mesure -->
+    <section v-if="customPricing" class="px-4 pt-16 sm:px-6 lg:px-8">
+      <div
+        v-reveal
+        class="mx-auto max-w-2xl rounded-card border-2 border-dashed border-primary-200 bg-card p-8 text-center shadow-soft dark:border-primary-800"
+      >
+        <h2 class="font-heading text-2xl font-bold text-ink">Créer mon abonnement</h2>
+        <p class="mt-1 font-semibold text-primary">Indiquez le nombre de jours</p>
+        <p class="mt-2 text-sm text-muted">
+          Choisissez librement votre durée de préparation, le prix s'ajuste automatiquement.
+        </p>
+
+        <label for="custom-days" class="mt-6 block text-sm font-medium text-ink">
+          Combien de jours souhaitez-vous préparer ?
+        </label>
+        <div class="mt-2 flex justify-center">
+          <InputNumber
+            v-model="customDays"
+            input-id="custom-days"
+            :min="customPricing.min_days"
+            :max="customPricing.max_days"
+            show-buttons
+            button-layout="horizontal"
+            :allow-empty="false"
+            suffix=" jours"
+            :input-style="{ width: '9rem', textAlign: 'center', fontWeight: 700 }"
+          />
+        </div>
+        <p class="mt-2 text-xs text-faint">
+          De {{ customPricing.min_days }} à {{ customPricing.max_days }} jours
+        </p>
+
+        <p class="mt-6 text-sm text-muted">{{ customDaysSafe }} jours de préparation</p>
+        <p class="mt-1 font-heading text-4xl font-extrabold text-primary">
+          {{ formatPrice(customPriceFcfa) }} F CFA
+          <span class="text-base font-semibold text-faint">/ {{ customPriceUsd }} USD</span>
+        </p>
+        <p class="mt-2 inline-flex items-center gap-2 rounded-full bg-accent-50 px-3 py-1 text-sm font-semibold text-accent-900 dark:bg-accent-950 dark:text-accent-200">
+          <i class="pi pi-calendar text-xs" />
+          Accès jusqu'au {{ customEndDate }}
+        </p>
+
+        <div class="mx-auto mt-8 max-w-sm">
+          <AppCta
+            label="Valider et payer"
+            icon="pi pi-arrow-right"
+            variant="gradient"
+            class="w-full"
+            @click="onChooseCustom"
+          />
+        </div>
+      </div>
+    </section>
+
     <!-- Paiement et garanties -->
     <section class="px-4 pb-20 pt-16 sm:px-6 lg:px-8">
       <div v-reveal class="mx-auto max-w-5xl rounded-card border border-line bg-card p-8 shadow-soft">
@@ -247,7 +308,12 @@
     </section>
   </div>
 
-  <PaymentDialog v-model="paymentVisible" :plan="paymentPlan" />
+  <PaymentDialog
+    v-model="paymentVisible"
+    :plan="paymentPlan"
+    :custom-days="paymentCustomDays"
+    :price-per-day="customPricing?.price_per_day ?? 0"
+  />
 </template>
 
 <script setup lang="ts">
@@ -268,7 +334,18 @@ const error = ref<string | null>(null);
 const plans = ref<PlanListResponse[]>([]);
 
 const paymentPlan = ref<PlanListResponse | null>(null);
+const paymentCustomDays = ref<number | null>(null);
 const paymentVisible = ref(false);
+
+// ── Abonnement sur mesure (tarif fourni par le backend) ───────
+interface CustomPricing {
+  price_per_day: number;
+  min_days: number;
+  max_days: number;
+  xaf_per_usd: number;
+}
+const customPricing = ref<CustomPricing | null>(null);
+const customDays = ref<number>(30);
 
 onMounted(async () => {
   try {
@@ -281,7 +358,54 @@ onMounted(async () => {
   } finally {
     loading.value = false;
   }
+
+  try {
+    const res = await get<{ data: CustomPricing }>("/v1/payments/custom-pricing");
+    customPricing.value = res.data ?? null;
+    if (customPricing.value) {
+      customDays.value = Math.min(
+        Math.max(customDays.value, customPricing.value.min_days),
+        customPricing.value.max_days,
+      );
+    }
+  } catch {
+    customPricing.value = null; // le bloc sur mesure est simplement masqué
+  }
 });
+
+const customDaysSafe = computed(() => {
+  if (!customPricing.value) return 0;
+  const n = Math.round(Number(customDays.value) || customPricing.value.min_days);
+  return Math.min(Math.max(n, customPricing.value.min_days), customPricing.value.max_days);
+});
+
+const customPriceFcfa = computed(
+  () => customDaysSafe.value * (customPricing.value?.price_per_day ?? 0),
+);
+
+// Conversion FCFA -> USD avec le taux renvoyé par le backend (cartes des formules + bloc sur mesure)
+function toUsd(fcfa: number): string {
+  const rate = customPricing.value?.xaf_per_usd || 1;
+  return (fcfa / rate).toLocaleString("fr-FR", { maximumFractionDigits: 2 });
+}
+
+const customPriceUsd = computed(() => toUsd(customPriceFcfa.value));
+
+const customEndDate = computed(() => {
+  const d = new Date();
+  d.setDate(d.getDate() + customDaysSafe.value);
+  return d.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
+});
+
+function onChooseCustom() {
+  if (!auth.isAuthenticated) {
+    openLogin();
+    return;
+  }
+  paymentPlan.value = null;
+  paymentCustomDays.value = customDaysSafe.value;
+  paymentVisible.value = true;
+}
 
 const b2cPlans = computed(() =>
   plans.value
@@ -313,8 +437,8 @@ function formatPrice(price: number): string {
 }
 
 function formatDuration(days: number): string {
-  if (days <= 7) return `${days} Jours`;
-  if (days <= 31) return `${Math.round(days / 30)} Mois`;
+  // moins de 30 jours : affiché en jours (14 -> "14 Jours"), sinon en mois (30 -> "1 Mois", 90 -> "3 Mois")
+  if (days < 30) return `${days} ${days > 1 ? "Jours" : "Jour"}`;
   return `${Math.round(days / 30)} Mois`;
 }
 
@@ -323,6 +447,7 @@ function onChoosePlan(plan: PlanListResponse) {
     openLogin();
     return;
   }
+  paymentCustomDays.value = null;
   paymentPlan.value = plan;
   paymentVisible.value = true;
 }

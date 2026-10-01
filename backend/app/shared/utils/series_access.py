@@ -15,7 +15,7 @@ class SeriesAccessManager:
     """Gestionnaire d'accès aux séries."""
     
     # Les 3 premières séries sont gratuites
-    FREE_SERIES_NUMBERS = [100, 148, 149]
+    FREE_SERIES_NUMBERS = [100, 101, 102, 103]
     
     def __init__(self, db: AsyncSession):
         self.db = db

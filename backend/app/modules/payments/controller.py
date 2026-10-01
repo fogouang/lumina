@@ -5,8 +5,10 @@ from typing import Annotated
 from uuid import UUID
 from fastapi import APIRouter, Depends, Header, Request, status
 
+from app.modules.payments import custom_pricing
 from app.modules.payments.schemas import (
     AdminPaymentResponse,
+    CustomPricingResponse,
     PawapayCallbackPayload,
     PaymentInitiateRequest,
     PaymentInitiateResponse,
@@ -41,6 +43,25 @@ async def initiate_payment(
     return SuccessResponse(
         data=PaymentInitiateResponse(**result),
         message="Paiement initié"
+    )
+
+
+@router.get(
+    "/custom-pricing",
+    response_model=SuccessResponse[CustomPricingResponse],
+    summary="Tarif de l'abonnement sur mesure (public)",
+)
+async def get_custom_pricing():
+    # Route publique : la page Tarifs l'appelle même sans connexion.
+    # Déclarée AVANT "/{payment_id}", sinon "custom-pricing" serait lu comme un UUID.
+    return SuccessResponse(
+        data=CustomPricingResponse(
+            price_per_day=custom_pricing.PRIX_PAR_JOUR_FCFA,
+            min_days=custom_pricing.JOURS_MIN,
+            max_days=custom_pricing.JOURS_MAX,
+            xaf_per_usd=custom_pricing.FCFA_PAR_USD,
+        ),
+        message="Tarif sur mesure",
     )
 
 
