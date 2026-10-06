@@ -6,6 +6,10 @@
         <h1 class="font-heading text-2xl font-extrabold tracking-tight text-ink">Utilisateurs</h1>
         <p class="mt-0.5 text-sm text-muted">
           <span class="font-semibold tabular-nums text-ink">{{ total }}</span> utilisateurs au total
+          <template v-if="newThisWeek > 0">
+            · <span class="font-semibold text-emerald-600 tabular-nums dark:text-emerald-400">{{ newThisWeek }}</span>
+            cette semaine
+          </template>
         </p>
       </div>
       <AppButton
@@ -23,10 +27,11 @@
         :value="users"
         :loading="loading"
         paginator
-        :rows="20"
+        :rows="10"
         :rows-per-page-options="[10, 20, 50]"
-        filter-display="row"
         :global-filter-fields="['first_name', 'last_name', 'email', 'role']"
+        sort-field="created_at"
+        :sort-order="-1"
         removable-sort
         striped-rows
         class="p-datatable-sm"
@@ -84,6 +89,19 @@
                 <p class="truncate text-xs text-muted">{{ data.email }}</p>
               </div>
             </div>
+          </template>
+        </Column>
+
+        <!-- Inscription -->
+        <Column field="created_at" header="Inscrit le" sortable style="min-width: 140px">
+          <template #body="{ data }">
+            <template v-if="data.created_at">
+              <p class="text-sm text-ink">{{ formatDate(data.created_at) }}</p>
+              <p class="text-xs" :class="isRecent(data.created_at) ? 'font-semibold text-emerald-600 dark:text-emerald-400' : 'text-faint'">
+                {{ relativeDate(data.created_at) }}
+              </p>
+            </template>
+            <span v-else class="text-sm text-faint">—</span>
           </template>
         </Column>
 
@@ -388,6 +406,11 @@ const planOptions = computed(() =>
   subscriptionStore.plans.map((p) => ({ label: p.name, value: p.id })),
 );
 
+// Inscriptions des 7 derniers jours
+const newThisWeek = computed(
+  () => users.value.filter((u: any) => u.created_at && daysSince(u.created_at) < 7).length,
+);
+
 const activateVisible = ref(false);
 const activatingUser = ref<UserListResponse | null>(null);
 const activating = ref(false);
@@ -435,7 +458,11 @@ async function fetchUsers() {
     const res = await get<SuccessResponse_list_UserListResponse__>(
       "/v1/users?limit=100",
     );
-    users.value = res.data ?? [];
+    // Les plus récents en premier
+    users.value = (res.data ?? []).sort(
+      (a: any, b: any) =>
+        new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime(),
+    );
     total.value = users.value.length;
   } catch {
     toast.add({
@@ -457,6 +484,33 @@ onMounted(fetchUsers);
 // ── Helpers ───────────────────────────────────────────────────
 function initials(user: UserListResponse): string {
   return `${user.first_name?.[0] ?? ""}${user.last_name?.[0] ?? ""}`.toUpperCase();
+}
+
+function daysSince(d: string): number {
+  return Math.floor((Date.now() - new Date(d).getTime()) / 86_400_000);
+}
+
+function isRecent(d: string): boolean {
+  return daysSince(d) < 7;
+}
+
+function relativeDate(d: string): string {
+  const days = daysSince(d);
+  if (days <= 0) return "Aujourd'hui";
+  if (days === 1) return "Hier";
+  if (days < 30) return `Il y a ${days} jours`;
+  const months = Math.floor(days / 30);
+  if (months < 12) return `Il y a ${months} mois`;
+  const years = Math.floor(days / 365);
+  return `Il y a ${years} an${years > 1 ? "s" : ""}`;
+}
+
+function formatDate(d: string): string {
+  return new Date(d).toLocaleDateString("fr-FR", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
 }
 
 function roleLabel(role: string): string {

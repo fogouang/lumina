@@ -30,8 +30,8 @@
     </div>
 
     <!-- Abonnements actifs -->
-    <section class="rounded-card border border-line bg-card p-5 shadow-soft sm:p-6">
-      <header class="mb-4 flex items-center justify-between gap-3 border-b border-line pb-3.5">
+    <section class="overflow-hidden rounded-card border border-line bg-card shadow-soft">
+      <header class="flex flex-col gap-3 border-b border-line p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
         <div class="flex items-center gap-2.5">
           <span class="grid size-8 place-items-center rounded-lg bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">
             <i class="pi pi-crown text-sm" />
@@ -43,70 +43,113 @@
             </span>
           </h2>
         </div>
-        <Button
-          icon="pi pi-refresh"
-          text
-          rounded
-          aria-label="Actualiser"
-          :loading="loadingSubs"
-          @click="fetchSubscriptions"
-        />
+        <div class="flex items-center gap-2">
+          <IconField class="w-full sm:w-72">
+            <InputIcon class="pi pi-search" />
+            <InputText
+              v-model="subSearch"
+              placeholder="Nom, email ou forfait..."
+              aria-label="Rechercher un abonnement"
+              fluid
+            />
+          </IconField>
+          <Button
+            icon="pi pi-refresh"
+            text
+            rounded
+            aria-label="Actualiser"
+            :loading="loadingSubs"
+            @click="fetchSubscriptions"
+          />
+        </div>
       </header>
 
-      <!-- Chargement -->
-      <div v-if="loadingSubs" class="space-y-2.5">
-        <div v-for="n in 4" :key="n" class="h-17 animate-pulse rounded-2xl bg-card-2" />
-      </div>
-
-      <!-- Liste -->
-      <div v-else-if="subscriptions.length" class="space-y-2.5">
-        <div
-          v-for="sub in subscriptions"
-          :key="sub.id"
-          class="flex items-center justify-between gap-3 rounded-2xl border border-line bg-card-2/50 p-4 transition-colors hover:bg-card-2"
-        >
-          <div class="flex min-w-0 items-center gap-3">
-            <span class="grid size-10 shrink-0 place-items-center rounded-leaf bg-emerald-100 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300">
-              <i class="pi pi-crown text-sm" />
+      <DataTable
+        :value="filteredSubscriptions"
+        :loading="loadingSubs"
+        paginator
+        :rows="10"
+        :rows-per-page-options="[10, 20, 50]"
+        sort-field="start_date"
+        :sort-order="-1"
+        removable-sort
+        striped-rows
+        class="p-datatable-sm"
+      >
+        <template #empty>
+          <div class="flex flex-col items-center py-12 text-center">
+            <span class="mb-3 grid size-14 place-items-center rounded-leaf bg-card-2 text-faint">
+              <i class="pi pi-crown text-2xl" />
             </span>
-            <div class="min-w-0">
-              <p class="truncate text-sm font-semibold text-ink">
-                {{ sub.user_email ?? sub.user_id }}
-              </p>
-              <p class="flex flex-wrap items-center gap-x-2 text-xs text-muted">
-                <span class="inline-flex items-center gap-1">
-                  <i class="pi pi-calendar text-[0.65rem]" />
-                  Expire le {{ formatDate(sub.end_date) }}
-                </span>
-                <span class="text-faint">·</span>
-                <span class="inline-flex items-center gap-1">
-                  <i class="pi pi-sparkles text-[0.65rem]" />
-                  {{ sub.ai_credits_remaining }} crédits IA
-                </span>
-              </p>
-            </div>
+            <p class="text-sm font-medium text-muted">
+              {{ subSearch ? "Aucun abonnement ne correspond à la recherche." : "Aucun abonnement actif trouvé." }}
+            </p>
           </div>
-          <span
-            class="inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold"
-            :class="
-              sub.is_active
-                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300'
-                : 'bg-card-2 text-muted'
-            "
-          >
-            <span class="size-1.5 rounded-full" :class="sub.is_active ? 'bg-emerald-500' : 'bg-faint'" />
-            {{ sub.is_active ? "Actif" : "Inactif" }}
-          </span>
-        </div>
-      </div>
+        </template>
 
-      <!-- Vide -->
-      <div v-else class="flex flex-col items-center py-10 text-center">
-        <span class="mb-3 grid size-14 place-items-center rounded-leaf bg-card-2 text-faint">
-          <i class="pi pi-crown text-2xl" />
-        </span>
-        <p class="text-sm font-medium text-muted">Aucun abonnement actif trouvé.</p>
-      </div>
+        <Column field="user_email" header="Utilisateur" sortable style="min-width: 240px">
+          <template #body="{ data }">
+            <div class="flex items-center gap-3">
+              <span class="grid size-9 shrink-0 place-items-center rounded-leaf bg-emerald-100 font-heading text-xs font-bold text-emerald-700 uppercase dark:bg-emerald-500/15 dark:text-emerald-300">
+                {{ (data.user_name || data.user_email || "?").charAt(0) }}
+              </span>
+              <div class="min-w-0">
+                <p class="truncate text-sm font-semibold text-ink">{{ data.user_name || data.user_email }}</p>
+                <p v-if="data.user_name" class="truncate text-xs text-muted">{{ data.user_email }}</p>
+              </div>
+            </div>
+          </template>
+        </Column>
+
+        <Column field="plan_name" header="Forfait" sortable style="min-width: 140px">
+          <template #body="{ data }">
+            <span class="text-sm text-ink">{{ data.plan_name || "—" }}</span>
+          </template>
+        </Column>
+
+        <Column field="start_date" header="Activé le" sortable style="min-width: 120px">
+          <template #body="{ data }">
+            <span class="inline-flex items-center gap-1.5 text-sm text-ink">
+              <i class="pi pi-calendar-plus text-xs text-faint" />
+              {{ formatDate(data.start_date) }}
+            </span>
+          </template>
+        </Column>
+
+        <Column field="end_date" header="Expire le" sortable style="min-width: 150px">
+          <template #body="{ data }">
+            <p class="text-sm text-ink">{{ formatDate(data.end_date) }}</p>
+            <p class="text-xs font-semibold" :class="remainingTone(data.end_date)">
+              {{ remainingLabel(data.end_date) }}
+            </p>
+          </template>
+        </Column>
+
+        <Column field="ai_credits_remaining" header="Crédits IA" sortable style="min-width: 110px">
+          <template #body="{ data }">
+            <span class="inline-flex items-center gap-1.5 text-sm text-ink tabular-nums">
+              <i class="pi pi-sparkles text-xs text-faint" />
+              {{ data.ai_credits_remaining }}
+            </span>
+          </template>
+        </Column>
+
+        <Column field="is_active" header="Statut" sortable style="min-width: 100px">
+          <template #body="{ data }">
+            <span
+              class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold"
+              :class="
+                data.is_active
+                  ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300'
+                  : 'bg-card-2 text-muted'
+              "
+            >
+              <span class="size-1.5 rounded-full" :class="data.is_active ? 'bg-emerald-500' : 'bg-faint'" />
+              {{ data.is_active ? "Actif" : "Inactif" }}
+            </span>
+          </template>
+        </Column>
+      </DataTable>
     </section>
 
     <!-- Dialog activation manuelle -->
@@ -339,6 +382,39 @@ const finalPrice = computed(() => {
   return selectedPlan.value.price;
 });
 
+// ── Liste : recherche et dates ────────────────────────────────
+const subSearch = ref("");
+
+const filteredSubscriptions = computed(() => {
+  const q = subSearch.value.trim().toLowerCase();
+  if (!q) return subscriptions.value;
+  return subscriptions.value.filter(
+    (s) =>
+      (s.user_name ?? "").toLowerCase().includes(q) ||
+      (s.user_email ?? "").toLowerCase().includes(q) ||
+      (s.plan_name ?? "").toLowerCase().includes(q),
+  );
+});
+
+function daysUntil(d: string) {
+  const end = new Date(d.length === 10 ? `${d}T23:59:59` : d);
+  return Math.ceil((end.getTime() - Date.now()) / 86_400_000);
+}
+
+function remainingLabel(d: string) {
+  const days = daysUntil(d);
+  if (days < 0) return "Expiré";
+  if (days === 0) return "Expire aujourd'hui";
+  return `${days} jour${days > 1 ? "s" : ""} restant${days > 1 ? "s" : ""}`;
+}
+
+function remainingTone(d: string) {
+  const days = daysUntil(d);
+  if (days < 0) return "text-red-600 dark:text-red-400";
+  if (days <= 7) return "text-amber-600 dark:text-amber-400";
+  return "text-emerald-600 dark:text-emerald-400";
+}
+
 // ── Formulaire ────────────────────────────────────────────────
 const form = reactive({
   user_id: "",
@@ -445,22 +521,6 @@ async function onActivate() {
   }
 }
 
-// Charger les partenaires au mount
-onMounted(async () => {
-  const [usersRes, plansRes, partnersRes] = await Promise.all([
-    get<SuccessResponse_list_UserListResponse__>("/v1/users?limit=100"),
-    get<SuccessResponse_list_PlanListResponse__>("/v1/plans?active_only=true"),
-    get<any>("/v1/partners"),
-  ]);
-  users.value = (usersRes.data ?? []).map((u) => ({
-    label: `${u.first_name} ${u.last_name} (${u.email})`,
-    value: u.id,
-  }));
-  plans.value = plansRes.data ?? [];
-  partners.value = partnersRes.data ?? [];
-  await fetchSubscriptions();
-});
-
 // Quand on sélectionne un partenaire, charger ses codes promo
 async function onPartnerSelect() {
   if (!form.partner_id) {
@@ -486,7 +546,6 @@ async function onPartnerSelect() {
   }
 }
 
-// Dans onCloseForm, reset partner_id aussi
 function onCloseForm() {
   formVisible.value = false;
   form.user_id = "";
@@ -498,7 +557,8 @@ function onCloseForm() {
 }
 
 function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString("fr-FR");
+  const date = dateStr.length === 10 ? new Date(`${dateStr}T00:00:00`) : new Date(dateStr);
+  return date.toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" });
 }
 
 useHead({ title: "Abonnements | Admin Lumina" });
