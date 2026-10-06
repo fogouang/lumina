@@ -40,4 +40,7 @@ class NotificationType(str, enum.Enum):
     EXPIRATION_WARNING = "expiration_warning"
     NEW_STUDENT = "new_student"
     PAYMENT_SUCCESS = "payment_success"
+    STREAK_RECORD = "streak_record"
+    WEEKLY_RECAP = "weekly_recap"
+    INACTIVITY_REMINDER = "inactivity_reminder"
 

@@ -2,7 +2,11 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
+import type { AmbassadorContractSummary } from './AmbassadorContractSummary';
+import type { AmbassadorSaleItem } from './AmbassadorSaleItem';
+import type { AmbassadorTotals } from './AmbassadorTotals';
 import type { ReferredUserItem } from './ReferredUserItem';
+import type { RemittanceItem } from './RemittanceItem';
 /**
  * Vue complète du dashboard parrainage d'un ambassadeur.
  */
@@ -12,5 +16,9 @@ export type ReferralDashboardResponse = {
     referred_count: number;
     total_earnings: number;
     referred_users: Array<ReferredUserItem>;
+    totals: AmbassadorTotals;
+    sales: Array<AmbassadorSaleItem>;
+    remittances: Array<RemittanceItem>;
+    contract: (AmbassadorContractSummary | null);
 };
 

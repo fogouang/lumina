@@ -10,10 +10,10 @@ import { request as __request } from '../core/request';
 export class InvoicesService {
     /**
      * Générer une facture
-     * Générer une facture PDF pour un paiement.
+     * Prépare la facture d'un paiement.
      *
-     * La facture est automatiquement générée après un paiement réussi,
-     * mais cet endpoint permet de la regénérer si nécessaire.
+     * Aucun fichier n'est créé : la facture est générée à la demande
+     * par la route /invoices/payment/{payment_id}/pdf.
      * @param paymentId
      * @param accessToken
      * @returns SuccessResponse_dict_ Successful Response
@@ -52,6 +52,32 @@ export class InvoicesService {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/api/v1/invoices/payment/{payment_id}',
+            path: {
+                'payment_id': paymentId,
+            },
+            cookies: {
+                'access_token': accessToken,
+            },
+            errors: {
+                422: `Validation Error`,
+            },
+        });
+    }
+    /**
+     * Télécharger le PDF de la facture
+     * Génère le PDF de la facture en mémoire et le renvoie directement.
+     * @param paymentId
+     * @param accessToken
+     * @returns any Successful Response
+     * @throws ApiError
+     */
+    public static downloadInvoicePdfApiV1InvoicesPaymentPaymentIdPdfGet(
+        paymentId: string,
+        accessToken?: (string | null),
+    ): CancelablePromise<any> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/invoices/payment/{payment_id}/pdf',
             path: {
                 'payment_id': paymentId,
             },

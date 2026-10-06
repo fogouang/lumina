@@ -6,8 +6,15 @@
         <div>
           <h1 class="font-heading text-2xl font-extrabold tracking-tight text-ink">Ambassadeurs</h1>
           <p class="mt-0.5 text-sm text-muted">
-            <span class="font-semibold tabular-nums text-ink">{{ ambassadors.length }}</span>
+            <span class="font-semibold text-ink tabular-nums">{{ ambassadors.length }}</span>
             ambassadeur(s) actif(s)
+            <template v-if="totalBalance > 0">
+              · <span class="font-semibold text-amber-600 tabular-nums dark:text-amber-400">{{ fcfa(totalBalance) }} FCFA</span>
+              à recouvrer
+            </template>
+            <template v-if="suspendedCount > 0">
+              · <span class="font-semibold text-red-600 dark:text-red-400">{{ suspendedCount }} suspendu(s)</span>
+            </template>
           </p>
         </div>
         <Button
@@ -27,7 +34,9 @@
           paginator
           :rows="10"
           striped-rows
-          class="p-datatable-sm"
+          row-hover
+          class="p-datatable-sm cursor-pointer"
+          @row-click="(e) => goToDetail(e.data.user_id)"
         >
           <template #empty>
             <div class="flex flex-col items-center py-12 text-center">
@@ -42,42 +51,87 @@
             <template #body="{ data }">
               <div class="flex items-center gap-3">
                 <span
-                  class="grid size-9 shrink-0 place-items-center rounded-leaf bg-accent-100 font-heading text-xs font-bold uppercase text-accent-800 dark:bg-accent-500/15 dark:text-accent-300"
+                  class="grid size-9 shrink-0 place-items-center rounded-leaf bg-accent-100 font-heading text-xs font-bold text-accent-800 uppercase dark:bg-accent-500/15 dark:text-accent-300"
                 >
                   {{ data.name?.charAt(0) ?? "?" }}
                 </span>
                 <div class="min-w-0">
-                  <p class="truncate text-sm font-semibold leading-tight text-ink">{{ data.name }}</p>
-                  <p class="truncate text-xs text-muted">{{ data.email }}</p>
+                  <p class="flex items-center gap-2 truncate text-sm leading-tight font-semibold text-ink">
+                    {{ data.name }}
+                    <span
+                      v-if="data.is_suspended"
+                      class="rounded-full bg-red-100 px-2 py-0.5 text-[0.6875rem] font-bold text-red-700 dark:bg-red-500/15 dark:text-red-300"
+                    >
+                      Suspendu
+                    </span>
+                    <span
+                      v-else-if="!data.has_contract"
+                      class="rounded-full bg-amber-100 px-2 py-0.5 text-[0.6875rem] font-bold text-amber-700 dark:bg-amber-500/15 dark:text-amber-300"
+                    >
+                      Sans contrat
+                    </span>
+                  </p>
+                  <p class="truncate text-xs text-muted">
+                    {{ data.email }} · <span class="font-mono">{{ data.referral_code }}</span>
+                  </p>
                 </div>
               </div>
             </template>
           </Column>
 
-          <Column field="referral_code" header="Code" style="min-width: 120px">
+          <Column field="commission_rate" header="Taux" sortable style="min-width: 80px">
+            <template #body="{ data }">
+              <span class="text-sm font-semibold text-ink tabular-nums">
+                {{ data.commission_rate != null ? `${data.commission_rate} %` : "—" }}
+              </span>
+            </template>
+          </Column>
+
+          <Column field="sales_count" header="Ventes" sortable style="min-width: 80px">
+            <template #body="{ data }">
+              <span class="text-sm font-semibold text-ink tabular-nums">{{ data.sales_count }}</span>
+            </template>
+          </Column>
+
+          <Column field="total_collected" header="Encaissé" sortable style="min-width: 120px">
+            <template #body="{ data }">
+              <span class="text-sm text-ink tabular-nums">{{ fcfa(data.total_collected) }}</span>
+            </template>
+          </Column>
+
+          <Column field="total_remitted" header="Reversé" sortable style="min-width: 120px">
+            <template #body="{ data }">
+              <span class="text-sm text-ink tabular-nums">{{ fcfa(data.total_remitted) }}</span>
+            </template>
+          </Column>
+
+          <Column field="balance_due" header="Reste dû" sortable style="min-width: 140px">
             <template #body="{ data }">
               <span
-                class="inline-flex rounded-lg border border-line bg-card-2 px-2 py-1 font-mono text-xs font-semibold tracking-wide text-ink"
+                class="inline-flex rounded-full px-2.5 py-1 font-heading text-xs font-bold tabular-nums"
+                :class="
+                  data.is_suspended
+                    ? 'bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-300'
+                    : data.balance_due > 0
+                      ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300'
+                      : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300'
+                "
               >
-                {{ data.referral_code }}
+                {{ fcfa(data.balance_due) }} FCFA
               </span>
             </template>
           </Column>
 
-          <Column field="referred_count" header="Filleuls" sortable style="min-width: 100px">
+          <Column header="" style="width: 1%">
             <template #body="{ data }">
-              <span class="inline-flex items-center gap-1.5 text-sm font-semibold tabular-nums text-ink">
-                <i class="pi pi-users text-xs text-faint" />
-                {{ data.referred_count }}
-              </span>
-            </template>
-          </Column>
-
-          <Column field="total_earnings" header="Gains cumulés" sortable style="min-width: 150px">
-            <template #body="{ data }">
-              <span class="font-heading text-sm font-bold tabular-nums text-primary">
-                {{ Number(data.total_earnings).toLocaleString("fr-FR") }} FCFA
-              </span>
+              <NuxtLink
+                :to="`/admin/referrals/${data.user_id}`"
+                class="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-sm font-semibold text-primary hover:bg-primary/10"
+                @click.stop
+              >
+                Voir
+                <i class="pi pi-angle-right text-xs" />
+              </NuxtLink>
             </template>
           </Column>
         </DataTable>
@@ -121,24 +175,47 @@
             </div>
           </template>
 
-          <Column field="referrer_name" header="Ambassadeur" sortable style="min-width: 180px">
+          <Column field="referrer_name" header="Ambassadeur" sortable style="min-width: 160px">
             <template #body="{ data }">
               <span class="text-sm font-semibold text-ink">{{ data.referrer_name }}</span>
             </template>
           </Column>
 
-          <Column field="referred_name" header="Filleul" sortable style="min-width: 180px">
+          <Column field="referred_name" header="Client" sortable style="min-width: 160px">
             <template #body="{ data }">
               <span class="text-sm text-muted">{{ data.referred_name }}</span>
             </template>
           </Column>
 
-          <Column field="amount" header="Montant" sortable style="min-width: 130px">
+          <Column field="plan_name" header="Forfait" sortable style="min-width: 140px">
+            <template #body="{ data }">
+              <span class="text-sm text-ink">{{ data.plan_name ?? "—" }}</span>
+            </template>
+          </Column>
+
+          <Column field="collected_by_ambassador" header="Type" sortable style="min-width: 120px">
             <template #body="{ data }">
               <span
-                class="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-bold tabular-nums text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"
+                class="inline-flex rounded-full px-2.5 py-1 text-xs font-semibold"
+                :class="data.collected_by_ambassador ? 'bg-primary/10 text-primary' : 'bg-card-2 text-muted'"
               >
-                +{{ Number(data.amount).toLocaleString("fr-FR") }} FCFA
+                {{ data.collected_by_ambassador ? "Vente directe" : "Lien" }}
+              </span>
+            </template>
+          </Column>
+
+          <Column field="sale_amount" header="Vente" sortable style="min-width: 120px">
+            <template #body="{ data }">
+              <span class="text-sm text-ink tabular-nums">{{ fcfa(data.sale_amount) }} FCFA</span>
+            </template>
+          </Column>
+
+          <Column field="amount" header="Commission" sortable style="min-width: 130px">
+            <template #body="{ data }">
+              <span
+                class="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-700 tabular-nums dark:bg-emerald-500/15 dark:text-emerald-300"
+              >
+                +{{ fcfa(data.amount) }} FCFA
               </span>
             </template>
           </Column>
@@ -167,6 +244,17 @@ const ambassadors = ref<any[]>([]);
 const earnings = ref<any[]>([]);
 const loadingAmbassadors = ref(true);
 const loadingEarnings = ref(true);
+
+const totalBalance = computed(() =>
+  ambassadors.value.reduce((sum, a) => sum + Number(a.balance_due ?? 0), 0),
+);
+const suspendedCount = computed(() => ambassadors.value.filter((a) => a.is_suspended).length);
+
+const fcfa = (n: number) => Number(n ?? 0).toLocaleString("fr-FR");
+
+function goToDetail(userId: string) {
+  navigateTo(`/admin/referrals/${userId}`);
+}
 
 async function fetchAmbassadors() {
   loadingAmbassadors.value = true;
@@ -207,5 +295,5 @@ onMounted(() => {
   fetchEarnings();
 });
 
-useHead({ title: "Ambassadeurs | Admin Lumina" });
+useHead({ title: "Ambassadeurs | Admin" });
 </script>

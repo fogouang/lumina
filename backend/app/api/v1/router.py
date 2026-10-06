@@ -25,6 +25,8 @@ from app.modules.partners.controller import router as partners_router
 from app.modules.promo_codes.controller import router as promo_codes_router
 from app.modules.expression_orale.controller import router as expression_orale_router
 from app.modules.referrals.controller import router as referrals_router
+from app.modules.ambassador_contracts.controller import router as ambassador_contracts_router
+from app.modules.activity.controller import router as activity_router
 
 
 
@@ -53,6 +55,5 @@ api_router.include_router(partners_router)
 api_router.include_router(promo_codes_router)
 api_router.include_router(expression_orale_router)
 api_router.include_router(referrals_router)
-
-
-
+api_router.include_router(ambassador_contracts_router)
+api_router.include_router(activity_router)

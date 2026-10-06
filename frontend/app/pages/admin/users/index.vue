@@ -72,8 +72,14 @@
                 {{ initials(data) }}
               </span>
               <div class="min-w-0">
-                <p class="truncate text-sm font-semibold leading-tight text-ink">
+                <p class="flex items-center gap-2 truncate text-sm font-semibold leading-tight text-ink">
                   {{ data.first_name }} {{ data.last_name }}
+                  <span
+                    v-if="data.is_ambassador"
+                    class="rounded-full bg-amber-100 px-2 py-0.5 text-[0.6875rem] font-bold text-amber-700 dark:bg-amber-500/15 dark:text-amber-300"
+                  >
+                    Ambassadeur
+                  </span>
                 </p>
                 <p class="truncate text-xs text-muted">{{ data.email }}</p>
               </div>
@@ -122,14 +128,14 @@
           <template #body="{ data }">
             <div class="flex items-center gap-1">
               <Button
-                v-tooltip.top="data.is_ambassador ? 'Retirer le statut ambassadeur' : 'Faire ambassadeur'"
+                v-tooltip.top="data.is_ambassador ? 'Voir sa fiche ambassadeur' : 'Préparer un contrat ambassadeur'"
                 :icon="data.is_ambassador ? 'pi pi-star-fill' : 'pi pi-star'"
                 size="small"
                 text
                 rounded
                 :severity="data.is_ambassador ? 'warning' : 'secondary'"
-                :aria-label="data.is_ambassador ? 'Retirer le statut ambassadeur' : 'Faire ambassadeur'"
-                @click="toggleAmbassador(data)"
+                :aria-label="data.is_ambassador ? 'Voir sa fiche ambassadeur' : 'Préparer un contrat ambassadeur'"
+                @click="goToAmbassador(data)"
               />
               <Button
                 v-tooltip.top="'Activer abonnement'"
@@ -480,6 +486,24 @@ const roleOptions = [
   { label: "Admin", value: "platform_admin" },
 ];
 
+// ── Ambassadeur ───────────────────────────────────────────────
+// Le statut ambassadeur ne se donne plus ici : il découle de la
+// signature d'un contrat (page Contrats) et se retire par sa résiliation.
+function goToAmbassador(user: UserListResponse) {
+  if ((user as any).is_ambassador) {
+    navigateTo(`/admin/referrals/${user.id}`);
+    return;
+  }
+  navigateTo({
+    path: "/admin/contrats-ambassadeurs",
+    query: {
+      user_id: user.id,
+      name: `${user.first_name ?? ""} ${user.last_name ?? ""}`.trim(),
+      email: user.email,
+    },
+  });
+}
+
 // ── Formulaire ────────────────────────────────────────────────
 const dialogVisible = ref(false);
 const editingUser = ref<UserListResponse | null>(null);
@@ -509,6 +533,7 @@ function openEdit(user: UserListResponse) {
   form.last_name = user.last_name ?? "";
   form.email = user.email ?? "";
   form.password = "";
+  form.phone = (user as any).phone ?? "";
   form.role = user.role ?? "student";
   dialogVisible.value = true;
 }
@@ -551,37 +576,6 @@ async function onSave() {
   }
 }
 
-const togglingAmbassador = ref<string | null>(null);
-
-async function toggleAmbassador(user: UserListResponse) {
-  togglingAmbassador.value = user.id;
-  const newStatus = !user.is_ambassador;
-  try {
-    await post("/v1/referrals/admin/set-ambassador", {
-      user_id: user.id,
-      is_ambassador: newStatus,
-    });
-    toast.add({
-      severity: "success",
-      summary: newStatus
-        ? "Statut ambassadeur activé"
-        : "Statut ambassadeur retiré",
-      life: 3000,
-    });
-    // Mise à jour locale immédiate, sans re-fetch complet
-    const target = users.value.find((u) => u.id === user.id);
-    if (target) (target as any).is_ambassador = newStatus;
-  } catch (err: any) {
-    toast.add({
-      severity: "error",
-      summary: err?.data?.message || "Erreur lors de la mise à jour du statut",
-      life: 3000,
-    });
-  } finally {
-    togglingAmbassador.value = null;
-  }
-}
-
 // ── Suppression ───────────────────────────────────────────────
 const deleteVisible = ref(false);
 const deletingUser = ref<UserListResponse | null>(null);
@@ -614,5 +608,5 @@ async function onDelete() {
   }
 }
 
-useHead({ title: "Utilisateurs | Admin Lumina" });
+useHead({ title: "Utilisateurs | Admin OCANADA" });
 </script>

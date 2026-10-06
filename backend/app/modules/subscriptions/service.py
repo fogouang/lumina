@@ -634,6 +634,12 @@ class SubscriptionService:
         if not plan or not plan.is_active:
             raise NotFoundException(resource="Plan", identifier=str(data.plan_id))
 
+        # ── Contrat signé et reversements à jour ? ───────────────
+        # Bloque avant toute modification si l'ambassadeur n'a pas de
+        # contrat signé ou a un reversement en retard.
+        referral_service = ReferralService(self.db)
+        await referral_service.assert_can_activate(ambassador.id)
+
         # Désactiver anciens abonnements
         await self.db.execute(
             update(Subscription)
@@ -704,11 +710,15 @@ class SubscriptionService:
         await self.db.commit()
 
         # ── Gain de parrainage ────────────────────────────────────
-        await ReferralService(self.db).record_payment_earning(
+        # L'ambassadeur a encaissé lui-même : la part de la plateforme
+        # (montant payé - commission) devient une somme à reverser.
+        await referral_service.record_payment_earning(
             payment_id=payment.id,
             payer_user_id=data.user_id,
             payment_amount=amount_paid,
+            collected_by_ambassador=True,
         )
+        await self.db.commit()
 
         # Générer la facture PDF
         from app.modules.invoices.service import InvoiceService

@@ -45,29 +45,17 @@
 
           <div class="flex items-center justify-between gap-4 sm:justify-end">
             <p class="whitespace-nowrap font-heading text-lg font-extrabold text-ink">
-              {{ formatPrice(payment.amount) }}
+              {{ formatPrice(payment.amount_paid) }}
               <span class="text-xs font-semibold text-faint">FCFA</span>
             </p>
-            <AppCta
-              v-if="payment.invoice_url"
-              :to="payment.invoice_url"
-              external
-              target="_blank"
-              rel="noopener"
+            <AppButton
+              v-if="payment.payment_status === 'completed'"
               label="PDF"
               icon="pi pi-download"
-              icon-pos="left"
-              variant="outline"
-              size="md"
-            />
-            <AppButton
-              v-else
-              label="Générer"
-              icon="pi pi-file-pdf"
               variant="secondary"
               size="small"
-              :loading="generatingId === payment.id"
-              @click="generateInvoice(payment.id)"
+              :loading="openingId === payment.id"
+              @click="openInvoice(payment.id)"
             />
           </div>
         </div>
@@ -82,12 +70,13 @@ import type { SuccessResponse_list_PaymentResponse__ } from '#shared/api/models/
 
 definePageMeta({ layout: 'account', middleware: 'auth' })
 
-const { get, post } = useApi()
+const { get } = useApi()
 const toast = useToast()
+const pdf = usePdf()
 
-const loading      = ref(true)
-const payments     = ref<PaymentResponse[]>([])
-const generatingId = ref<string | null>(null)
+const loading   = ref(true)
+const payments  = ref<PaymentResponse[]>([])
+const openingId = ref<string | null>(null)
 
 onMounted(async () => {
   try {
@@ -100,18 +89,15 @@ onMounted(async () => {
   }
 })
 
-async function generateInvoice(paymentId: string) {
-  generatingId.value = paymentId
+// La facture est générée à la volée par le serveur : rien n'est stocké
+async function openInvoice(paymentId: string) {
+  openingId.value = paymentId
   try {
-    await post(`/v1/invoices/generate/${paymentId}`)
-    toast.add({ severity: 'success', summary: 'Facture générée !', life: 3000 })
-    // Recharger
-    const res = await get<SuccessResponse_list_PaymentResponse__>('/v1/payments/me')
-    payments.value = res.data ?? []
+    await pdf.open(`/v1/invoices/payment/${paymentId}/pdf`)
   } catch {
-    toast.add({ severity: 'error', summary: 'Erreur lors de la génération', life: 3000 })
+    toast.add({ severity: 'error', summary: "Impossible d'ouvrir la facture", life: 3000 })
   } finally {
-    generatingId.value = null
+    openingId.value = null
   }
 }
 
@@ -133,4 +119,3 @@ function formatPrice(n: number) {
 
 useHead({ title: 'Factures | Lumina TCF' })
 </script>
-

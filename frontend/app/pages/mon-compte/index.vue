@@ -51,6 +51,11 @@
       </div>
     </div>
 
+    <!-- Assiduité -->
+    <div v-reveal="{ delay: 120 }">
+      <AccountActivityTracker />
+    </div>
+
     <!-- Statistiques -->
     <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
       <div

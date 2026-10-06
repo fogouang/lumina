@@ -135,17 +135,20 @@ export const adminSections: NavSection[] = [
       { label: "Paiements", to: "/admin/payments", icon: "pi pi-credit-card" },
     ],
   },
-  {
-    title: "Partenaires",
-    items: [
-      { label: "Partenaires", to: "/admin/partners", icon: "pi pi-building" },
-      { label: "Codes promo", to: "/admin/promo-code", icon: "pi pi-ticket" },
-    ],
-  },
+  
   {
     title: "Parrainage",
     items: [
-      { label: "Ambassadeurs", to: "/admin/referrals", icon: "pi pi-star" },
+      {
+        label: "Ambassadeurs et ventes",
+        to: "/admin/referrals",
+        icon: "pi pi-star",
+      },
+      {
+        label: "Contrats",
+        to: "/admin/contrats-ambassadeurs",
+        icon: "pi pi-file-edit",
+      },
     ],
   },
 ];
