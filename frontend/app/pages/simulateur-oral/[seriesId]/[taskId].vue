@@ -46,6 +46,19 @@ const micState = ref<"agent_speaking" | "student_turn" | null>(null);
 // prise de parole (présentation + consigne, ou phrase d'invitation Tâche 2).
 const timerStarted = ref(false);
 
+// Tuile de l'examinatrice (expose la sortie audio de l'avatar 3D)
+const avatarRef = ref<{
+  getAudioOutput: () => { ctx: AudioContext; node: AudioNode } | null;
+} | null>(null);
+
+// Interface d'appel
+const showTranscript = ref(true);
+const cameraEnabled = ref(false);
+// Nom de l'examinatrice si le back l'envoie dans session_ready (sinon libellé générique)
+const examinerName = ref<string | null>(null);
+// Flux micro exposé à la vignette candidat (anneau de niveau)
+const micStreamUi = shallowRef<MediaStream | null>(null);
+
 interface CriterionScore {
   name: string;
   score: number;
@@ -69,12 +82,6 @@ const gradingResult = ref<GradingResult | null>(null);
 // Thème immersif "appel" pour toutes les phases actives ; thème clair
 // "rapport" une fois le résultat affiché.
 const isCallTheme = computed(() => phase.value !== "graded");
-
-const micLabel = computed(() => {
-  if (micState.value === "agent_speaking") return "L'examinateur parle…";
-  if (micState.value === "student_turn") return "À vous de parler";
-  return "";
-});
 
 // Regroupe les chunks consécutifs du même locuteur en une seule bulle,
 // sans altérer les données brutes du transcript.
@@ -148,6 +155,7 @@ function connectWebSocket(): void {
         preparationTimeSeconds.value =
           (data.preparation_time_seconds as number) ?? 0;
         recordingTimeSeconds.value = data.recording_time_seconds as number;
+        examinerName.value = (data.examiner_name as string | undefined) ?? null;
         if (preparationTimeSeconds.value > 0) {
           phase.value = "intro"; // l'IA va lire la mise en situation
         } else {
@@ -268,11 +276,18 @@ let processor: ScriptProcessorNode | null = null;
 async function startStreamingMic(): Promise<void> {
   micError.value = null;
   try {
-    micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    micStream = await navigator.mediaDevices.getUserMedia({
+      audio: {
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true,
+      },
+    });
   } catch {
     micError.value = "L'accès au microphone est nécessaire pour cette tâche.";
     return;
   }
+  micStreamUi.value = micStream;
 
   audioContext = new AudioContext({ sampleRate: 16000 });
   const source = audioContext.createMediaStreamSource(micStream);
@@ -285,10 +300,16 @@ async function startStreamingMic(): Promise<void> {
       return;
     const input = e.inputBuffer.getChannelData(0);
     const pcm16 = new Int16Array(input.length);
-    for (let i = 0; i < input.length; i++) {
-      const sample = input[i] ?? 0;
-      const s = Math.max(-1, Math.min(1, sample));
-      pcm16[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
+
+    // Anti-écho : tant que la voix de l'examinatrice sort des haut-parleurs,
+    // on envoie du silence (le flux reste continu pour Gemini, mais il
+    // n'entend plus sa propre voix captée par le micro).
+    if (!isExaminerAudioPlaying()) {
+      for (let i = 0; i < input.length; i++) {
+        const sample = input[i] ?? 0;
+        const s = Math.max(-1, Math.min(1, sample));
+        pcm16[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
+      }
     }
     ws.send(pcm16.buffer);
   };
@@ -303,6 +324,7 @@ function stopStreamingMic(): void {
   processor = null;
   micStream = null;
   audioContext = null;
+  micStreamUi.value = null;
 }
 
 // ── Lecture audio (PCM16 24kHz, sortie Gemini Live) ─────────────
@@ -311,36 +333,74 @@ function stopStreamingMic(): void {
 // File d'attente basée sur nextPlayTime pour enchaîner les chunks sans
 // coupure ni chevauchement.
 const GEMINI_OUTPUT_SAMPLE_RATE = 24000;
-let playbackContext: AudioContext | null = null;
-let nextPlayTime = 0;
+// Marge après la fin de la voix de l'examinatrice (réverbération de la pièce)
+const ECHO_TAIL_SECONDS = 0.35;
 
-function ensurePlaybackContext(): AudioContext {
+// Contexte de secours, utilisé seulement si l'avatar 3D n'est pas prêt
+let playbackContext: AudioContext | null = null;
+let currentTarget: {
+  ctx: AudioContext;
+  node: AudioNode;
+  isAvatar: boolean;
+} | null = null;
+let nextPlayTime = 0;
+const activeSources = new Set<AudioBufferSourceNode>();
+
+function isExaminerAudioPlaying(): boolean {
+  if (!currentTarget) return false;
+  return nextPlayTime + ECHO_TAIL_SECONDS > currentTarget.ctx.currentTime;
+}
+
+function ensureFallbackContext(): AudioContext {
   if (!playbackContext) {
     playbackContext = new AudioContext({
       sampleRate: GEMINI_OUTPUT_SAMPLE_RATE,
     });
-    nextPlayTime = playbackContext.currentTime;
-  }
-  if (playbackContext.state === "suspended") {
-    playbackContext.resume();
   }
   return playbackContext;
 }
 
+function getPlaybackTarget() {
+  const avatarOut = avatarRef.value?.getAudioOutput() ?? null;
+
+  // On ne bascule vers l'avatar que quand la file en cours est vide,
+  // sinon deux contextes joueraient la voix en même temps.
+  const queueDrained =
+    !currentTarget || nextPlayTime <= currentTarget.ctx.currentTime;
+
+  if (avatarOut && currentTarget?.isAvatar !== true && queueDrained) {
+    currentTarget = { ...avatarOut, isAvatar: true };
+    nextPlayTime = currentTarget.ctx.currentTime;
+  } else if (!currentTarget) {
+    const ctx = ensureFallbackContext();
+    currentTarget = { ctx, node: ctx.destination, isAvatar: false };
+    nextPlayTime = ctx.currentTime;
+  }
+
+  if (currentTarget.ctx.state === "suspended") {
+    currentTarget.ctx.resume();
+  }
+  return currentTarget;
+}
+
 function playAudioChunk(audioBuffer: ArrayBuffer): void {
-  const ctx = ensurePlaybackContext();
+  const { ctx, node } = getPlaybackTarget();
+
   const int16 = new Int16Array(audioBuffer);
   const float32 = new Float32Array(int16.length);
   for (let i = 0; i < int16.length; i++) {
     float32[i] = (int16[i] ?? 0) / 0x8000;
   }
 
+  // 24000 en dur : le contexte de l'avatar tourne à 48000 et rééchantillonne tout seul
   const buffer = ctx.createBuffer(1, float32.length, GEMINI_OUTPUT_SAMPLE_RATE);
   buffer.copyToChannel(float32, 0);
 
   const source = ctx.createBufferSource();
   source.buffer = buffer;
-  source.connect(ctx.destination);
+  source.connect(node);
+  activeSources.add(source);
+  source.onended = () => activeSources.delete(source);
 
   const startTime = Math.max(ctx.currentTime, nextPlayTime);
   source.start(startTime);
@@ -348,8 +408,19 @@ function playAudioChunk(audioBuffer: ArrayBuffer): void {
 }
 
 function stopPlaybackAudio(): void {
+  // On coupe les sons en cours sans fermer le contexte de l'avatar :
+  // c'est le composant 3D qui le libère lui-même.
+  activeSources.forEach((s) => {
+    try {
+      s.stop();
+    } catch {
+      // déjà terminé
+    }
+  });
+  activeSources.clear();
   playbackContext?.close();
   playbackContext = null;
+  currentTarget = null;
   nextPlayTime = 0;
 }
 
@@ -370,12 +441,15 @@ onBeforeUnmount(() => {
 
 <template>
   <div
-    class="flex min-h-screen flex-col transition-colors duration-500"
-    :class="
+    class="flex flex-col transition-colors duration-500"
+    :class="[
       isCallTheme
         ? 'bg-[radial-gradient(ellipse_at_50%_-10%,var(--p-primary-700)_0%,var(--p-primary-900)_50%,var(--p-primary-950)_100%)] text-white'
-        : 'bg-canvas text-ink'
-    "
+        : 'bg-canvas text-ink',
+     ['intro', 'prep', 'live'].includes(phase)
+  ? 'fixed inset-0 z-50 overflow-hidden'
+  : 'min-h-screen',
+    ]"
   >
     <!-- Chargement -->
     <div v-if="loadingTask" class="flex flex-1 items-center justify-center">
@@ -403,53 +477,12 @@ onBeforeUnmount(() => {
 
     <template v-else-if="task">
       <!-- Barre d'appel -->
-      <div
+      <SimulateurOralCallHeader
         v-if="phase !== 'graded'"
-        class="flex shrink-0 items-center gap-3 border-b px-4 py-3 backdrop-blur-md"
-        :class="
-          isCallTheme ? 'border-white/10 bg-white/5' : 'border-line bg-card/90'
-        "
-      >
-        <button
-          type="button"
-          aria-label="Quitter la simulation"
-          class="grid size-9 shrink-0 place-items-center rounded-xl transition-colors"
-          :class="
-            isCallTheme
-              ? 'text-white/80 hover:bg-white/10 hover:text-white'
-              : 'text-muted hover:bg-card-2 hover:text-primary'
-          "
-          @click="confirmLeave"
-        >
-          <i class="pi pi-arrow-left text-sm" />
-        </button>
-        <div class="flex min-w-0 flex-1 items-center gap-2.5">
-          <span
-            class="size-2 shrink-0 rounded-full"
-            :class="
-              phase === 'live'
-                ? 'animate-pulse bg-red-500 shadow-[0_0_0_4px_rgb(239_68_68/0.25)]'
-                : 'bg-white/30'
-            "
-          />
-          <h1
-            class="truncate font-heading text-sm font-bold"
-            :class="isCallTheme ? 'text-white/90' : 'text-ink'"
-          >
-            {{ task.title ?? `Tâche ${task.task_number}` }}
-          </h1>
-        </div>
-        <span
-          v-if="['intro', 'prep', 'live'].includes(phase)"
-          class="ml-auto inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold"
-          :class="
-            isCallTheme ? 'bg-white/10 text-white/70' : 'bg-card-2 text-muted'
-          "
-        >
-          <i class="pi pi-shield text-[0.65rem]" />
-          Mode Examen
-        </span>
-      </div>
+        :title="task.title ?? `Tâche ${task.task_number}`"
+        :phase="phase"
+        @leave="confirmLeave"
+      />
 
       <!-- Connexion -->
       <div
@@ -498,188 +531,83 @@ onBeforeUnmount(() => {
         </div>
       </div>
 
-      <!-- Intro / Prep / Live : interface d'appel -->
+      <!-- Intro / Prep / Live : interface d'appel vidéo -->
       <div
         v-else-if="['intro', 'prep', 'live'].includes(phase)"
-        class="flex-1 overflow-y-auto"
+        class="flex min-h-0 flex-1 flex-col"
       >
-        <div class="mx-auto w-full max-w-2xl space-y-6 px-4 py-8">
-          <!-- Portraits -->
-          <div
-            v-if="phase !== 'prep'"
-            class="flex items-center justify-center gap-8 pb-2 sm:gap-14"
-          >
-            <!-- Examinateur -->
+        <div
+          class="mx-auto flex min-h-0 w-full max-w-6xl flex-1 flex-col gap-4 p-4 lg:flex-row"
+        >
+          <!-- Scène : examinatrice en grand, candidat en vignette -->
+          <div class="relative min-h-0 flex-1">
+            <SimulateurOralExaminerTile
+              ref="avatarRef"
+              avatar-url="/avatars/brunette.glb"
+              :name="examinerName"
+              :speaking="micState === 'agent_speaking'"
+              :listening="micState === 'student_turn'"
+            />
+
+            <!-- Vignette candidat : positionnée par ce conteneur, pas par le composant -->
             <div
-              class="flex flex-col items-center gap-2 transition-opacity duration-300"
-              :class="
-                micState === 'student_turn' ? 'opacity-40' : 'opacity-100'
-              "
+              class="absolute bottom-3 right-3 z-10 h-36 w-28 sm:h-44 sm:w-36"
             >
-              <div class="relative grid size-24 place-items-center sm:size-28">
-                <span
-                  class="absolute inset-0 rounded-full bg-accent-400/35 blur-md transition-opacity duration-300"
-                  :class="
-                    micState === 'agent_speaking'
-                      ? 'animate-pulse opacity-100'
-                      : 'opacity-0'
-                  "
-                />
-                <span
-                  class="absolute inset-0 rounded-full border-2 transition-colors duration-300"
-                  :class="
-                    micState === 'agent_speaking'
-                      ? 'border-accent-300/80'
-                      : 'border-white/10'
-                  "
-                />
-                <span
-                  class="relative grid size-[88%] place-items-center rounded-full bg-linear-to-b from-primary-700 to-primary-900 shadow-[inset_0_2px_0_rgb(255_255_255/0.1)]"
-                >
-                  <i class="pi pi-user text-3xl text-white/75" />
-                </span>
-              </div>
-              <p class="text-xs font-semibold tracking-wide text-white/60">
-                Examinateur
-              </p>
+              <SimulateurOralCandidateTile
+                class="h-full w-full"
+                :mic-stream="micStreamUi"
+                :speaking="micState === 'student_turn'"
+                :camera-enabled="cameraEnabled"
+                @camera-error="cameraEnabled = false"
+              />
             </div>
 
-            <!-- Candidat -->
+            <!-- Consigne de préparation -->
             <div
-              class="flex flex-col items-center gap-2 transition-opacity duration-300"
-              :class="
-                micState === 'agent_speaking' ? 'opacity-40' : 'opacity-100'
-              "
+              v-if="phase === 'prep'"
+              class="absolute inset-x-3 top-3 z-10 rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-center text-sm text-white/80 backdrop-blur-md"
             >
-              <div class="relative grid size-24 place-items-center sm:size-28">
-                <span
-                  class="absolute inset-0 rounded-full bg-emerald-300/35 blur-md transition-opacity duration-300"
-                  :class="
-                    micState === 'student_turn'
-                      ? 'animate-pulse opacity-100'
-                      : 'opacity-0'
-                  "
-                />
-                <span
-                  class="absolute inset-0 rounded-full border-2 transition-colors duration-300"
-                  :class="
-                    micState === 'student_turn'
-                      ? 'border-emerald-300/80'
-                      : 'border-white/10'
-                  "
-                />
-                <span
-                  class="relative grid size-[88%] place-items-center rounded-full bg-linear-to-b from-primary-700 to-primary-900 shadow-[inset_0_2px_0_rgb(255_255_255/0.1)]"
-                >
-                  <i class="pi pi-microphone text-3xl text-white/75" />
-                </span>
-              </div>
-              <p class="text-xs font-semibold tracking-wide text-white/60">
-                Vous
-              </p>
-            </div>
-          </div>
-          <p
-            v-if="phase !== 'prep'"
-            class="-mt-3 text-center text-xs uppercase tracking-widest text-white/45"
-          >
-            {{ micLabel }}
-          </p>
-
-          <!-- Chrono officiel -->
-          <div
-            v-if="phase === 'live' && timerStarted"
-            class="flex items-center justify-center gap-3"
-          >
-            <ExamTimer
-              :total-seconds="recordingTimeSeconds"
-              @expired="onLiveExpired"
-            />
-            <button
-              type="button"
-              class="inline-flex items-center gap-2 rounded-xl border border-white/25 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-white/10"
-              @click="endSessionNow"
-            >
-              <i class="pi pi-stop-circle text-xs" />
-              Terminer
-            </button>
-          </div>
-          <p
-            v-else-if="phase === 'live'"
-            class="text-center text-xs text-white/45"
-          >
-            Le chronomètre démarre après la présentation de l'examinateur…
-          </p>
-
-          <!-- Préparation -->
-          <div
-            v-if="phase === 'prep'"
-            class="flex flex-col items-center gap-4 py-6"
-          >
-            <ExamTimer
-              :total-seconds="preparationTimeSeconds"
-              @expired="onPrepExpired"
-            />
-            <span
-              class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-semibold text-white/75"
-            >
-              <i class="pi pi-pause-circle" /> Pause · pas d'enregistrement
-            </span>
-            <p class="max-w-md text-center text-sm text-white/60">
               Préparez-vous en silence. L'échange démarrera automatiquement à la
               fin du minuteur.
-            </p>
+            </div>
           </div>
 
-          <!-- Erreur micro -->
+          <!-- Transcription : hauteur bloquée, le contenu défile à l'intérieur -->
+          <SimulateurOralTranscriptPanel
+            v-if="showTranscript"
+            :lines="groupedTranscript"
+            class="h-48 shrink-0 lg:h-auto lg:w-80"
+          />
+        </div>
+
+        <!-- Erreur micro -->
+        <div
+          v-if="micError"
+          class="mx-auto w-full max-w-6xl shrink-0 px-4 pb-3"
+        >
           <div
-            v-if="micError"
             class="flex items-start gap-2.5 rounded-2xl border border-accent-400/30 bg-accent-400/10 p-3.5 text-sm text-accent-100"
           >
             <i class="pi pi-exclamation-triangle mt-0.5 text-accent-300" />
             {{ micError }}
           </div>
-
-          <!-- Fil de discussion -->
-          <div class="space-y-3 py-2">
-            <div
-              v-for="(line, i) in groupedTranscript"
-              :key="i"
-              class="flex items-end gap-2"
-              :class="
-                line.speaker === 'candidat' ? 'flex-row-reverse' : 'flex-row'
-              "
-            >
-              <span
-                class="grid size-7 shrink-0 place-items-center rounded-full border"
-                :class="
-                  line.speaker === 'candidat'
-                    ? 'border-emerald-300/30 bg-emerald-500/15'
-                    : 'border-white/15 bg-white/5'
-                "
-              >
-                <i
-                  :class="
-                    line.speaker === 'candidat'
-                      ? 'pi pi-microphone'
-                      : 'pi pi-user'
-                  "
-                  class="text-xs text-white/75"
-                />
-              </span>
-              <div
-                class="max-w-[75%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed"
-                :class="
-                  line.speaker === 'candidat'
-                    ? 'rounded-br-sm bg-white text-primary-950 shadow-md shadow-black/25'
-                    : 'rounded-bl-sm border border-white/10 bg-white/10 text-white/85 backdrop-blur'
-                "
-              >
-                {{ line.text }}
-              </div>
-            </div>
-          </div>
         </div>
+
+        <!-- Barre de contrôle -->
+        <SimulateurOralCallControls
+          :phase="phase"
+          :timer-started="timerStarted"
+          :preparation-seconds="preparationTimeSeconds"
+          :recording-seconds="recordingTimeSeconds"
+          :mic-state="micState"
+          :transcript-visible="showTranscript"
+          :camera-enabled="cameraEnabled"
+          @prep-expired="onPrepExpired"
+          @live-expired="onLiveExpired"
+          @end="endSessionNow"
+          @toggle-transcript="showTranscript = !showTranscript"
+          @toggle-camera="cameraEnabled = !cameraEnabled"
+        />
       </div>
 
       <!-- Correction en cours -->

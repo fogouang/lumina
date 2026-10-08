@@ -12,6 +12,7 @@
     "generate:api:prod": "openapi-typescript-codegen --input https://api.deutschtest.com/openapi.json --output ./shared/api --client fetch"
   },
   "dependencies": {
+    "@met4citizen/talkinghead": "^1.7.0",
     "@pinia/nuxt": "0.11.3",
     "@primeuix/themes": "^2.0.3",
     "@primevue/forms": "^4.5.5",
@@ -25,6 +26,7 @@
     "primevue": "^4.5.5",
     "tailwindcss": "^4.2.4",
     "tailwindcss-primeui": "^0.6.1",
+    "three": "^0.186.1",
     "vue": "^3.5.33",
     "vue-router": "^5.0.6",
     "zod": "^4.3.6"
