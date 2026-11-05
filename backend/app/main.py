@@ -149,21 +149,37 @@ async def app_exception_handler(request: Request, exc: AppException):
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     """
     Handler pour erreurs de validation Pydantic.
+    Log détaillé (mot de passe masqué) + message lisible pour le frontend.
     """
     errors = {}
+    log_errors = []
     for error in exc.errors():
-        field = ".".join(str(loc) for loc in error["loc"])
-        errors[field] = error["msg"]
-    
+        loc = [str(x) for x in error["loc"]]
+        field = ".".join(loc)
+        # Pydantic préfixe les erreurs des validateurs par "Value error, "
+        msg = str(error["msg"]).removeprefix("Value error, ")
+        errors[field] = msg
+
+        entry = {"field": field, "msg": msg, "type": error.get("type")}
+        if not any("password" in part for part in loc):
+            entry["input"] = error.get("input")
+        log_errors.append(entry)
+
+    body = exc.body
+    if isinstance(body, dict):
+        body = {k: ("***" if "password" in k else v) for k, v in body.items()}
+
     logger.warning(
-        f"Validation error on {request.url.path}",
-        extra={"errors": errors}
+        f"Validation error on {request.url.path} | errors={log_errors} | body={body}"
     )
-    
+
+    # Premier message d'erreur renvoyé tel quel au frontend
+    first_message = next(iter(errors.values()), "Erreur de validation")
+
     return JSONResponse(
         status_code=422,
         content=ErrorResponse(
-            message="Erreur de validation",
+            message=first_message,
             code="VALIDATION_ERROR",
             details=errors
         ).model_dump()

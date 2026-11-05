@@ -24,73 +24,36 @@ class UserService:
         self.repo = UserRepository(db)
     
     async def get_all(self, skip: int = 0, limit: int = 100, current_user: User = None) -> list[User]:
-        """
-        Récupérer tous les utilisateurs (admin uniquement).
-        
-        Args:
-            skip: Offset
-            limit: Limit
-            current_user: Utilisateur authentifié
-            
-        Returns:
-            Liste d'utilisateurs
-            
-        Raises:
-            ForbiddenException: Si pas admin
-        """
-        
+        """Récupérer tous les utilisateurs (admin uniquement)."""
         if current_user and current_user.role != UserRole.PLATFORM_ADMIN:
             raise ForbiddenException(detail="Seuls les admins peuvent lister les utilisateurs")
         
         return await self.repo.get_all(skip=skip, limit=limit)
 
-    
     async def get_by_id(self, user_id: UUID) -> User:
-        """
-        Récupérer un utilisateur par ID.
-        
-        Args:
-            user_id: UUID de l'utilisateur
-            
-        Returns:
-            Utilisateur
-            
-        Raises:
-            NotFoundException: Si utilisateur introuvable
-        """
+        """Récupérer un utilisateur par ID."""
         return await self.repo.get_by_id_or_404(user_id)
     
     async def create(self, data: UserCreate, current_user: User) -> User:
         """
         Créer un utilisateur (admin uniquement).
-        
-        Args:
-            data: Données de création
-            current_user: Utilisateur authentifié
-            
-        Returns:
-            Utilisateur créé
-            
-        Raises:
-            ForbiddenException: Si pas admin
-            BadRequestException: Si email déjà utilisé
+        Le téléphone est obligatoire, l'email facultatif.
         """
-        # Vérifier permissions
         if current_user.role != UserRole.PLATFORM_ADMIN:
             raise ForbiddenException(detail="Seuls les admins peuvent créer des utilisateurs")
         
-        # Vérifier email unique
-        existing = await self.repo.find_by_email(data.email)
-        if existing:
+        # Téléphone unique (déjà normalisé par le schéma)
+        if await self.repo.find_by_phone(data.phone):
+            raise BadRequestException(detail="Ce numéro de téléphone est déjà utilisé")
+
+        # Email unique s'il est fourni
+        email = data.email.strip().lower() if data.email else None
+        if email and await self.repo.find_by_email(email):
             raise BadRequestException(detail="Cet email est déjà utilisé")
         
-        # Hasher le mot de passe
-        hashed_password = hash_password(data.password)
-        
-        # Créer l'utilisateur
         user = await self.repo.create(
-            email=data.email,
-            password_hash=hashed_password,
+            email=email,
+            password_hash=hash_password(data.password),
             first_name=data.first_name,
             last_name=data.last_name,
             phone=data.phone,
@@ -101,71 +64,33 @@ class UserService:
         return user
     
     async def update(self, user_id: UUID, data: UserUpdate, current_user: User) -> User:
-        """
-        Mettre à jour un utilisateur.
+        """Mettre à jour un utilisateur (admin ou self)."""
+        await self.get_by_id(user_id)
         
-        Args:
-            user_id: UUID de l'utilisateur
-            data: Données de mise à jour
-            current_user: Utilisateur authentifié
-            
-        Returns:
-            Utilisateur mis à jour
-            
-        Raises:
-            ForbiddenException: Si pas autorisé
-            NotFoundException: Si utilisateur introuvable
-        """
-        # Vérifier que l'utilisateur existe
-        user = await self.get_by_id(user_id)
-        
-        # Vérifier permissions (admin ou self)
         if current_user.role != UserRole.PLATFORM_ADMIN and current_user.id != user_id:
             raise ForbiddenException(detail="Vous ne pouvez modifier que votre propre profil")
         
-        # Préparer les données à mettre à jour (ignorer None)
         update_data = data.model_dump(exclude_unset=True)
+
+        # Un numéro ne peut pas être retiré, ni appartenir à deux comptes
+        if "phone" in update_data:
+            if update_data["phone"] is None:
+                raise BadRequestException(detail="Le numéro de téléphone est obligatoire")
+            if await self.repo.phone_taken_by_other(update_data["phone"], user_id):
+                raise BadRequestException(detail="Ce numéro de téléphone est déjà utilisé")
         
-        # Mettre à jour
-        updated_user = await self.repo.update(user_id, **update_data)
-        
-        return updated_user
+        return await self.repo.update(user_id, **update_data)
     
     async def delete(self, user_id: UUID, current_user: User) -> bool:
-        """
-        Supprimer un utilisateur (admin uniquement).
-        
-        Args:
-            user_id: UUID de l'utilisateur
-            current_user: Utilisateur authentifié
-            
-        Returns:
-            True si supprimé
-            
-        Raises:
-            ForbiddenException: Si pas admin
-        """
-        # Vérifier permissions
+        """Supprimer un utilisateur (admin uniquement)."""
         if current_user.role != UserRole.PLATFORM_ADMIN:
             raise ForbiddenException(detail="Seuls les admins peuvent supprimer des utilisateurs")
         
-        # Empêcher de se supprimer soi-même
         if current_user.id == user_id:
             raise BadRequestException(detail="Vous ne pouvez pas supprimer votre propre compte")
         
-        # Supprimer
         return await self.repo.delete(user_id)
     
     async def get_by_role(self, role: UserRole, skip: int = 0, limit: int = 100) -> list[User]:
-        """
-        Récupérer les utilisateurs par rôle.
-        
-        Args:
-            role: Rôle à filter
-            skip: Offset
-            limit: Limit
-            
-        Returns:
-            Liste d'utilisateurs
-        """
+        """Récupérer les utilisateurs par rôle."""
         return await self.repo.get_by_role(role, skip=skip, limit=limit)

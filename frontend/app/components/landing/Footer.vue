@@ -15,12 +15,7 @@ const year = new Date().getFullYear();
         <!-- Marque -->
         <div class="space-y-5">
           <NuxtLink to="/" class="flex items-center gap-3">
-            <span
-              class="brand-gradient flex size-10 items-center justify-center rounded-leaf font-heading font-bold text-white shadow-brand"
-            >
-              {{ site.name.charAt(0) }}
-            </span>
-            <span class="font-heading text-lg font-bold text-ink">{{
+            <span class="font-heading text-lg font-bold  text-primary">{{
               site.name
             }}</span>
           </NuxtLink>
@@ -132,8 +127,12 @@ const year = new Date().getFullYear();
           </a>
         </p>
         <div class="flex gap-6">
-          <a href="/politique-confidentialite" class="hover:text-primary">Mentions légales</a>
-          <a href="/condition-remboursement" class="hover:text-primary">Confidentialité</a>
+          <a href="/politique-confidentialite" class="hover:text-primary"
+            >Mentions légales</a
+          >
+          <a href="/condition-remboursement" class="hover:text-primary"
+            >Confidentialité</a
+          >
         </div>
       </div>
     </div>

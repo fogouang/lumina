@@ -3,13 +3,13 @@
 /* tslint:disable */
 /* eslint-disable */
 /**
- * Schema pour l'inscription d'un nouvel utilisateur.
+ * Inscription : téléphone + mot de passe (plus d'email).
  */
 export type RegisterRequest = {
     /**
-     * Email unique
+     * Téléphone avec indicatif (obligatoire)
      */
-    email: string;
+    phone: string;
     /**
      * Mot de passe (min 8 caractères)
      */
@@ -22,10 +22,6 @@ export type RegisterRequest = {
      * Nom
      */
     last_name: string;
-    /**
-     * Téléphone (optionnel)
-     */
-    phone?: (string | null);
     /**
      * Code de parrainage (optionnel)
      */

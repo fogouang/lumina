@@ -2,11 +2,14 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
+/**
+ * Connexion avec téléphone OU email (anciens comptes).
+ */
 export type LoginRequest = {
     /**
-     * Email
+     * Téléphone ou email
      */
-    email: string;
+    identifier: string;
     /**
      * Mot de passe
      */

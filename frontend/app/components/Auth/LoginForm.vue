@@ -6,26 +6,42 @@
     class="flex flex-col gap-5"
     @submit="onSubmit"
   >
-    <!-- Email -->
+    <!-- Téléphone ou email -->
     <div class="flex flex-col gap-2">
-      <label for="login-email" class="text-sm font-semibold text-ink">Email</label>
+      <label for="login-identifier" class="text-sm font-semibold text-ink">
+        Téléphone ou email
+      </label>
       <InputText
-        id="login-email"
-        name="email"
-        type="email"
-        placeholder="votre@email.com"
-        autocomplete="email"
+        id="login-identifier"
+        name="identifier"
+        type="text"
+        inputmode="text"
+        placeholder="6XX XX XX XX ou votre@email.com"
+        autocomplete="username"
         fluid
-        :invalid="$form.email?.invalid"
+        :invalid="$form.identifier?.invalid"
       />
-      <Message v-if="$form.email?.invalid" severity="error" size="small" variant="simple">
-        {{ $form.email.error.message }}
+      <Message v-if="$form.identifier?.invalid" severity="error" size="small" variant="simple">
+        {{ $form.identifier.error.message }}
       </Message>
+      <p class="text-xs text-faint">
+        Hors Cameroun, ajoutez l'indicatif du pays (ex. +225, +33).
+      </p>
     </div>
 
     <!-- Mot de passe -->
     <div class="flex flex-col gap-2">
-      <label for="login-password" class="text-sm font-semibold text-ink">Mot de passe</label>
+      <div class="flex items-center justify-between">
+        <label for="login-password" class="text-sm font-semibold text-ink">Mot de passe</label>
+        <a
+          :href="forgotPasswordUrl($form.identifier?.value)"
+          target="_blank"
+          rel="noopener"
+          class="text-xs font-semibold text-primary underline-offset-4 hover:underline"
+        >
+          Mot de passe oublié ?
+        </a>
+      </div>
       <Password
         input-id="login-password"
         name="password"
@@ -79,31 +95,42 @@
 <script setup lang="ts">
 import { z } from "zod";
 import { zodResolver } from "@primevue/forms/resolvers/zod";
+import { site } from "~/config/site";
 
 const auth = useAuthStore();
 const { close, switchTab } = useAuthModal();
 const toast = useToast();
 
-const initialValues = { email: "", password: "" };
+const initialValues = { identifier: "", password: "" };
 
 const resolver = zodResolver(
   z.object({
-    email: z.string().email({ message: "Email invalide." }),
+    identifier: z
+      .string()
+      .trim()
+      .min(3, { message: "Saisissez votre téléphone ou votre email." }),
     password: z.string().min(1, { message: "Mot de passe requis." }),
   }),
 );
+
+/** Lien WhatsApp vers le support, message pré-rempli avec l'identifiant saisi. */
+function forgotPasswordUrl(identifier?: string): string {
+  const account = identifier?.trim() ? identifier.trim() : "...";
+  const text = `Bonjour, j'ai oublié mon mot de passe ${site.name}. Mon compte : ${account}`;
+  return `https://wa.me/${site.supportWhatsapp}?text=${encodeURIComponent(text)}`;
+}
 
 async function onSubmit({
   valid,
   values,
 }: {
   valid: boolean;
-  values: { email?: string; password?: string };
+  values: { identifier?: string; password?: string };
 }) {
   if (!valid) return;
-  if (!values.email || !values.password) return;
+  if (!values.identifier || !values.password) return;
   try {
-    await auth.login({ email: values.email, password: values.password });
+    await auth.login({ identifier: values.identifier.trim(), password: values.password });
     toast.add({ severity: "success", summary: "Connecté !", life: 3000 });
     close();
   } catch {

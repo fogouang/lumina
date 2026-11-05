@@ -52,36 +52,37 @@
       </div>
     </div>
 
-    <!-- Email -->
-    <div class="flex flex-col gap-2">
-      <label for="register-email" class="text-sm font-semibold text-ink">Email</label>
-      <InputText
-        id="register-email"
-        name="email"
-        type="email"
-        placeholder="votre@email.com"
-        autocomplete="email"
-        fluid
-        :invalid="$form.email?.invalid"
-      />
-      <Message v-if="$form.email?.invalid" severity="error" size="small" variant="simple">
-        {{ $form.email.error.message }}
-      </Message>
-    </div>
-
     <!-- Téléphone -->
     <div class="flex flex-col gap-2">
       <label for="register-phone" class="text-sm font-semibold text-ink">
-        Téléphone <span class="font-normal text-faint">(optionnel)</span>
+        Téléphone <span class="font-normal text-faint">(WhatsApp de préférence)</span>
       </label>
-      <InputText
-        id="register-phone"
-        name="phone"
-        type="tel"
-        placeholder="+237 6XX XXX XXX"
-        autocomplete="tel"
-        fluid
-      />
+      <div class="flex gap-2">
+        <Select
+          name="dial_code"
+          :options="DIAL_CODES"
+          option-label="label"
+          option-value="value"
+          class="w-40 shrink-0"
+          aria-label="Indicatif pays"
+        >
+          <template #value="{ value }">{{ value }}</template>
+        </Select>
+        <InputText
+          id="register-phone"
+          name="phone"
+          type="tel"
+          inputmode="tel"
+          placeholder="6XX XX XX XX"
+          autocomplete="tel-national"
+          fluid
+          :invalid="$form.phone?.invalid"
+        />
+      </div>
+      <Message v-if="$form.phone?.invalid" severity="error" size="small" variant="simple">
+        {{ $form.phone.error.message }}
+      </Message>
+      <p class="text-xs text-faint">Ce numéro vous sert à vous connecter.</p>
     </div>
 
     <!-- Mot de passe -->
@@ -93,6 +94,7 @@
         placeholder="••••••••"
         autocomplete="new-password"
         toggle-mask
+        :feedback="false"
         fluid
         :invalid="$form.password?.invalid"
       />
@@ -140,6 +142,7 @@
 import { z } from "zod";
 import { zodResolver } from "@primevue/forms/resolvers/zod";
 import { site } from "~/config/site";
+import { DIAL_CODES } from "~/utils/phone";
 
 const props = defineProps<{
   referralCode?: string | null;
@@ -163,19 +166,20 @@ const toast = useToast();
 const initialValues = {
   first_name: "",
   last_name: "",
-  email: "",
+  dial_code: "+237",
   phone: "",
   password: "",
 };
 
 const resolver = zodResolver(
   z.object({
-    first_name: z
-      .string()
-      .min(2, { message: "Prénom requis (min 2 caractères)." }),
+    first_name: z.string().min(2, { message: "Prénom requis (min 2 caractères)." }),
     last_name: z.string().min(2, { message: "Nom requis (min 2 caractères)." }),
-    email: z.string().email({ message: "Email invalide." }),
-    phone: z.string().optional(),
+    dial_code: z.string().min(2),
+    phone: z
+      .string()
+      .min(1, { message: "Le numéro de téléphone est obligatoire." })
+      .regex(PHONE_INPUT_REGEX, { message: "Numéro de téléphone invalide." }),
     password: z.string().min(8, { message: "Mot de passe min 8 caractères." }),
   }),
 );
@@ -188,26 +192,19 @@ async function onSubmit({
   values: {
     first_name?: string;
     last_name?: string;
-    email?: string;
+    dial_code?: string;
     phone?: string;
     password?: string;
   };
 }) {
   if (!valid) return;
-  if (
-    !values.first_name ||
-    !values.last_name ||
-    !values.email ||
-    !values.password
-  )
-    return;
+  if (!values.first_name || !values.last_name || !values.phone || !values.password) return;
 
   try {
     await auth.register({
       first_name: values.first_name,
       last_name: values.last_name,
-      email: values.email,
-      phone: values.phone || null,
+      phone: buildPhone(values.dial_code || "+237", values.phone),
       password: values.password,
       referral_code: props.referralCode || undefined,
     });

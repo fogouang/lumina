@@ -4,59 +4,59 @@ Service d'authentification.
 Gère la logique métier de login, register et validation des tokens.
 """
 
+from datetime import date, datetime, timedelta, timezone
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.modules.auth.schemas import AuthResponse, LoginRequest, RegisterRequest, UserResponse
-from app.modules.users.models import User
+from app.modules.auth.schemas import (
+    AuthResponse,
+    LoginRequest,
+    RegisterRequest,
+    UpdateMyPhoneRequest,
+    UserResponse,
+    WhatsappInviteRequest,
+)
 from app.modules.referrals.service import ReferralService
+from app.modules.subscriptions.models import Subscription
+from app.modules.users.models import User
+from app.modules.users.phone import normalize_phone
 from app.shared.enums import UserRole
 from app.shared.exceptions.http import BadRequestException, UnauthorizedException
 from app.shared.security.jwt import create_access_token, decode_access_token
 from app.shared.security.password import hash_password, verify_password
-from datetime import date, timedelta
-from app.modules.subscriptions.models import Subscription
+
+INVALID_CREDENTIALS = "Identifiant ou mot de passe incorrect"
+
 
 class AuthService:
     """
     Service d'authentification.
     
-    Fournit les méthodes pour:
-    - S'inscrire (register)
-    - Se connecter (login)
+    - S'inscrire (téléphone + mot de passe)
+    - Se connecter (téléphone ou email + mot de passe)
+    - Compléter son téléphone / répondre à l'invitation WhatsApp
     - Vérifier un token
     """
     
     def __init__(self, db: AsyncSession):
-        """
-        Initialiser le service.
-        
-        Args:
-            db: Session database async
-        """
         self.db = db
         self.referral_service = ReferralService(db)
     
     async def register(self, data: RegisterRequest) -> AuthResponse:
-        # Vérifier que l'email n'existe pas déjà
-        existing_user = await self._get_user_by_email(data.email)
-        if existing_user:
-            raise BadRequestException(detail="Cet email est déjà utilisé")
+        # Téléphone déjà normalisé par le schéma
+        if await self._get_user_by_phone(data.phone):
+            raise BadRequestException(detail="Ce numéro de téléphone est déjà utilisé")
 
         # Résolution du parrainage AVANT création (code invalide → on ignore, on ne bloque pas)
         referrer = None
         if data.referral_code:
             referrer = await self.referral_service.resolve_referrer(data.referral_code)
 
-        # Hasher le mot de passe
-        hashed_password = hash_password(data.password)
-
-        # Créer l'utilisateur
         user = User(
-            email=data.email,
-            password_hash=hashed_password,
+            email=None,
+            password_hash=hash_password(data.password),
             first_name=data.first_name,
             last_name=data.last_name,
             phone=data.phone,
@@ -100,69 +100,101 @@ class AuthService:
 
     async def login(self, data: LoginRequest) -> AuthResponse:
         """
-        Connecter un utilisateur.
-        
-        Args:
-            data: Credentials (email + password)
-            
-        Returns:
-            Token + infos utilisateur
-            
-        Raises:
-            UnauthorizedException: Si credentials invalides
-            
-        Example:
-            >>> service = AuthService(db)
-            >>> response = await service.login(LoginRequest(...))
+        Connecter un utilisateur avec son téléphone ou son email.
+        Messages explicites pour guider l'utilisateur.
         """
-        # Récupérer l'utilisateur
-        user = await self._get_user_by_email(data.email)
-        
-        # Vérifier que l'utilisateur existe
+        identifier = data.identifier.strip()
+        is_email = "@" in identifier
+
+        if is_email:
+            user = await self._get_user_by_email(identifier)
+        else:
+            try:
+                phone = normalize_phone(identifier)
+            except ValueError as e:
+                raise BadRequestException(detail=f"{e}. Vérifiez le numéro saisi.")
+            user = await self._get_user_by_phone(phone)
+
         if not user:
-            raise UnauthorizedException(detail="Email ou mot de passe incorrect")
-        
-        # Vérifier que le compte est actif
+            if is_email:
+                raise UnauthorizedException(
+                    detail="Aucun compte n'est associé à cet email. Vérifiez l'adresse ou créez un compte."
+                )
+            raise UnauthorizedException(
+                detail=(
+                    "Aucun compte n'est associé à ce numéro. Vérifiez-le ou créez un compte. "
+                    "Si vous vous êtes inscrit avec un email, connectez-vous avec votre email."
+                )
+            )
+
         if not user.is_active:
-            raise UnauthorizedException(detail="Compte désactivé")
-        
-        # Vérifier le mot de passe
+            raise UnauthorizedException(
+                detail="Votre compte est désactivé. Contactez le support sur WhatsApp."
+            )
+
         if not verify_password(data.password, user.password_hash):
-            raise UnauthorizedException(detail="Email ou mot de passe incorrect")
-        
-        # Générer le token
+            raise UnauthorizedException(
+                detail="Mot de passe incorrect. Réessayez ou cliquez sur « Mot de passe oublié ? »."
+            )
+
         access_token = create_access_token(data={"sub": str(user.id)})
-        
-        # Retourner la réponse
+
         return AuthResponse(
             access_token=access_token,
             token_type="bearer",
             user=UserResponse.model_validate(user)
         )
+        
+
+    async def update_my_phone(self, user_id: UUID, data: UpdateMyPhoneRequest) -> UserResponse:
+        """
+        Ajouter / modifier son propre numéro (modale des anciens comptes).
+        """
+        user = await self._get_user_by_id(user_id)
+        if user is None:
+            raise UnauthorizedException(detail="Utilisateur introuvable")
+
+        existing = await self._get_user_by_phone(data.phone)
+        if existing and existing.id != user.id:
+            raise BadRequestException(detail="Ce numéro de téléphone est déjà utilisé")
+
+        user.phone = data.phone
+        await self.db.commit()
+        await self.db.refresh(user)
+
+        return UserResponse.model_validate(user)
+
+    async def record_whatsapp_invite(self, user_id: UUID, data: WhatsappInviteRequest) -> UserResponse:
+        """
+        Enregistrer la réponse à l'invitation au groupe WhatsApp.
+        - clicked   : ne plus jamais afficher
+        - dismissed : relance plus tard (voir User.should_show_whatsapp_invite)
+        """
+        user = await self._get_user_by_id(user_id)
+        if user is None:
+            raise UnauthorizedException(detail="Utilisateur introuvable")
+
+        now = datetime.now(timezone.utc)
+        if data.action == "clicked":
+            user.whatsapp_invite_clicked_at = now
+        else:
+            user.whatsapp_invite_dismissed_at = now
+            user.whatsapp_invite_dismiss_count = (user.whatsapp_invite_dismiss_count or 0) + 1
+
+        await self.db.commit()
+        await self.db.refresh(user)
+
+        return UserResponse.model_validate(user)
     
     async def get_current_user(self, token: str) -> User:
         """
         Récupérer l'utilisateur courant depuis un token.
-        
-        Args:
-            token: JWT access token
-            
-        Returns:
-            Utilisateur authentifié
-            
-        Raises:
-            UnauthorizedException: Si token invalide ou utilisateur introuvable
-            
-        Example:
-            >>> user = await service.get_current_user(token)
         """
-        # Décoder le token
         payload = decode_access_token(token)
         
         if payload is None:
             raise UnauthorizedException(detail="Token invalide ou expiré")
         
-        # Récupérer l'user_id depuis le payload
         user_id_str: str | None = payload.get("sub")
         
         if user_id_str is None:
@@ -173,7 +205,6 @@ class AuthService:
         except ValueError:
             raise UnauthorizedException(detail="Token invalide")
         
-        # Récupérer l'utilisateur
         user = await self._get_user_by_id(user_id)
         
         if user is None:
@@ -185,11 +216,29 @@ class AuthService:
         return user
     
     # === Méthodes privées ===
+
+    async def _get_user_by_identifier(self, identifier: str) -> User | None:
+        """Email si l'identifiant contient @, sinon téléphone."""
+        identifier = identifier.strip()
+        if "@" in identifier:
+            return await self._get_user_by_email(identifier)
+        try:
+            phone = normalize_phone(identifier)
+        except ValueError:
+            return None
+        return await self._get_user_by_phone(phone)
     
     async def _get_user_by_email(self, email: str) -> User | None:
-        """Récupérer un utilisateur par email."""
+        """Récupérer un utilisateur par email (insensible à la casse)."""
         result = await self.db.execute(
-            select(User).where(User.email == email)
+            select(User).where(func.lower(User.email) == email.strip().lower())
+        )
+        return result.scalar_one_or_none()
+
+    async def _get_user_by_phone(self, phone: str) -> User | None:
+        """Récupérer un utilisateur par téléphone (déjà normalisé)."""
+        result = await self.db.execute(
+            select(User).where(User.phone == phone)
         )
         return result.scalar_one_or_none()
     

@@ -7,6 +7,8 @@ import type { LoginRequest } from '../models/LoginRequest';
 import type { RegisterRequest } from '../models/RegisterRequest';
 import type { SuccessResponse_AuthResponse_ } from '../models/SuccessResponse_AuthResponse_';
 import type { SuccessResponse_dict_ } from '../models/SuccessResponse_dict_';
+import type { UpdateMyPhoneRequest } from '../models/UpdateMyPhoneRequest';
+import type { WhatsappInviteRequest } from '../models/WhatsappInviteRequest';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import { OpenAPI } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
@@ -15,14 +17,11 @@ export class AuthenticationService {
      * Inscription d'un nouvel utilisateur
      * Inscrire un nouvel utilisateur.
      *
-     * - **email**: Email unique
+     * - **phone**: Téléphone avec indicatif (obligatoire, unique)
      * - **password**: Mot de passe (min 8 caractères)
      * - **first_name**: Prénom
      * - **last_name**: Nom
-     * - **phone**: Téléphone (optionnel)
-     *
-     * Retourne un token JWT et les infos utilisateur.
-     * Le token est également stocké dans un cookie HttpOnly.
+     * - **referral_code**: Code de parrainage (optionnel)
      * @param requestBody
      * @returns SuccessResponse_AuthResponse_ Successful Response
      * @throws ApiError
@@ -42,13 +41,10 @@ export class AuthenticationService {
     }
     /**
      * Connexion
-     * Se connecter avec email et mot de passe.
+     * Se connecter avec téléphone ou email + mot de passe.
      *
-     * - **email**: Email de l'utilisateur
+     * - **identifier**: Téléphone ou email
      * - **password**: Mot de passe
-     *
-     * Retourne un token JWT et les infos utilisateur.
-     * Le token est également stocké dans un cookie HttpOnly.
      * @param requestBody
      * @returns SuccessResponse_AuthResponse_ Successful Response
      * @throws ApiError
@@ -68,9 +64,9 @@ export class AuthenticationService {
     }
     /**
      * Récupérer l'utilisateur courant
-     * Récupérer les informations de l'utilisateur authentifié.
-     *
-     * Nécessite un token JWT valide dans le cookie ou header Authorization.
+     * Informations de l'utilisateur authentifié.
+     * `phone` null → afficher la modale téléphone.
+     * `should_show_whatsapp_invite` true → afficher la modale WhatsApp.
      * @param accessToken
      * @returns app__shared__schemas__responses__SuccessResponse_UserResponse___1 Successful Response
      * @throws ApiError
@@ -90,10 +86,56 @@ export class AuthenticationService {
         });
     }
     /**
+     * Ajouter ou modifier son numéro de téléphone
+     * @param requestBody
+     * @param accessToken
+     * @returns app__shared__schemas__responses__SuccessResponse_UserResponse___1 Successful Response
+     * @throws ApiError
+     */
+    public static updateMyPhoneApiV1AuthMePhonePatch(
+        requestBody: UpdateMyPhoneRequest,
+        accessToken?: (string | null),
+    ): CancelablePromise<app__shared__schemas__responses__SuccessResponse_UserResponse___1> {
+        return __request(OpenAPI, {
+            method: 'PATCH',
+            url: '/api/v1/auth/me/phone',
+            cookies: {
+                'access_token': accessToken,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: `Validation Error`,
+            },
+        });
+    }
+    /**
+     * Réponse à l'invitation au groupe WhatsApp
+     * @param requestBody
+     * @param accessToken
+     * @returns app__shared__schemas__responses__SuccessResponse_UserResponse___1 Successful Response
+     * @throws ApiError
+     */
+    public static whatsappInviteApiV1AuthMeWhatsappInvitePost(
+        requestBody: WhatsappInviteRequest,
+        accessToken?: (string | null),
+    ): CancelablePromise<app__shared__schemas__responses__SuccessResponse_UserResponse___1> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/auth/me/whatsapp-invite',
+            cookies: {
+                'access_token': accessToken,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: `Validation Error`,
+            },
+        });
+    }
+    /**
      * Déconnexion
-     * Déconnecter l'utilisateur.
-     *
-     * Supprime le cookie contenant le token d'accès.
+     * Déconnecter l'utilisateur (suppression du cookie).
      * @param accessToken
      * @returns SuccessResponse_dict_ Successful Response
      * @throws ApiError

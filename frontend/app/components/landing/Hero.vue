@@ -6,7 +6,7 @@ const { openLogin } = useAuthModal();
 const stats = [
   { value: "3K+", label: "Candidats" },
   { value: "4", label: "Modules" },
-  { value: "10K+", label: "Tests réalisés" },
+  { value: "5K+", label: "Tests réalisés" },
 ];
 
 // Versions claires des variables du design system, pour le fond sombre du hero
@@ -34,11 +34,6 @@ const darkSurfaceVars = {
       />
       <div
         class="absolute inset-0 bg-linear-to-t from-primary-950/60 via-transparent to-primary-950/40"
-      />
-      <!-- Grille blanche très discrète -->
-      <div
-        class="bg-grid animate-grid-drift absolute inset-0"
-        style="--app-line: rgba(255, 255, 255, 0.06)"
       />
       <!-- Halo jaune -->
       <div

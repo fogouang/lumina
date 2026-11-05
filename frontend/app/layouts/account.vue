@@ -1,8 +1,15 @@
 <template>
   <div class="flex min-h-screen bg-canvas text-ink">
     <!-- Sidebar desktop -->
-    <aside class="sticky top-0 hidden h-screen w-68 shrink-0 border-r border-line bg-card lg:block">
-      <AppSidebarPanel :sections="accountSections" />
+    <aside
+      class="sticky top-0 hidden h-screen w-68 shrink-0 flex-col border-r border-line bg-card lg:flex"
+    >
+      <div class="min-h-0 flex-1 overflow-y-auto">
+        <AppSidebarPanel :sections="accountSections" />
+      </div>
+      <div class="border-t border-line p-3">
+        <AccountWhatsappCard />
+      </div>
     </aside>
 
     <div class="flex min-w-0 flex-1 flex-col">
@@ -11,12 +18,21 @@
         class="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-line bg-card/80 px-4 backdrop-blur-md lg:hidden"
       >
         <NuxtLink to="/" class="flex items-center gap-3">
-          <span class="brand-gradient flex size-9 items-center justify-center rounded-leaf font-heading font-bold text-white shadow-brand">
+          <span
+            class="brand-gradient flex size-9 items-center justify-center rounded-leaf font-heading font-bold text-white shadow-brand"
+          >
             {{ site.name.charAt(0) }}
           </span>
-          <span class="font-heading text-lg font-bold text-ink">{{ site.name }}</span>
+          <span class="font-heading text-lg font-bold text-ink">{{
+            site.name
+          }}</span>
         </NuxtLink>
-        <AppButton variant="ghost" icon="pi pi-bars" aria-label="Ouvrir le menu" @click="menuOpen = true" />
+        <AppButton
+          variant="ghost"
+          icon="pi pi-bars"
+          aria-label="Ouvrir le menu"
+          @click="menuOpen = true"
+        />
       </header>
 
       <!-- Contenu -->
@@ -32,14 +48,24 @@
       v-model:visible="menuOpen"
       position="left"
       class="w-80"
-      :pt="{ header: { class: 'hidden' }, content: { class: 'p-0' } }"
+      :pt="{
+        header: { class: 'hidden' },
+        content: { class: 'p-0 flex flex-col' },
+      }"
     >
-      <AppSidebarPanel :sections="accountSections" />
+      <div class="min-h-0 flex-1 overflow-y-auto">
+        <AppSidebarPanel :sections="accountSections" />
+      </div>
+      <div class="border-t border-line p-3">
+        <AccountWhatsappCard />
+      </div>
     </Drawer>
-  </div>
 
-  <BuyCreditsDialog :is-open="buyCreditsOpen" />
-  <Toast />
+    <!-- Dialogs globaux de l'espace compte -->
+    <BuyCreditsDialog :is-open="buyCreditsOpen" />
+    <AccountOnboardingGate />
+    <Toast />
+  </div>
 </template>
 
 <script setup lang="ts">

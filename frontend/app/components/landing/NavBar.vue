@@ -65,13 +65,9 @@ function logout() {
     <nav class="mx-auto flex h-18 max-w-7xl items-center gap-6 px-4 sm:px-6 lg:px-8">
       <!-- Logo -->
       <NuxtLink to="/" class="flex shrink-0 items-center gap-3">
+       
         <span
-          class="brand-gradient flex size-10 items-center justify-center rounded-leaf font-heading font-bold text-white shadow-brand"
-        >
-          {{ site.name.charAt(0) }}
-        </span>
-        <span
-          class="font-heading text-lg font-bold transition-colors duration-300"
+          class="font-heading text-lg font-bold transition-colors duration-300 text-primary"
           :class="overlay ? 'text-white' : 'text-ink'"
         >
           {{ site.name }}

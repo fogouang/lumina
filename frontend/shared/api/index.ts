@@ -208,6 +208,7 @@ export type { SuccessResponse_Union_ManualCorrectionResponse__NoneType__ } from 
 export type { SuccessResponse_Union_OralCorrectionResponse__NoneType__ } from './models/SuccessResponse_Union_OralCorrectionResponse__NoneType__';
 export type { SuccessResponse_WrittenAttemptHistoryListResponse_ } from './models/SuccessResponse_WrittenAttemptHistoryListResponse_';
 export type { SuccessResponse_WrittenExpressionResponse_ } from './models/SuccessResponse_WrittenExpressionResponse_';
+export type { UpdateMyPhoneRequest } from './models/UpdateMyPhoneRequest';
 export type { UserCreate } from './models/UserCreate';
 export type { UserListResponse } from './models/UserListResponse';
 export { UserRole } from './models/UserRole';
@@ -215,6 +216,7 @@ export type { UserUpdate } from './models/UserUpdate';
 export type { ValidationError } from './models/ValidationError';
 export type { WeekByType } from './models/WeekByType';
 export type { WeeklyGoalUpdate } from './models/WeeklyGoalUpdate';
+export { WhatsappInviteRequest } from './models/WhatsappInviteRequest';
 export type { WrittenAttemptHistoryItem } from './models/WrittenAttemptHistoryItem';
 export type { WrittenAttemptHistoryListResponse } from './models/WrittenAttemptHistoryListResponse';
 export type { WrittenExpressionResponse } from './models/WrittenExpressionResponse';

@@ -3,6 +3,8 @@ import { mainNav } from "~/config/navigation";
 export const site = {
   name: "OCanada",
   tagline: "Préparation TCF Canada",
+  supportWhatsapp:"https://wa.me/237691850913",
+  whatsappGroupUrl: "https://chat.whatsapp.com/Igmd1jH29ob4rcCHggZgPi",
   description:
     "Entraînez-vous aux 4 épreuves du TCF Canada avec des sujets réels, une correction par IA et un suivi de votre niveau NCLC.",
   links: mainNav.map(({ label, to }) => ({ label, to })),
