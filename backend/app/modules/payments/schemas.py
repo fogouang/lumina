@@ -93,6 +93,8 @@ class AdminPaymentResponse(BaseSchema):
     user_id: UUID | None
     user_email: str | None
     user_name: str | None
+    user_phone: str | None = None
+    operator: str | None = None
     organization_id: UUID | None
     subscription_id: UUID | None
     org_subscription_id: UUID | None

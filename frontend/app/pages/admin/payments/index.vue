@@ -1,9 +1,18 @@
 <template>
   <div>
     <!-- En-tête -->
-    <div class="mb-6">
-      <h1 class="font-heading text-2xl font-extrabold tracking-tight text-ink">Paiements</h1>
-      <p class="mt-0.5 text-sm text-muted">Historique de tous les paiements</p>
+    <div class="mb-6 flex items-start justify-between gap-4">
+      <div>
+        <h1 class="font-heading text-2xl font-extrabold tracking-tight text-ink">Paiements</h1>
+        <p class="mt-0.5 text-sm text-muted">Historique de tous les paiements</p>
+      </div>
+      <AppButton
+        icon="pi pi-refresh"
+        variant="ghost"
+        aria-label="Actualiser"
+        :loading="loading"
+        @click="fetchData"
+      />
     </div>
 
     <!-- Stats -->
@@ -46,13 +55,13 @@
     </div>
 
     <!-- Filtres -->
-    <div class="mb-6 flex flex-col gap-3 sm:flex-row">
-      <IconField class="w-full sm:w-72">
+    <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+      <IconField class="w-full sm:w-80">
         <InputIcon class="pi pi-search" />
         <InputText
           v-model="search"
-          placeholder="Rechercher une référence..."
-          aria-label="Rechercher une référence"
+          placeholder="Référence, nom, email ou téléphone..."
+          aria-label="Rechercher un paiement"
           fluid
         />
       </IconField>
@@ -61,10 +70,21 @@
         :options="statusOptions"
         option-label="label"
         option-value="value"
-        placeholder="Statut"
         aria-label="Filtrer par statut"
         class="w-full sm:w-44"
       />
+      <Select
+        v-model="methodFilter"
+        :options="methodOptions"
+        option-label="label"
+        option-value="value"
+        aria-label="Filtrer par méthode"
+        class="w-full sm:w-44"
+      />
+      <p class="text-sm text-muted sm:ml-auto">
+        <span class="font-semibold tabular-nums text-ink">{{ filteredPayments.length }}</span>
+        résultat{{ filteredPayments.length > 1 ? "s" : "" }}
+      </p>
     </div>
 
     <!-- Tableau -->
@@ -86,21 +106,32 @@
           </div>
         </template>
 
-        <Column field="invoice_number" header="Facture" style="min-width: 140px">
+        <Column field="invoice_number" header="Facture" style="min-width: 150px">
           <template #body="{ data }">
             <span class="font-mono text-xs font-semibold text-ink">{{ data.invoice_number }}</span>
           </template>
         </Column>
 
-        <Column header="Utilisateur" style="min-width: 200px">
+        <Column header="Utilisateur" style="min-width: 220px">
           <template #body="{ data }">
-            <span class="text-sm" :class="data.user_email ? 'text-ink' : 'text-faint'">
-              {{ data.user_email ?? "—" }}
-            </span>
+            <div class="min-w-0">
+              <p class="truncate text-sm font-semibold text-ink">{{ data.user_name ?? "Inconnu" }}</p>
+              <a
+                v-if="data.user_phone"
+                :href="`https://wa.me/${data.user_phone.replace('+', '')}`"
+                target="_blank"
+                rel="noopener"
+                class="inline-flex items-center gap-1 text-xs text-green-700 hover:underline dark:text-green-400"
+              >
+                <i class="pi pi-whatsapp text-[0.7rem]" />
+                {{ data.user_phone }}
+              </a>
+              <p v-else-if="data.user_email" class="truncate text-xs text-faint">{{ data.user_email }}</p>
+            </div>
           </template>
         </Column>
 
-        <Column header="Montant" style="min-width: 120px">
+        <Column header="Montant" style="min-width: 110px">
           <template #body="{ data }">
             <span class="text-sm tabular-nums text-muted">
               {{ data.amount?.toLocaleString("fr-FR") }} FCFA
@@ -108,7 +139,7 @@
           </template>
         </Column>
 
-        <Column header="Payé" style="min-width: 120px">
+        <Column header="Payé" style="min-width: 110px">
           <template #body="{ data }">
             <span
               class="font-heading text-sm font-bold tabular-nums"
@@ -123,23 +154,28 @@
           </template>
         </Column>
 
-        <Column header="Méthode" style="min-width: 110px">
+        <Column header="Méthode" style="min-width: 150px">
           <template #body="{ data }">
             <span
-              class="inline-flex rounded-lg border border-line bg-card-2 px-2 py-0.5 text-xs font-semibold capitalize text-muted"
+              class="inline-flex items-center gap-1.5 rounded-lg border border-line bg-card-2 px-2 py-0.5 text-xs font-semibold text-muted"
             >
-              {{ data.payment_method }}
+              <i :class="[methodIcon(data.payment_method), 'text-[0.7rem]']" />
+              {{ methodLabel(data) }}
             </span>
           </template>
         </Column>
 
         <Column header="Statut" style="min-width: 110px">
           <template #body="{ data }">
-            <Tag :value="data.payment_status" :severity="statusSeverity(data.payment_status)" rounded />
+            <Tag
+              :value="statusLabel(data.payment_status)"
+              :severity="statusSeverity(data.payment_status)"
+              rounded
+            />
           </template>
         </Column>
 
-        <Column header="Date" style="min-width: 140px">
+        <Column header="Date" style="min-width: 150px">
           <template #body="{ data }">
             <span class="inline-flex items-center gap-1.5 text-sm text-muted">
               <i class="pi pi-calendar text-xs text-faint" />
@@ -153,6 +189,8 @@
 </template>
 
 <script setup lang="ts">
+import { site } from "~/config/site";
+
 definePageMeta({ layout: "admin", middleware: "admin" });
 
 const { get } = useApi();
@@ -163,24 +201,56 @@ const payments = ref<any[]>([]);
 const stats = ref<any>(null);
 const search = ref("");
 const statusFilter = ref("all");
+const methodFilter = ref("all");
+
+// Valeurs identiques à celles renvoyées par le backend (minuscules)
+const STATUS: Record<string, { label: string; severity: string }> = {
+  completed: { label: "Payé", severity: "success" },
+  pending: { label: "En attente", severity: "warn" },
+  failed: { label: "Échoué", severity: "danger" },
+};
+
+const METHOD: Record<string, { label: string; icon: string }> = {
+  mobile_money: { label: "Mobile Money", icon: "pi pi-mobile" },
+  bank_transfer: { label: "Virement", icon: "pi pi-building-columns" },
+  card: { label: "Carte", icon: "pi pi-credit-card" },
+};
 
 const statusOptions = [
-  { label: "Tous", value: "all" },
-  { label: "Complétés", value: "COMPLETED" },
-  { label: "En attente", value: "PENDING" },
-  { label: "Échoués", value: "FAILED" },
+  { label: "Tous les statuts", value: "all" },
+  { label: "Payés", value: "completed" },
+  { label: "En attente", value: "pending" },
+  { label: "Échoués", value: "failed" },
 ];
 
-const filteredPayments = computed(() =>
-  payments.value.filter((p) => {
-    const matchStatus =
-      statusFilter.value === "all" || p.payment_status === statusFilter.value;
-    const matchSearch =
-      !search.value ||
-      p.invoice_number?.toLowerCase().includes(search.value.toLowerCase());
-    return matchStatus && matchSearch;
-  }),
-);
+const methodOptions = [
+  { label: "Toutes méthodes", value: "all" },
+  { label: "Mobile Money", value: "mobile_money" },
+  { label: "Virement", value: "bank_transfer" },
+  { label: "Carte", value: "card" },
+];
+
+const filteredPayments = computed(() => {
+  const q = search.value.trim().toLowerCase();
+  const qDigits = q.replace(/\D/g, "");
+
+  return payments.value.filter((p) => {
+    const status = String(p.payment_status ?? "").toLowerCase();
+    const method = String(p.payment_method ?? "").toLowerCase();
+
+    if (statusFilter.value !== "all" && status !== statusFilter.value) return false;
+    if (methodFilter.value !== "all" && method !== methodFilter.value) return false;
+    if (!q) return true;
+
+    const matchText = [p.invoice_number, p.user_name, p.user_email]
+      .filter(Boolean)
+      .some((v: string) => v.toLowerCase().includes(q));
+    const matchPhone =
+      qDigits.length >= 3 && String(p.user_phone ?? "").replace(/\D/g, "").includes(qDigits);
+
+    return matchText || matchPhone;
+  });
+});
 
 async function fetchData() {
   loading.value = true;
@@ -200,11 +270,24 @@ async function fetchData() {
 
 onMounted(fetchData);
 
+function statusLabel(status: string): string {
+  return STATUS[String(status).toLowerCase()]?.label ?? status;
+}
+
 function statusSeverity(status: string): string {
-  return (
-    { COMPLETED: "success", PENDING: "warn", FAILED: "danger" }[status] ??
-    "secondary"
-  );
+  return STATUS[String(status).toLowerCase()]?.severity ?? "secondary";
+}
+
+function methodIcon(method: string): string {
+  return METHOD[String(method).toLowerCase()]?.icon ?? "pi pi-wallet";
+}
+
+function methodLabel(p: any): string {
+  const base = METHOD[String(p.payment_method).toLowerCase()]?.label ?? p.payment_method;
+  if (p.payment_method === "mobile_money" && p.operator) {
+    return `${base} · ${p.operator === "ORANGE" ? "Orange" : p.operator}`;
+  }
+  return base;
 }
 
 function formatDate(date: string): string {
@@ -217,5 +300,5 @@ function formatDate(date: string): string {
   });
 }
 
-useHead({ title: "Paiements | Admin Lumina" });
+useHead({ title: `Paiements | Admin ${site.name}` });
 </script>

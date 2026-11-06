@@ -97,7 +97,7 @@ class PaymentRepository(BaseRepository[Payment]):
         from app.modules.users.models import User
 
         result = await self.db.execute(
-            select(Payment, User.email, User.first_name, User.last_name)
+            select(Payment, User.email, User.phone, User.first_name, User.last_name)
             .outerjoin(User, Payment.user_id == User.id)
             .order_by(Payment.created_at.desc())
             .limit(limit)
@@ -108,6 +108,7 @@ class PaymentRepository(BaseRepository[Payment]):
             {
                 **{c.key: getattr(row.Payment, c.key) for c in Payment.__table__.columns},
                 "user_email": row.email,
+                "user_phone": row.phone,
                 "user_name": f"{row.first_name} {row.last_name}" if row.first_name else None,
             }
             for row in rows

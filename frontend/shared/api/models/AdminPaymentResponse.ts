@@ -12,6 +12,8 @@ export type AdminPaymentResponse = {
     user_id: (string | null);
     user_email: (string | null);
     user_name: (string | null);
+    user_phone?: (string | null);
+    operator?: (string | null);
     organization_id: (string | null);
     subscription_id: (string | null);
     org_subscription_id: (string | null);
