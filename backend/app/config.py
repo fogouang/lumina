@@ -77,6 +77,14 @@ class Settings(BaseSettings):
     PAWAPAY_API_TOKEN: str
     PAWAPAY_SANDBOX: bool = True
     
+        # Kratos Pay
+    KRATOS_API_KEY: str = ""
+    KRATOS_APP_ID: str = ""
+    KRATOS_BASE_URL: str = ""
+    KRATOS_WEBHOOK_SECRET: str = ""
+    KRATOS_WEBHOOK_ALGO: str = "sha256"
+    KRATOS_WEBHOOK_STRICT: bool = False
+    
     # === CELERY & REDIS ===
     REDIS_URL: str = "redis://localhost:6379/0"
     CELERY_BROKER_URL: str = "redis://localhost:6379/0"

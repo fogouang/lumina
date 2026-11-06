@@ -553,12 +553,20 @@ async function onPay() {
       };
     }
 
-    // 2. Initier le paiement pawaPay
+    // 2. Initier le paiement Mobile Money
     const payRes = await post<SuccessResponse_PaymentInitiateResponse_>(
       "/v1/payments/initiate",
       payload,
     );
     paymentResponse.value = payRes.data ?? null;
+
+    // Paiement déjà confirmé à l'initiation : succès direct, pas d'attente
+    if (paymentResponse.value?.payment_status === "completed") {
+      await auth.fetchMe();
+      step.value = "success";
+      return;
+    }
+
     step.value = "confirm";
     startPolling();
   } catch (err: any) {

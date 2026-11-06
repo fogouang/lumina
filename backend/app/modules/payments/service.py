@@ -10,8 +10,8 @@ from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.payments import custom_pricing
+from app.modules.payments.kratos import KratosClient, KratosError
 from app.modules.payments.models import Payment
-from app.modules.payments.pawapay import PawapayClient
 from app.modules.payments.repository import PaymentRepository
 from app.modules.payments.schemas import PawapayCallbackPayload, PaymentInitiateRequest
 from app.modules.subscriptions.models import OrganizationSubscription, Subscription
@@ -34,7 +34,7 @@ class PaymentService:
     def __init__(self, db: AsyncSession):
         self.db = db
         self.repo = PaymentRepository(db)
-        self.pawapay = PawapayClient()
+        self.kratos = KratosClient()
 
     async def initiate_payment(
         self,
@@ -78,7 +78,7 @@ class PaymentService:
         reason = ""
 
         if data.custom_days is not None:
-            # Souscription temporaire (inactive) : activée par le callback une fois le paiement confirmé.
+            # Souscription temporaire (inactive) : activée une fois le paiement confirmé.
             # Prix et crédits IA calculés ici, jamais envoyés par le frontend.
             jours = data.custom_days
             temp_subscription = Subscription(
@@ -169,33 +169,50 @@ class PaymentService:
             operator=data.operator,
         )
 
-        phone = data.phone_number.strip()
-        if not phone.startswith("237"):
-            phone = f"237{phone}"
-
+        # ── Collecte Kratos ──────────────────────────────────────
         try:
-            pawapay_response = await self.pawapay.initiate_deposit(
-                deposit_id=str(payment.id),
-                amount=amount_paid,
-                phone_number=phone,
+            kratos_tx = await self.kratos.create_collection(
+                idempotency_key=invoice_number,
+                amount=int(amount_paid),
+                phone_number=data.phone_number.strip(),
                 provider="MTN_MOMO_CMR" if data.operator == "MTN" else "ORANGE_CMR",
-                client_reference_id=invoice_number,
-                customer_message="Lumina TCF",
-                 metadata={"app": "lumina"}
+                description=f"OCanada {invoice_number}",
             )
+        except KratosError as e:
+            await self.repo.update(payment.id, payment_status=PaymentStatus.FAILED)
+            logger.error(
+                f"Kratos collecte refusée {invoice_number} : {e} "
+                f"(http={e.http_status}, code={e.code}, details={e.details}, request_id={e.request_id})"
+            )
+            raise BadRequestException(detail=f"Paiement refusé : {e}")
         except Exception as e:
             await self.repo.update(payment.id, payment_status=PaymentStatus.FAILED)
-            raise BadRequestException(detail=f"Erreur paiement : {str(e)}")
-
-        pawapay_status = pawapay_response.get("status")
-        if pawapay_status == "REJECTED":
-            failure = pawapay_response.get("failureReason", {})
-            await self.repo.update(payment.id, payment_status=PaymentStatus.FAILED)
+            logger.error(f"Kratos collecte erreur {invoice_number} : {e}")
             raise BadRequestException(
-                detail=f"Paiement rejeté : {failure.get('failureMessage', 'Erreur inconnue')}"
+                detail="Le service de paiement est indisponible pour le moment. Réessayez dans quelques minutes."
             )
 
-        await self.repo.update(payment.id, pawapay_deposit_id=str(payment.id))
+        # L'uuid Kratos est rangé dans pawapay_deposit_id (colonne existante, String(36))
+        kratos_uuid = kratos_tx.get("uuid")
+        if kratos_uuid:
+            await self.repo.update(payment.id, pawapay_deposit_id=str(kratos_uuid))
+
+        status = self.kratos.internal_status(kratos_tx.get("status"))
+
+        if status == "FAILED":
+            await self._fail_payment(payment, kratos_tx)
+            raise BadRequestException(
+                detail="Paiement refusé par l'opérateur. Vérifiez votre solde et réessayez."
+            )
+
+        payment_status = PaymentStatus.PENDING
+        message = "Confirmez le paiement sur votre téléphone mobile."
+        if status == "COMPLETED":
+            await self._complete_payment(payment, kratos_tx)
+            payment_status = PaymentStatus.COMPLETED
+            message = "Paiement confirmé."
+        else:
+            await self.repo.update(payment.id, webhook_payload=_serialize_payload(kratos_tx))
 
         return {
             "payment_id": payment.id,
@@ -204,66 +221,129 @@ class PaymentService:
             "discount_amount": discount_amount,
             "amount_paid": amount_paid,
             "commission_due": commission_due,
-            "payment_status": PaymentStatus.PENDING,
+            "payment_status": payment_status,
             "transaction_reference": invoice_number,
-            "message": "Confirmez le paiement sur votre téléphone mobile.",
+            "message": message,
         }
 
-    # ── Callback pawaPay ─────────────────────────────────
+    # ── Validation / échec (communs Kratos et pawaPay) ───
+
+    async def _complete_payment(self, payment: Payment, raw: dict) -> None:
+        """Marque le paiement payé et active ce qu'il achète. Idempotent."""
+        fresh = await self.repo.get_by_id(payment.id)
+        if fresh and fresh.payment_status == PaymentStatus.COMPLETED:
+            logger.info(f"Payment {payment.id} déjà COMPLETED, ignoré")
+            return
+
+        await self.repo.update(
+            payment.id,
+            payment_status=PaymentStatus.COMPLETED,
+            completed_at=datetime.now(timezone.utc),
+            webhook_payload=_serialize_payload(raw),
+        )
+        logger.info(f"Payment {payment.id} → COMPLETED")
+
+        if payment.promo_code_id:
+            from app.modules.promo_codes.repository import PromoCodeRepository
+            await PromoCodeRepository(self.db).increment_used_count(payment.promo_code_id)
+
+        await self._activate_subscription(payment)
+
+        if payment.user_id:
+            from app.modules.referrals.service import ReferralService
+            await ReferralService(self.db).record_payment_earning(
+                payment_id=payment.id,
+                payer_user_id=payment.user_id,
+                payment_amount=payment.amount_paid,
+            )
+
+            from app.modules.notifications.service import NotificationService
+            await NotificationService(self.db).notify_payment_success(
+                user_id=payment.user_id,
+                amount=float(payment.amount_paid),
+                payment_id=payment.id,
+            )
+
+    async def _fail_payment(self, payment: Payment, raw: dict) -> None:
+        fresh = await self.repo.get_by_id(payment.id)
+        if fresh and fresh.payment_status == PaymentStatus.COMPLETED:
+            return
+        await self.repo.update(
+            payment.id,
+            payment_status=PaymentStatus.FAILED,
+            webhook_payload=_serialize_payload(raw),
+        )
+        logger.info(f"Payment {payment.id} → FAILED")
+
+    # ── Kratos : webhook et relecture du statut ──────────
+
+    def _is_kratos_payment(self, payment: Payment) -> bool:
+        """Les anciens paiements pawaPay ont pawapay_deposit_id = str(payment.id)."""
+        return bool(payment.pawapay_deposit_id) and payment.pawapay_deposit_id != str(payment.id)
+
+    async def _refresh_from_kratos(self, payment: Payment) -> Payment:
+        """
+        Relit la transaction chez Kratos et applique son statut. C'est la source
+        de vérité : un webhook ne sert que de signal, son contenu n'est pas cru tel quel.
+        """
+        if payment.payment_status != PaymentStatus.PENDING or not self._is_kratos_payment(payment):
+            return payment
+        try:
+            tx = await self.kratos.get_transaction(payment.pawapay_deposit_id)
+        except Exception as e:
+            logger.warning(f"Relecture Kratos impossible pour {payment.transaction_reference} : {e}")
+            return payment
+
+        status = self.kratos.internal_status(tx.get("status"))
+        amount = tx.get("amount")
+        if amount is not None:
+            try:
+                if int(float(amount)) != int(payment.amount_paid):
+                    logger.error(
+                        f"Kratos {payment.transaction_reference} : montant {amount} différent de "
+                        f"{payment.amount_paid}, ignoré"
+                    )
+                    return payment
+            except (TypeError, ValueError):
+                return payment
+
+        if status == "COMPLETED":
+            await self._complete_payment(payment, tx)
+        elif status == "FAILED":
+            await self._fail_payment(payment, tx)
+        return await self.repo.get_by_id(payment.id)
+
+    async def handle_kratos_webhook(self, payload: dict) -> bool:
+        """Webhook Kratos : retrouve le paiement puis relit son statut chez Kratos."""
+        uuid, reference, status = KratosClient.parse_webhook(payload)
+        logger.info(f"Webhook Kratos : uuid={uuid} reference={reference} status={status}")
+
+        payment = None
+        if uuid:
+            payment = await self.repo.find_by_pawapay_deposit_id(uuid)
+        if not payment and reference:
+            payment = await self.repo.find_by_transaction_ref(reference)
+        if not payment:
+            logger.error(f"Webhook Kratos : paiement introuvable (uuid={uuid}, reference={reference})")
+            return False
+
+        await self._refresh_from_kratos(payment)
+        return True
+
+    # ── Callback pawaPay (paiements lancés avant la bascule) ──
 
     async def handle_callback(self, payload: PawapayCallbackPayload) -> bool:
-        logger.info(f"Callback reçu — depositId={payload.depositId} status={payload.status}")
+        logger.info(f"Callback pawaPay reçu : depositId={payload.depositId} status={payload.status}")
 
         payment = await self.repo.get_by_id(UUID(payload.depositId))
         if not payment:
             logger.error(f"Payment introuvable pour depositId: {payload.depositId}")
             raise NotFoundException(resource="Payment", identifier=payload.depositId)
 
-        if payment.payment_status == PaymentStatus.COMPLETED:
-            logger.info(f"Payment {payment.id} déjà COMPLETED — ignoré")
-            return True
-
         if payload.status == "COMPLETED":
-            await self.repo.update(
-                payment.id,
-                payment_status=PaymentStatus.COMPLETED,
-                pawapay_deposit_id=payload.depositId,
-                completed_at=datetime.now(timezone.utc),
-                webhook_payload=_serialize_payload(payload.model_dump()),
-            )
-            logger.info(f"Payment {payment.id} → COMPLETED")
-
-            if payment.promo_code_id:
-                from app.modules.promo_codes.repository import PromoCodeRepository
-                promo_repo = PromoCodeRepository(self.db)
-                await promo_repo.increment_used_count(payment.promo_code_id)
-
-            await self._activate_subscription(payment)
-
-            from app.modules.referrals.service import ReferralService
-            if payment.user_id:
-                await ReferralService(self.db).record_payment_earning(
-                    payment_id=payment.id,
-                    payer_user_id=payment.user_id,
-                    payment_amount=payment.amount_paid,
-                )
-
-            from app.modules.notifications.service import NotificationService
-            notif_service = NotificationService(self.db)
-            if payment.user_id:
-                await notif_service.notify_payment_success(
-                    user_id=payment.user_id,
-                    amount=float(payment.amount_paid),
-                    payment_id=payment.id,
-                )
-
+            await self._complete_payment(payment, payload.model_dump())
         elif payload.status == "FAILED":
-            await self.repo.update(
-                payment.id,
-                payment_status=PaymentStatus.FAILED,
-                webhook_payload=_serialize_payload(payload.model_dump()),
-            )
-            logger.info(f"Payment {payment.id} → FAILED")
+            await self._fail_payment(payment, payload.model_dump())
 
         return True
 
@@ -337,7 +417,9 @@ class PaymentService:
             logger.error(f"Erreur génération facture pour payment {payment.id}: {e}")
 
     async def get_payment_by_id(self, payment_id: UUID) -> Payment:
-        return await self.repo.get_by_id_or_404(payment_id)
+        """Si le paiement Kratos est encore en attente, son statut est relu chez Kratos."""
+        payment = await self.repo.get_by_id_or_404(payment_id)
+        return await self._refresh_from_kratos(payment)
 
     async def get_my_payments(self, current_user: User) -> list[Payment]:
         return await self.repo.get_by_user(current_user.id)

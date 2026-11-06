@@ -28,7 +28,7 @@ export type { AnalyticsData } from './models/AnalyticsData';
 export type { app__modules__auth__schemas__UserResponse } from './models/app__modules__auth__schemas__UserResponse';
 export type { app__modules__users__schemas__UserResponse } from './models/app__modules__users__schemas__UserResponse';
 export type { app__shared__schemas__responses__SuccessResponse } from './models/app__shared__schemas__responses__SuccessResponse';
-export type { app__shared__schemas__responses__SuccessResponse_UserResponse___1 } from './models/app__shared__schemas__responses__SuccessResponse_UserResponse___1';
+export type { app__shared__schemas__responses__SuccessResponse_UserResponse___2 } from './models/app__shared__schemas__responses__SuccessResponse_UserResponse___2';
 export type { AttemptHistoryItem } from './models/AttemptHistoryItem';
 export type { AttemptHistoryListResponse } from './models/AttemptHistoryListResponse';
 export { AttemptStatus } from './models/AttemptStatus';

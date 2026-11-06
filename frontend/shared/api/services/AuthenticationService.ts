@@ -2,7 +2,7 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { app__shared__schemas__responses__SuccessResponse_UserResponse___1 } from '../models/app__shared__schemas__responses__SuccessResponse_UserResponse___1';
+import type { app__shared__schemas__responses__SuccessResponse } from '../models/app__shared__schemas__responses__SuccessResponse';
 import type { LoginRequest } from '../models/LoginRequest';
 import type { RegisterRequest } from '../models/RegisterRequest';
 import type { SuccessResponse_AuthResponse_ } from '../models/SuccessResponse_AuthResponse_';
@@ -68,12 +68,12 @@ export class AuthenticationService {
      * `phone` null → afficher la modale téléphone.
      * `should_show_whatsapp_invite` true → afficher la modale WhatsApp.
      * @param accessToken
-     * @returns app__shared__schemas__responses__SuccessResponse_UserResponse___1 Successful Response
+     * @returns app__shared__schemas__responses__SuccessResponse<UserResponse> Successful Response
      * @throws ApiError
      */
     public static getMeApiV1AuthMeGet(
         accessToken?: (string | null),
-    ): CancelablePromise<app__shared__schemas__responses__SuccessResponse_UserResponse___1> {
+    ): CancelablePromise<app__shared__schemas__responses__SuccessResponse> {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/api/v1/auth/me',
@@ -89,13 +89,13 @@ export class AuthenticationService {
      * Ajouter ou modifier son numéro de téléphone
      * @param requestBody
      * @param accessToken
-     * @returns app__shared__schemas__responses__SuccessResponse_UserResponse___1 Successful Response
+     * @returns app__shared__schemas__responses__SuccessResponse<UserResponse> Successful Response
      * @throws ApiError
      */
     public static updateMyPhoneApiV1AuthMePhonePatch(
         requestBody: UpdateMyPhoneRequest,
         accessToken?: (string | null),
-    ): CancelablePromise<app__shared__schemas__responses__SuccessResponse_UserResponse___1> {
+    ): CancelablePromise<app__shared__schemas__responses__SuccessResponse> {
         return __request(OpenAPI, {
             method: 'PATCH',
             url: '/api/v1/auth/me/phone',
@@ -113,13 +113,13 @@ export class AuthenticationService {
      * Réponse à l'invitation au groupe WhatsApp
      * @param requestBody
      * @param accessToken
-     * @returns app__shared__schemas__responses__SuccessResponse_UserResponse___1 Successful Response
+     * @returns app__shared__schemas__responses__SuccessResponse<UserResponse> Successful Response
      * @throws ApiError
      */
     public static whatsappInviteApiV1AuthMeWhatsappInvitePost(
         requestBody: WhatsappInviteRequest,
         accessToken?: (string | null),
-    ): CancelablePromise<app__shared__schemas__responses__SuccessResponse_UserResponse___1> {
+    ): CancelablePromise<app__shared__schemas__responses__SuccessResponse> {
         return __request(OpenAPI, {
             method: 'POST',
             url: '/api/v1/auth/me/whatsapp-invite',

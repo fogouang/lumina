@@ -1,11 +1,17 @@
 """
 Controller (routes) pour les paiements.
 """
+import json
+import logging
 from typing import Annotated
 from uuid import UUID
-from fastapi import APIRouter, Depends, Header, Request, status
 
+from fastapi import APIRouter, Depends, Header, Request, status
+from fastapi.responses import JSONResponse
+
+from app.config import get_settings
 from app.modules.payments import custom_pricing
+from app.modules.payments.kratos import KratosClient
 from app.modules.payments.schemas import (
     AdminPaymentResponse,
     CustomPricingResponse,
@@ -20,6 +26,8 @@ from app.shared.database.session import DbSession
 from app.shared.dependencies import CurrentUser
 from app.shared.exceptions.http import UnauthorizedException
 from app.shared.schemas.responses import SuccessResponse
+
+logger = logging.getLogger("tcf_canada")
 
 router = APIRouter(prefix="/payments", tags=["Payments"])
 
@@ -64,6 +72,47 @@ async def get_custom_pricing():
         message="Tarif sur mesure",
     )
 
+@router.post(
+    "/kratos/webhook/Tq8mZr4vXc2nLp7wKs9e",
+    status_code=status.HTTP_200_OK,
+    include_in_schema=False,
+)
+async def kratos_webhook(
+    request: Request,
+    service: Annotated[PaymentService, Depends(get_payment_service)] = None,
+):
+    """
+    Webhook Kratos. On garde le corps brut : la signature HMAC porte dessus.
+    Le statut est ensuite relu chez Kratos, le contenu du webhook n'est pas cru tel quel.
+    """
+    raw_body = await request.body()
+    signature = request.headers.get("x-mok-signature")
+    logger.info(
+        f"📩 Webhook Kratos reçu : headers={dict(request.headers)} "
+        f"body={raw_body.decode('utf-8', 'replace')}"
+    )
+
+    if not KratosClient.verify_signature(raw_body, signature):
+        if get_settings().KRATOS_WEBHOOK_STRICT:
+            logger.warning("Webhook Kratos rejeté : signature absente ou invalide")
+            return JSONResponse(status_code=401, content={"status": "invalid_signature"})
+        logger.warning("Webhook Kratos : signature non vérifiée, traité quand même (KRATOS_WEBHOOK_STRICT=false)")
+
+    try:
+        payload = json.loads(raw_body or b"{}")
+    except ValueError:
+        logger.error("Webhook Kratos : corps JSON illisible")
+        return JSONResponse(status_code=400, content={"status": "invalid_body"})
+
+    try:
+        found = await service.handle_kratos_webhook(payload)
+    except Exception as e:
+        logger.exception(f"Webhook Kratos : erreur de traitement : {e}")
+        # 500 : Kratos pourra renvoyer l'événement
+        return JSONResponse(status_code=500, content={"status": "error"})
+
+    # Référence inconnue : 200 quand même, inutile que Kratos renvoie en boucle
+    return {"status": "OK" if found else "ignored"}
 
 @router.post(
     "/callback/jkdKo0Lp8lsdfjk4j0HJhskfak93d",

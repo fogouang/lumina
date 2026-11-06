@@ -2,7 +2,7 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { app__shared__schemas__responses__SuccessResponse } from '../models/app__shared__schemas__responses__SuccessResponse';
+import type { app__shared__schemas__responses__SuccessResponse_UserResponse___2 } from '../models/app__shared__schemas__responses__SuccessResponse_UserResponse___2';
 import type { SuccessResponse_dict_ } from '../models/SuccessResponse_dict_';
 import type { SuccessResponse_list_UserListResponse__ } from '../models/SuccessResponse_list_UserListResponse__';
 import type { UserCreate } from '../models/UserCreate';
@@ -45,13 +45,13 @@ export class UsersService {
      * Créer un utilisateur (admin uniquement).
      * @param requestBody
      * @param accessToken
-     * @returns app__shared__schemas__responses__SuccessResponse<UserResponse> Successful Response
+     * @returns app__shared__schemas__responses__SuccessResponse_UserResponse___2 Successful Response
      * @throws ApiError
      */
     public static createUserApiV1UsersPost(
         requestBody: UserCreate,
         accessToken?: (string | null),
-    ): CancelablePromise<app__shared__schemas__responses__SuccessResponse> {
+    ): CancelablePromise<app__shared__schemas__responses__SuccessResponse_UserResponse___2> {
         return __request(OpenAPI, {
             method: 'POST',
             url: '/api/v1/users',
@@ -70,13 +70,13 @@ export class UsersService {
      * Récupérer les détails d'un utilisateur.
      * @param userId
      * @param accessToken
-     * @returns app__shared__schemas__responses__SuccessResponse<UserResponse> Successful Response
+     * @returns app__shared__schemas__responses__SuccessResponse_UserResponse___2 Successful Response
      * @throws ApiError
      */
     public static getUserApiV1UsersUserIdGet(
         userId: string,
         accessToken?: (string | null),
-    ): CancelablePromise<app__shared__schemas__responses__SuccessResponse> {
+    ): CancelablePromise<app__shared__schemas__responses__SuccessResponse_UserResponse___2> {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/api/v1/users/{user_id}',
@@ -97,14 +97,14 @@ export class UsersService {
      * @param userId
      * @param requestBody
      * @param accessToken
-     * @returns app__shared__schemas__responses__SuccessResponse<UserResponse> Successful Response
+     * @returns app__shared__schemas__responses__SuccessResponse_UserResponse___2 Successful Response
      * @throws ApiError
      */
     public static updateUserApiV1UsersUserIdPatch(
         userId: string,
         requestBody: UserUpdate,
         accessToken?: (string | null),
-    ): CancelablePromise<app__shared__schemas__responses__SuccessResponse> {
+    ): CancelablePromise<app__shared__schemas__responses__SuccessResponse_UserResponse___2> {
         return __request(OpenAPI, {
             method: 'PATCH',
             url: '/api/v1/users/{user_id}',

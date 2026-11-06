@@ -326,6 +326,14 @@ async function purchase() {
       },
     );
     purchaseResult.value = res.data ?? null;
+
+    // Paiement déjà confirmé à l'initiation : crédits déjà ajoutés
+    if (purchaseResult.value?.payment_status === "completed") {
+      await sub.fetchMySubscriptions();
+      step.value = 3;
+      return;
+    }
+
     step.value = 2;
     startPolling();
   } catch (err: any) {

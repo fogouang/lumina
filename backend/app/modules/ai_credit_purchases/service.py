@@ -1,6 +1,7 @@
 """
 Service métier pour les achats de crédits IA.
 """
+import logging
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -13,12 +14,14 @@ from app.modules.ai_credit_purchases.schemas import (
     PurchaseRequest,
     PurchaseResponse,
 )
-from app.modules.payments.pawapay import PawapayClient
+from app.modules.payments.kratos import KratosClient, KratosError
 from app.modules.subscriptions.repository import SubscriptionRepository
 from app.shared.enums import PaymentMethod, PaymentStatus
 from app.shared.exceptions.http import BadRequestException, ForbiddenException, NotFoundException
 
 settings = get_settings()
+logger = logging.getLogger(__name__)
+
 
 class AICreditPurchaseService:
     """Service pour gérer les achats de crédits IA."""
@@ -27,7 +30,7 @@ class AICreditPurchaseService:
         self.db = db
         self.purchase_repo = AICreditPurchaseRepository(db)
         self.subscription_repo = SubscriptionRepository(db)
-        self.pawapay = PawapayClient()
+        self.kratos = KratosClient()
 
     def get_pricing_info(self) -> CreditPricingResponse:
         price = settings.AI_CREDIT_PRICE_PER_UNIT
@@ -50,7 +53,7 @@ class AICreditPurchaseService:
         purchase_data: PurchaseRequest
     ) -> PurchaseResponse:
         """
-        Acheter des crédits IA via pawaPay.
+        Acheter des crédits IA via Kratos (Mobile Money).
 
         Flow:
         1. Vérifier que l'utilisateur a une souscription active
@@ -58,12 +61,15 @@ class AICreditPurchaseService:
         3. Calculer le montant total
         4. Créer un Payment PENDING
         5. Créer le lien AICreditPurchase
-        6. Initier le deposit pawaPay (deposit_id = payment.id)
+        6. Lancer la collecte Kratos (idempotency_key = numéro de facture)
 
-        Note: Le crédit effectif se fera dans le callback après paiement réussi,
-        via credit_subscription_after_payment().
+        Le crédit effectif se fait à la confirmation du paiement (webhook Kratos
+        ou relecture du statut), via PaymentService._complete_payment()
+        qui appelle credit_subscription_after_payment().
         """
         from app.modules.users.models import User
+        from app.modules.payments.repository import PaymentRepository
+        from app.modules.payments.service import PaymentService, _serialize_payload
 
         # 1. Vérifier souscription active
         subscriptions = await self.subscription_repo.get_active_by_user(user_id)
@@ -93,8 +99,6 @@ class AICreditPurchaseService:
             raise NotFoundException(detail="Utilisateur introuvable")
 
         # 5. Créer le Payment PENDING
-        from app.modules.payments.repository import PaymentRepository
-
         payment_repo = PaymentRepository(self.db)
         invoice_number = await payment_repo.generate_invoice_number()
 
@@ -124,36 +128,50 @@ class AICreditPurchaseService:
             total_amount=float(total_amount)
         )
 
-        # 7. Initier le deposit pawaPay
-        phone = purchase_data.phone_number.strip()
-        if not phone.startswith("237"):
-            phone = f"237{phone}"
-
-        reason = f"Achat {purchase_data.credits} crédits IA"
-
+        # 7. Collecte Kratos
         try:
-            pawapay_response = await self.pawapay.initiate_deposit(
-                deposit_id=str(payment.id),
-                amount=float(total_amount),
-                phone_number=phone,
+            kratos_tx = await self.kratos.create_collection(
+                idempotency_key=invoice_number,
+                amount=int(total_amount),
+                phone_number=purchase_data.phone_number.strip(),
                 provider="MTN_MOMO_CMR" if purchase_data.operator == "MTN" else "ORANGE_CMR",
-                client_reference_id=invoice_number,
-                customer_message=reason,
-                 metadata={"app": "lumina"}
+                description=f"OCanada {purchase_data.credits} crédits IA",
             )
+        except KratosError as e:
+            await payment_repo.update(payment.id, payment_status=PaymentStatus.FAILED)
+            logger.error(
+                f"Kratos collecte refusée {invoice_number} (crédits IA) : {e} "
+                f"(http={e.http_status}, code={e.code}, details={e.details}, request_id={e.request_id})"
+            )
+            raise BadRequestException(detail=f"Paiement refusé : {e}")
         except Exception as e:
             await payment_repo.update(payment.id, payment_status=PaymentStatus.FAILED)
-            raise BadRequestException(detail=f"Erreur paiement : {e}")
-
-        pawapay_status = pawapay_response.get("status")
-        if pawapay_status == "REJECTED":
-            failure = pawapay_response.get("failureReason", {})
-            await payment_repo.update(payment.id, payment_status=PaymentStatus.FAILED)
+            logger.error(f"Kratos collecte erreur {invoice_number} (crédits IA) : {e}")
             raise BadRequestException(
-                detail=f"Paiement rejeté : {failure.get('failureMessage', 'Erreur inconnue')}"
+                detail="Le service de paiement est indisponible pour le moment. Réessayez dans quelques minutes."
             )
 
-        await payment_repo.update(payment.id, pawapay_deposit_id=str(payment.id))
+        # L'uuid Kratos est rangé dans pawapay_deposit_id (colonne existante)
+        kratos_uuid = kratos_tx.get("uuid")
+        if kratos_uuid:
+            await payment_repo.update(payment.id, pawapay_deposit_id=str(kratos_uuid))
+
+        status = self.kratos.internal_status(kratos_tx.get("status"))
+        payment_service = PaymentService(self.db)
+
+        if status == "FAILED":
+            await payment_service._fail_payment(payment, kratos_tx)
+            raise BadRequestException(
+                detail="Paiement refusé par l'opérateur. Vérifiez votre solde et réessayez."
+            )
+
+        payment_status = PaymentStatus.PENDING
+        if status == "COMPLETED":
+            # Ajoute les crédits via credit_subscription_after_payment()
+            await payment_service._complete_payment(payment, kratos_tx)
+            payment_status = PaymentStatus.COMPLETED
+        else:
+            await payment_repo.update(payment.id, webhook_payload=_serialize_payload(kratos_tx))
 
         return PurchaseResponse(
             payment_id=payment.id,
@@ -161,7 +179,7 @@ class AICreditPurchaseService:
             credits=purchase_data.credits,
             price_per_credit=float(price_per_credit),
             total_amount=float(total_amount),
-            payment_status=PaymentStatus.PENDING.value,
+            payment_status=payment_status.value,
             transaction_reference=invoice_number,
         )
 
@@ -195,7 +213,7 @@ class AICreditPurchaseService:
     async def credit_subscription_after_payment(self, payment_id: UUID) -> bool:
         """
         Créditer la souscription après paiement réussi.
-        Appelé par PaymentService après un callback pawaPay COMPLETED.
+        Appelé par PaymentService._complete_payment() (Kratos ou ancien callback pawaPay).
 
         Returns:
             True si crédits ajoutés, False si ce n'est pas un achat de crédits
