@@ -1,8 +1,13 @@
 <template>
   <div>
     <!-- Chargement -->
-    <div v-if="loading" class="flex flex-col items-center justify-center gap-4 py-24">
-      <span class="grid size-14 place-items-center rounded-leaf brand-gradient text-white shadow-brand">
+    <div
+      v-if="loading"
+      class="flex flex-col items-center justify-center gap-4 py-24"
+    >
+      <span
+        class="grid size-14 place-items-center rounded-leaf brand-gradient text-white shadow-brand"
+      >
         <i class="pi pi-spin pi-spinner text-xl" />
       </span>
       <p class="text-sm font-medium text-muted">Chargement des sujets…</p>
@@ -12,23 +17,36 @@
       <!-- ── MODE LECTURE ───────────────────────────────────── -->
       <template v-if="!simulating">
         <!-- En-tête -->
-        <header class="featured-panel relative mb-6 overflow-hidden rounded-card p-6 text-white shadow-brand sm:p-8">
-          <div class="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+        <header
+          class="featured-panel relative mb-6 overflow-hidden rounded-card p-6 text-white shadow-brand sm:p-8"
+        >
+          <div
+            class="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between"
+          >
             <div class="min-w-0">
               <NuxtLink
-                :to="`/simulateur/expression-ecrite/${sessionId}`"
+                :to="backLink"
                 class="mb-3 inline-flex items-center gap-2 text-sm font-medium text-white/75 transition-colors hover:text-white"
               >
                 <i class="pi pi-arrow-left text-xs" />
-                {{ session.name }}
+                Tous les sujets
               </NuxtLink>
-              <h1 class="font-heading text-2xl font-extrabold tracking-tight sm:text-3xl">{{ combo.title }}</h1>
+              <h1
+                class="font-heading text-2xl font-extrabold tracking-tight sm:text-3xl"
+              >
+                {{ combo.title }}
+              </h1>
               <p class="mt-1.5 max-w-xl text-sm leading-relaxed text-white/75">
                 <template v-if="sub.aiCreditsRemaining > 0">
-                  Lisez les 3 sujets puis cliquez sur <strong class="text-white">Démarrer</strong> pour lancer le chrono.
-                  <strong class="text-white">1 crédit IA</strong> sera utilisé à la soumission.
+                  Lisez les 3 sujets puis cliquez sur
+                  <strong class="text-white">Démarrer</strong> pour lancer le
+                  chrono. <strong class="text-white">1 crédit IA</strong> sera
+                  utilisé à la soumission.
                 </template>
-                <template v-else>Mode lecture : vous pouvez lire les sujets mais pas obtenir de correction IA.</template>
+                <template v-else
+                  >Mode lecture : vous pouvez lire les sujets mais pas obtenir
+                  de correction IA.</template
+                >
               </p>
               <div class="mt-5">
                 <button
@@ -53,15 +71,29 @@
             </div>
 
             <dl class="grid grid-cols-3 gap-2 sm:gap-3 lg:min-w-104">
-              <div class="rounded-xl border border-white/15 bg-white/10 px-3 py-3 backdrop-blur sm:px-4">
+              <div
+                class="rounded-xl border border-white/15 bg-white/10 px-3 py-3 backdrop-blur sm:px-4"
+              >
                 <dt class="sr-only">Nombre de tâches</dt>
-                <i class="pi pi-list text-sm text-accent-400" aria-hidden="true" />
-                <dd class="mt-1.5 font-heading text-sm font-bold sm:text-base">3 tâches</dd>
+                <i
+                  class="pi pi-list text-sm text-accent-400"
+                  aria-hidden="true"
+                />
+                <dd class="mt-1.5 font-heading text-sm font-bold sm:text-base">
+                  3 tâches
+                </dd>
               </div>
-              <div class="rounded-xl border border-white/15 bg-white/10 px-3 py-3 backdrop-blur sm:px-4">
+              <div
+                class="rounded-xl border border-white/15 bg-white/10 px-3 py-3 backdrop-blur sm:px-4"
+              >
                 <dt class="sr-only">Durée recommandée</dt>
-                <i class="pi pi-clock text-sm text-accent-400" aria-hidden="true" />
-                <dd class="mt-1.5 font-heading text-sm font-bold sm:text-base">60 min</dd>
+                <i
+                  class="pi pi-clock text-sm text-accent-400"
+                  aria-hidden="true"
+                />
+                <dd class="mt-1.5 font-heading text-sm font-bold sm:text-base">
+                  60 min
+                </dd>
               </div>
               <button
                 type="button"
@@ -74,9 +106,16 @@
                 aria-label="Acheter des crédits IA"
                 @click="openBuyCredits()"
               >
-                <i class="pi pi-bolt text-sm text-accent-400" aria-hidden="true" />
-                <span class="mt-1.5 block font-heading text-sm font-bold sm:text-base">
-                  {{ sub.aiCreditsRemaining }} crédit{{ sub.aiCreditsRemaining > 1 ? "s" : "" }}
+                <i
+                  class="pi pi-bolt text-sm text-accent-400"
+                  aria-hidden="true"
+                />
+                <span
+                  class="mt-1.5 block font-heading text-sm font-bold sm:text-base"
+                >
+                  {{ sub.aiCreditsRemaining }} crédit{{
+                    sub.aiCreditsRemaining > 1 ? "s" : ""
+                  }}
                 </span>
               </button>
             </dl>
@@ -108,18 +147,32 @@
         </div>
 
         <!-- Tâche 3 -->
-        <section class="mb-8 overflow-hidden rounded-card border border-line bg-card shadow-soft">
-          <div class="flex items-center justify-between gap-3 border-b border-line bg-card-2/50 px-5 py-4">
+        <section
+          class="mb-8 overflow-hidden rounded-card border border-line bg-card shadow-soft"
+        >
+          <div
+            class="flex items-center justify-between gap-3 border-b border-line bg-card-2/50 px-5 py-4"
+          >
             <div class="flex items-center gap-3">
-              <span class="grid size-10 shrink-0 place-items-center rounded-leaf brand-gradient text-sm font-bold text-white shadow-brand">
+              <span
+                class="grid size-10 shrink-0 place-items-center rounded-leaf brand-gradient text-sm font-bold text-white shadow-brand"
+              >
                 3
               </span>
               <div>
-                <p class="text-[0.65rem] font-bold uppercase tracking-wider text-faint">Argumentation</p>
-                <p class="text-sm font-bold text-ink">Tâche 3 - Argumentation</p>
+                <p
+                  class="text-[0.65rem] font-bold uppercase tracking-wider text-faint"
+                >
+                  Argumentation
+                </p>
+                <p class="text-sm font-bold text-ink">
+                  Tâche 3 - Argumentation
+                </p>
               </div>
             </div>
-            <span class="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-accent-100 px-2.5 py-1 text-xs font-bold tabular-nums text-accent-800 dark:bg-accent-500/15 dark:text-accent-300">
+            <span
+              class="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-accent-100 px-2.5 py-1 text-xs font-bold tabular-nums text-accent-800 dark:bg-accent-500/15 dark:text-accent-300"
+            >
               <i class="pi pi-align-left text-[0.6rem]" />
               {{ combo.task3_word_min }}–{{ combo.task3_word_max }} mots
             </span>
@@ -127,17 +180,36 @@
 
           <div class="flex flex-col gap-4 px-5 py-5">
             <p class="text-xs italic text-muted">
-              Rédigez un article argumentatif comparant deux points de vue opposés.
+              Rédigez un article argumentatif comparant deux points de vue
+              opposés.
             </p>
-            <h3 class="font-heading text-lg font-bold text-ink">{{ combo.task3_title }}</h3>
+            <h3 class="font-heading text-lg font-bold text-ink">
+              {{ combo.task3_title }}
+            </h3>
             <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div class="rounded-2xl border border-accent-200 bg-accent-50 p-5 dark:border-accent-500/25 dark:bg-accent-500/10">
-                <p class="mb-2 text-xs font-bold uppercase tracking-wider text-accent-800 dark:text-accent-300">Document 1</p>
-                <p class="text-[0.9375rem] leading-relaxed text-ink">{{ combo.task3_document_1 }}</p>
+              <div
+                class="rounded-2xl border border-accent-200 bg-accent-50 p-5 dark:border-accent-500/25 dark:bg-accent-500/10"
+              >
+                <p
+                  class="mb-2 text-xs font-bold uppercase tracking-wider text-accent-800 dark:text-accent-300"
+                >
+                  Document 1
+                </p>
+                <p class="text-[0.9375rem] leading-relaxed text-ink">
+                  {{ combo.task3_document_1 }}
+                </p>
               </div>
-              <div class="rounded-2xl border border-primary/20 bg-primary/5 p-5">
-                <p class="mb-2 text-xs font-bold uppercase tracking-wider text-primary">Document 2</p>
-                <p class="text-[0.9375rem] leading-relaxed text-ink">{{ combo.task3_document_2 }}</p>
+              <div
+                class="rounded-2xl border border-primary/20 bg-primary/5 p-5"
+              >
+                <p
+                  class="mb-2 text-xs font-bold uppercase tracking-wider text-primary"
+                >
+                  Document 2
+                </p>
+                <p class="text-[0.9375rem] leading-relaxed text-ink">
+                  {{ combo.task3_document_2 }}
+                </p>
               </div>
             </div>
           </div>
@@ -150,7 +222,9 @@
               :aria-expanded="showTask3Correction"
               @click="showTask3Correction = !showTask3Correction"
             >
-              <span class="flex items-center gap-2 text-sm font-semibold text-primary">
+              <span
+                class="flex items-center gap-2 text-sm font-semibold text-primary"
+              >
                 <i class="pi pi-eye text-xs" />
                 Voir la proposition de correction
               </span>
@@ -160,7 +234,9 @@
               />
             </button>
             <div v-if="showTask3Correction" class="px-5 pb-5">
-              <p class="whitespace-pre-wrap rounded-2xl border border-primary/15 bg-primary/5 p-4 text-sm leading-relaxed text-ink">
+              <p
+                class="whitespace-pre-wrap rounded-2xl border border-primary/15 bg-primary/5 p-4 text-sm leading-relaxed text-ink"
+              >
                 {{ combo.task3_correction }}
               </p>
             </div>
@@ -191,18 +267,24 @@
       <!-- ── MODE SIMULATION ────────────────────────────────── -->
       <template v-else>
         <!-- Barre sticky (chrono) -->
-        <header class="sticky top-0 z-50 -mx-5 mb-0 border-b border-line bg-card/90 backdrop-blur-md sm:-mx-8 xl:-mx-10 2xl:-mx-12">
-          <div class="flex h-14 items-center justify-between gap-3 px-4 sm:px-5">
+        <header
+          class="sticky top-0 z-50 -mx-5 mb-0 border-b border-line bg-card/90 backdrop-blur-md sm:-mx-8 xl:-mx-10 2xl:-mx-12"
+        >
+          <div
+            class="flex h-14 items-center justify-between gap-3 px-4 sm:px-5"
+          >
             <div class="flex min-w-0 items-center gap-3">
               <NuxtLink
-                :to="`/simulateur/expression-ecrite/${sessionId}`"
+                :to="backLink"
                 aria-label="Retour aux sujets"
                 class="grid size-9 shrink-0 place-items-center rounded-xl text-muted transition-colors hover:bg-card-2 hover:text-primary"
               >
                 <i class="pi pi-arrow-left text-sm" />
               </NuxtLink>
               <div class="min-w-0">
-                <p class="truncate text-sm font-bold leading-tight text-ink">{{ session.name }}</p>
+                <p class="truncate text-sm font-bold leading-tight text-ink">
+                  {{ session.name }}
+                </p>
                 <p class="truncate text-xs text-muted">{{ combo.title }}</p>
               </div>
             </div>
@@ -237,24 +319,36 @@
               @click="openBuyCredits()"
             >
               <i class="pi pi-bolt text-xs" />
-              {{ sub.aiCreditsRemaining }} crédit{{ sub.aiCreditsRemaining > 1 ? "s" : "" }}
+              {{ sub.aiCreditsRemaining }} crédit{{
+                sub.aiCreditsRemaining > 1 ? "s" : ""
+              }}
             </button>
           </div>
         </header>
 
-        <div class="-mx-5 flex min-h-[calc(100vh-3.5rem)] sm:-mx-8 xl:-mx-10 2xl:-mx-12">
+        <div
+          class="-mx-5 flex min-h-[calc(100vh-3.5rem)] sm:-mx-8 xl:-mx-10 2xl:-mx-12"
+        >
           <!-- Sidebar gauche -->
           <aside
             class="sticky top-14 hidden h-[calc(100vh-3.5rem)] w-60 shrink-0 flex-col overflow-y-auto border-r border-line bg-card lg:flex"
           >
-            <p class="px-4 pb-2 pt-4 text-[0.65rem] font-bold uppercase tracking-widest text-faint">Navigation</p>
+            <p
+              class="px-4 pb-2 pt-4 text-[0.65rem] font-bold uppercase tracking-widest text-faint"
+            >
+              Navigation
+            </p>
             <div class="flex flex-col gap-1 px-2">
               <button
                 v-for="(t, i) in tasks"
                 :key="t.key"
                 type="button"
                 class="flex items-center gap-2.5 rounded-xl border px-3 py-2.5 text-left transition-all"
-                :class="activeTask === i ? 'border-primary/30 bg-primary/5' : 'border-transparent hover:bg-card-2'"
+                :class="
+                  activeTask === i
+                    ? 'border-primary/30 bg-primary/5'
+                    : 'border-transparent hover:bg-card-2'
+                "
                 @click="activeTask = i"
               >
                 <span
@@ -265,11 +359,16 @@
                       : 'brand-gradient shadow-[inset_0_-2px_0_rgb(0_0_0/0.2)]'
                   "
                 >
-                  <i v-if="isTaskDone(t.key)" class="pi pi-check text-[0.65rem]" />
+                  <i
+                    v-if="isTaskDone(t.key)"
+                    class="pi pi-check text-[0.65rem]"
+                  />
                   <span v-else>{{ i + 1 }}</span>
                 </span>
                 <div class="min-w-0">
-                  <p class="truncate text-xs font-semibold text-ink">{{ t.shortLabel }}</p>
+                  <p class="truncate text-xs font-semibold text-ink">
+                    {{ t.shortLabel }}
+                  </p>
                   <p class="font-mono text-[0.65rem] tabular-nums text-faint">
                     {{ wordCount(answers[t.key]) }}/{{ t.max }}
                   </p>
@@ -277,7 +376,10 @@
               </button>
             </div>
 
-            <div v-if="!combinedCorrection" class="mt-auto border-t border-line p-3">
+            <div
+              v-if="!combinedCorrection"
+              class="mt-auto border-t border-line p-3"
+            >
               <AppButton
                 label="Soumettre"
                 icon="pi pi-bolt"
@@ -288,9 +390,13 @@
                 :disabled="!allAnswered || sub.aiCreditsRemaining === 0"
                 @click="submitAll"
               />
-              <p class="mt-1.5 text-center text-[0.65rem] leading-snug text-faint">
+              <p
+                class="mt-1.5 text-center text-[0.65rem] leading-snug text-faint"
+              >
                 <span v-if="!allAnswered">Complétez les 3 tâches</span>
-                <span v-else>Prêt · <strong class="text-ink">1 crédit IA</strong></span>
+                <span v-else
+                  >Prêt · <strong class="text-ink">1 crédit IA</strong></span
+                >
               </p>
             </div>
           </aside>
@@ -302,11 +408,14 @@
               v-if="sub.aiCreditsRemaining === 0 && !combinedCorrection"
               class="flex flex-col gap-3 rounded-2xl border border-accent-200 bg-accent-50 p-4 sm:flex-row sm:items-center dark:border-accent-500/25 dark:bg-accent-500/10"
             >
-              <i class="pi pi-exclamation-triangle shrink-0 text-accent-700 dark:text-accent-300" />
+              <i
+                class="pi pi-exclamation-triangle shrink-0 text-accent-700 dark:text-accent-300"
+              />
               <div class="flex-1 text-sm">
                 <p class="font-bold text-ink">Plus de crédits IA</p>
                 <p class="text-muted">
-                  Vous pouvez continuer à rédiger mais la soumission nécessite au moins 1 crédit.
+                  Vous pouvez continuer à rédiger mais la soumission nécessite
+                  au moins 1 crédit.
                 </p>
               </div>
               <AppButton
@@ -321,38 +430,75 @@
 
             <!-- Tâche active -->
             <template v-if="!combinedCorrection">
-              <section class="overflow-hidden rounded-card border border-line bg-card shadow-soft">
-                <div class="flex items-center gap-3 border-b border-line bg-card-2/50 px-5 py-3.5">
-                  <span class="grid size-9 shrink-0 place-items-center rounded-leaf brand-gradient text-sm font-bold text-white shadow-brand">
+              <section
+                class="overflow-hidden rounded-card border border-line bg-card shadow-soft"
+              >
+                <div
+                  class="flex items-center gap-3 border-b border-line bg-card-2/50 px-5 py-3.5"
+                >
+                  <span
+                    class="grid size-9 shrink-0 place-items-center rounded-leaf brand-gradient text-sm font-bold text-white shadow-brand"
+                  >
                     {{ activeTask + 1 }}
                   </span>
                   <div class="min-w-0 flex-1">
-                    <p class="text-sm font-bold text-ink">{{ currentTask.label }}</p>
-                    <p class="text-xs text-muted">{{ currentTask.min }}–{{ currentTask.max }} mots recommandés</p>
+                    <p class="text-sm font-bold text-ink">
+                      {{ currentTask.label }}
+                    </p>
+                    <p class="text-xs text-muted">
+                      {{ currentTask.min }}–{{ currentTask.max }} mots
+                      recommandés
+                    </p>
                   </div>
-                  <span class="shrink-0 rounded-full bg-accent-100 px-2.5 py-1 text-xs font-bold text-accent-800 dark:bg-accent-500/15 dark:text-accent-300">
+                  <span
+                    class="shrink-0 rounded-full bg-accent-100 px-2.5 py-1 text-xs font-bold text-accent-800 dark:bg-accent-500/15 dark:text-accent-300"
+                  >
                     {{ currentTask.typeLabel }}
                   </span>
                 </div>
 
                 <!-- Consigne -->
                 <div class="border-b border-line px-5 py-4">
-                  <p v-if="activeTask === 0" class="text-sm leading-relaxed text-ink">
+                  <p
+                    v-if="activeTask === 0"
+                    class="text-sm leading-relaxed text-ink"
+                  >
                     {{ combo.task1_instruction }}
                   </p>
-                  <p v-else-if="activeTask === 1" class="text-sm leading-relaxed text-ink">
+                  <p
+                    v-else-if="activeTask === 1"
+                    class="text-sm leading-relaxed text-ink"
+                  >
                     {{ combo.task2_instruction }}
                   </p>
                   <template v-else>
-                    <h3 class="mb-3 font-heading text-base font-bold text-ink">{{ combo.task3_title }}</h3>
+                    <h3 class="mb-3 font-heading text-base font-bold text-ink">
+                      {{ combo.task3_title }}
+                    </h3>
                     <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
-                      <div class="rounded-2xl border border-accent-200 bg-accent-50 p-3.5 dark:border-accent-500/25 dark:bg-accent-500/10">
-                        <p class="mb-1.5 text-[0.65rem] font-bold uppercase tracking-wider text-accent-800 dark:text-accent-300">Document 1</p>
-                        <p class="text-sm leading-relaxed text-ink">{{ combo.task3_document_1 }}</p>
+                      <div
+                        class="rounded-2xl border border-accent-200 bg-accent-50 p-3.5 dark:border-accent-500/25 dark:bg-accent-500/10"
+                      >
+                        <p
+                          class="mb-1.5 text-[0.65rem] font-bold uppercase tracking-wider text-accent-800 dark:text-accent-300"
+                        >
+                          Document 1
+                        </p>
+                        <p class="text-sm leading-relaxed text-ink">
+                          {{ combo.task3_document_1 }}
+                        </p>
                       </div>
-                      <div class="rounded-2xl border border-primary/20 bg-primary/5 p-3.5">
-                        <p class="mb-1.5 text-[0.65rem] font-bold uppercase tracking-wider text-primary">Document 2</p>
-                        <p class="text-sm leading-relaxed text-ink">{{ combo.task3_document_2 }}</p>
+                      <div
+                        class="rounded-2xl border border-primary/20 bg-primary/5 p-3.5"
+                      >
+                        <p
+                          class="mb-1.5 text-[0.65rem] font-bold uppercase tracking-wider text-primary"
+                        >
+                          Document 2
+                        </p>
+                        <p class="text-sm leading-relaxed text-ink">
+                          {{ combo.task3_document_2 }}
+                        </p>
                       </div>
                     </div>
                   </template>
@@ -368,15 +514,26 @@
                   :disabled="!!combinedCorrection"
                 />
 
-                <div class="flex items-center justify-between gap-3 border-t border-line bg-card-2/50 px-5 py-2.5">
+                <div
+                  class="flex items-center justify-between gap-3 border-t border-line bg-card-2/50 px-5 py-2.5"
+                >
                   <span
                     class="font-mono text-xs font-semibold tabular-nums"
-                    :class="wordCountClass(wordCount(answers[currentTask.key]), currentTask.min, currentTask.max)"
+                    :class="
+                      wordCountClass(
+                        wordCount(answers[currentTask.key]),
+                        currentTask.min,
+                        currentTask.max,
+                      )
+                    "
                   >
-                    {{ wordCount(answers[currentTask.key]) }} / {{ currentTask.max }} mots
+                    {{ wordCount(answers[currentTask.key]) }} /
+                    {{ currentTask.max }} mots
                   </span>
                   <span
-                    v-if="wordCount(answers[currentTask.key]) >= currentTask.min"
+                    v-if="
+                      wordCount(answers[currentTask.key]) >= currentTask.min
+                    "
                     class="flex items-center gap-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400"
                   >
                     <i class="pi pi-check-circle" /> Minimum atteint
@@ -393,7 +550,9 @@
                   :disabled="activeTask === 0"
                   @click="activeTask--"
                 />
-                <span class="font-heading text-sm font-bold tabular-nums text-muted">
+                <span
+                  class="font-heading text-sm font-bold tabular-nums text-muted"
+                >
                   Tâche {{ activeTask + 1 }} / 3
                 </span>
                 <AppButton
@@ -420,47 +579,78 @@
             <!-- ── Résultats ─────────────────────────────────── -->
             <template v-else>
               <!-- Score -->
-              <div class="featured-panel relative overflow-hidden rounded-card p-8 text-center text-white shadow-brand">
+              <div
+                class="featured-panel relative overflow-hidden rounded-card p-8 text-center text-white shadow-brand"
+              >
                 <div class="relative z-10 flex flex-col items-center gap-2">
-                  <span class="mb-1 grid size-14 place-items-center rounded-full bg-white/15 backdrop-blur">
+                  <span
+                    class="mb-1 grid size-14 place-items-center rounded-full bg-white/15 backdrop-blur"
+                  >
                     <i class="pi pi-check-circle text-2xl" />
                   </span>
-                  <p class="font-heading text-6xl font-extrabold leading-none tabular-nums">
-                    {{ combinedCorrection.global_assessment.overall_score }}<span class="text-2xl opacity-60">/20</span>
+                  <p
+                    class="font-heading text-6xl font-extrabold leading-none tabular-nums"
+                  >
+                    {{ combinedCorrection.global_assessment.overall_score
+                    }}<span class="text-2xl opacity-60">/20</span>
                   </p>
-                  <span class="mt-1 rounded-full bg-accent-400 px-3 py-1 font-heading text-sm font-extrabold text-primary-950">
-                    Niveau {{ combinedCorrection.global_assessment.cecrl_level }}
+                  <span
+                    class="mt-1 rounded-full bg-accent-400 px-3 py-1 font-heading text-sm font-extrabold text-primary-950"
+                  >
+                    Niveau
+                    {{ combinedCorrection.global_assessment.cecrl_level }}
                   </span>
-                  <p class="mt-1 max-w-md text-sm leading-relaxed text-white/80">
+                  <p
+                    class="mt-1 max-w-md text-sm leading-relaxed text-white/80"
+                  >
                     {{ combinedCorrection.global_assessment.appreciation }}
                   </p>
                 </div>
               </div>
 
               <!-- Scores par critère -->
-              <section class="rounded-card border border-line bg-card p-5 shadow-soft">
-                <h3 class="mb-4 flex items-center gap-2 border-b border-line pb-3.5 font-heading text-sm font-bold text-ink">
+              <section
+                class="rounded-card border border-line bg-card p-5 shadow-soft"
+              >
+                <h3
+                  class="mb-4 flex items-center gap-2 border-b border-line pb-3.5 font-heading text-sm font-bold text-ink"
+                >
                   <i class="pi pi-chart-bar text-primary" /> Scores par critère
                 </h3>
-                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                <div
+                  class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3"
+                >
                   <div
                     v-for="item in criteriaItems"
                     :key="item.label"
                     class="rounded-2xl border border-line bg-card-2/50 p-4"
                   >
                     <div class="mb-1 flex items-baseline justify-between gap-2">
-                      <p class="text-xs font-semibold text-muted">{{ item.label }}</p>
-                      <p class="font-heading text-xl font-extrabold tabular-nums text-primary">
-                        {{ item.score }}<span class="text-sm font-semibold text-faint">/{{ item.max }}</span>
+                      <p class="text-xs font-semibold text-muted">
+                        {{ item.label }}
+                      </p>
+                      <p
+                        class="font-heading text-xl font-extrabold tabular-nums text-primary"
+                      >
+                        {{ item.score
+                        }}<span class="text-sm font-semibold text-faint"
+                          >/{{ item.max }}</span
+                        >
                       </p>
                     </div>
-                    <div class="mb-2 h-1.5 overflow-hidden rounded-full bg-line">
+                    <div
+                      class="mb-2 h-1.5 overflow-hidden rounded-full bg-line"
+                    >
                       <div
                         class="h-full rounded-full bg-linear-to-r from-primary-400 to-primary-700"
-                        :style="{ width: `${Math.min(100, (item.score / item.max) * 100)}%` }"
+                        :style="{
+                          width: `${Math.min(100, (item.score / item.max) * 100)}%`,
+                        }"
                       />
                     </div>
-                    <p class="text-xs leading-relaxed text-ink">{{ item.feedback }}</p>
+                    <p class="text-xs leading-relaxed text-ink">
+                      {{ item.feedback }}
+                    </p>
                   </div>
                 </div>
               </section>
@@ -470,57 +660,114 @@
                 v-if="combinedCorrection.task_feedbacks"
                 class="rounded-card border border-line bg-card p-5 shadow-soft"
               >
-                <h3 class="mb-4 flex items-center gap-2 border-b border-line pb-3.5 font-heading text-sm font-bold text-ink">
-                  <i class="pi pi-file-edit text-primary" /> Versions corrigées par tâche
+                <h3
+                  class="mb-4 flex items-center gap-2 border-b border-line pb-3.5 font-heading text-sm font-bold text-ink"
+                >
+                  <i class="pi pi-file-edit text-primary" /> Versions corrigées
+                  par tâche
                 </h3>
                 <div class="flex flex-col gap-4">
-                  <template v-for="(taskKey, idx) in ['task1', 'task2', 'task3']" :key="taskKey">
+                  <template
+                    v-for="(taskKey, idx) in ['task1', 'task2', 'task3']"
+                    :key="taskKey"
+                  >
                     <div
                       v-if="combinedCorrection.task_feedbacks[taskKey]"
                       class="overflow-hidden rounded-2xl border border-line"
                     >
-                      <div class="flex items-center gap-2.5 border-b border-line bg-card-2/50 px-4 py-3">
-                        <span class="grid size-7 shrink-0 place-items-center rounded-full brand-gradient text-xs font-bold text-white">
+                      <div
+                        class="flex items-center gap-2.5 border-b border-line bg-card-2/50 px-4 py-3"
+                      >
+                        <span
+                          class="grid size-7 shrink-0 place-items-center rounded-full brand-gradient text-xs font-bold text-white"
+                        >
                           {{ idx + 1 }}
                         </span>
                         <span class="text-sm font-semibold text-ink">
-                          {{ ["Tâche 1 - Message", "Tâche 2 - Narration", "Tâche 3 - Argumentation"][idx] }}
+                          {{
+                            [
+                              "Tâche 1 - Message",
+                              "Tâche 2 - Narration",
+                              "Tâche 3 - Argumentation",
+                            ][idx]
+                          }}
                         </span>
                       </div>
 
-                      <div class="grid grid-cols-1 gap-3 border-b border-line px-4 py-3 md:grid-cols-2">
-                        <div v-if="combinedCorrection.task_feedbacks[taskKey].main_strengths?.length">
-                          <p class="mb-1.5 text-xs font-bold text-emerald-700 dark:text-emerald-400">Points forts</p>
+                      <div
+                        class="grid grid-cols-1 gap-3 border-b border-line px-4 py-3 md:grid-cols-2"
+                      >
+                        <div
+                          v-if="
+                            combinedCorrection.task_feedbacks[taskKey]
+                              .main_strengths?.length
+                          "
+                        >
+                          <p
+                            class="mb-1.5 text-xs font-bold text-emerald-700 dark:text-emerald-400"
+                          >
+                            Points forts
+                          </p>
                           <ul class="flex flex-col gap-1">
                             <li
-                              v-for="s in combinedCorrection.task_feedbacks[taskKey].main_strengths"
+                              v-for="s in combinedCorrection.task_feedbacks[
+                                taskKey
+                              ].main_strengths"
                               :key="s"
                               class="flex items-start gap-1.5 text-xs text-emerald-700 dark:text-emerald-300"
                             >
-                              <i class="pi pi-check mt-0.5 shrink-0 text-[0.65rem]" />{{ s }}
+                              <i
+                                class="pi pi-check mt-0.5 shrink-0 text-[0.65rem]"
+                              />{{ s }}
                             </li>
                           </ul>
                         </div>
-                        <div v-if="combinedCorrection.task_feedbacks[taskKey].main_weaknesses?.length">
-                          <p class="mb-1.5 text-xs font-bold text-red-700 dark:text-red-400">Points à améliorer</p>
+                        <div
+                          v-if="
+                            combinedCorrection.task_feedbacks[taskKey]
+                              .main_weaknesses?.length
+                          "
+                        >
+                          <p
+                            class="mb-1.5 text-xs font-bold text-red-700 dark:text-red-400"
+                          >
+                            Points à améliorer
+                          </p>
                           <ul class="flex flex-col gap-1">
                             <li
-                              v-for="w in combinedCorrection.task_feedbacks[taskKey].main_weaknesses"
+                              v-for="w in combinedCorrection.task_feedbacks[
+                                taskKey
+                              ].main_weaknesses"
                               :key="w"
                               class="flex items-start gap-1.5 text-xs text-red-700 dark:text-red-300"
                             >
-                              <i class="pi pi-times mt-0.5 shrink-0 text-[0.65rem]" />{{ w }}
+                              <i
+                                class="pi pi-times mt-0.5 shrink-0 text-[0.65rem]"
+                              />{{ w }}
                             </li>
                           </ul>
                         </div>
                       </div>
 
-                      <div v-if="combinedCorrection.task_feedbacks[taskKey].corrected_text" class="px-4 py-4">
-                        <p class="mb-2 text-[0.65rem] font-bold uppercase tracking-wider text-primary">
+                      <div
+                        v-if="
+                          combinedCorrection.task_feedbacks[taskKey]
+                            .corrected_text
+                        "
+                        class="px-4 py-4"
+                      >
+                        <p
+                          class="mb-2 text-[0.65rem] font-bold uppercase tracking-wider text-primary"
+                        >
                           Proposition de correction
                         </p>
-                        <p class="whitespace-pre-wrap rounded-xl bg-card-2 p-3.5 text-sm leading-relaxed text-ink">
-                          {{ combinedCorrection.task_feedbacks[taskKey].corrected_text }}
+                        <p
+                          class="whitespace-pre-wrap rounded-xl bg-card-2 p-3.5 text-sm leading-relaxed text-ink"
+                        >
+                          {{
+                            combinedCorrection.task_feedbacks[taskKey]
+                              .corrected_text
+                          }}
                         </p>
                       </div>
                     </div>
@@ -533,7 +780,9 @@
                 v-if="combinedCorrection.corrections?.length"
                 class="rounded-card border border-line bg-card p-5 shadow-soft"
               >
-                <h3 class="mb-4 flex items-center gap-2 border-b border-line pb-3.5 font-heading text-sm font-bold text-ink">
+                <h3
+                  class="mb-4 flex items-center gap-2 border-b border-line pb-3.5 font-heading text-sm font-bold text-ink"
+                >
                   <i class="pi pi-pencil text-primary" /> Erreurs identifiées
                 </h3>
                 <div class="flex flex-col gap-3">
@@ -549,11 +798,19 @@
                       >
                         Tâche {{ c.task }}
                       </span>
-                      <span class="text-sm font-bold text-red-700 line-through dark:text-red-400">{{ c.error }}</span>
+                      <span
+                        class="text-sm font-bold text-red-700 line-through dark:text-red-400"
+                        >{{ c.error }}</span
+                      >
                       <i class="pi pi-arrow-right text-xs text-faint" />
-                      <span class="text-sm font-bold text-emerald-700 dark:text-emerald-400">{{ c.correction }}</span>
+                      <span
+                        class="text-sm font-bold text-emerald-700 dark:text-emerald-400"
+                        >{{ c.correction }}</span
+                      >
                     </div>
-                    <p class="text-xs leading-relaxed text-muted">{{ c.explanation }}</p>
+                    <p class="text-xs leading-relaxed text-muted">
+                      {{ c.explanation }}
+                    </p>
                   </div>
                 </div>
               </section>
@@ -563,8 +820,13 @@
                 v-if="combinedCorrection.suggestions?.length"
                 class="rounded-card border border-line bg-card p-5 shadow-soft"
               >
-                <h3 class="mb-4 flex items-center gap-2 border-b border-line pb-3.5 font-heading text-sm font-bold text-ink">
-                  <i class="pi pi-lightbulb text-accent-600 dark:text-accent-400" /> Conseils pour progresser
+                <h3
+                  class="mb-4 flex items-center gap-2 border-b border-line pb-3.5 font-heading text-sm font-bold text-ink"
+                >
+                  <i
+                    class="pi pi-lightbulb text-accent-600 dark:text-accent-400"
+                  />
+                  Conseils pour progresser
                 </h3>
                 <ol class="flex flex-col gap-2">
                   <li
@@ -572,7 +834,9 @@
                     :key="i"
                     class="flex items-start gap-3 rounded-2xl bg-card-2/60 p-3"
                   >
-                    <span class="grid size-6 shrink-0 place-items-center rounded-full brand-gradient text-xs font-bold text-white">
+                    <span
+                      class="grid size-6 shrink-0 place-items-center rounded-full brand-gradient text-xs font-bold text-white"
+                    >
                       {{ i + 1 }}
                     </span>
                     <p class="text-sm leading-relaxed text-ink">{{ s }}</p>
@@ -589,7 +853,7 @@
                   @click="resetSimulation"
                 />
                 <NuxtLink
-                  :to="`/simulateur/expression-ecrite/${sessionId}`"
+                  :to="backLink"
                   class="inline-flex items-center justify-center gap-2 rounded-xl border border-line bg-card px-4 py-2.5 text-sm font-semibold text-ink transition-colors hover:border-primary/40 hover:text-primary"
                 >
                   <i class="pi pi-arrow-left text-xs" />
@@ -603,10 +867,16 @@
           <aside
             class="sticky top-14 hidden h-[calc(100vh-3.5rem)] w-56 shrink-0 flex-col gap-5 overflow-y-auto border-l border-line bg-card p-4 xl:flex"
           >
-            <p class="text-[0.65rem] font-bold uppercase tracking-widest text-faint">Outils</p>
+            <p
+              class="text-[0.65rem] font-bold uppercase tracking-widest text-faint"
+            >
+              Outils
+            </p>
 
             <div class="flex flex-col gap-2">
-              <p class="text-xs font-semibold text-muted">Caractères spéciaux</p>
+              <p class="text-xs font-semibold text-muted">
+                Caractères spéciaux
+              </p>
               <div class="flex flex-wrap gap-1.5">
                 <button
                   v-for="ch in specialChars"
@@ -623,12 +893,18 @@
 
             <div class="flex flex-col gap-3">
               <p class="text-xs font-semibold text-muted">Progression</p>
-              <div v-for="(t, i) in tasks" :key="t.key" class="flex flex-col gap-1">
+              <div
+                v-for="(t, i) in tasks"
+                :key="t.key"
+                class="flex flex-col gap-1"
+              >
                 <div class="flex items-center justify-between">
                   <span class="text-xs text-muted">Tâche {{ i + 1 }}</span>
                   <span
                     class="font-mono text-[0.65rem] font-semibold tabular-nums"
-                    :class="wordCountClass(wordCount(answers[t.key]), t.min, t.max)"
+                    :class="
+                      wordCountClass(wordCount(answers[t.key]), t.min, t.max)
+                    "
                   >
                     {{ wordCount(answers[t.key]) }}/{{ t.max }}
                   </span>
@@ -638,19 +914,32 @@
                     class="h-full rounded-full transition-all duration-300"
                     :class="{
                       'bg-red-400': wordCount(answers[t.key]) < t.min,
-                      'bg-emerald-500': wordCount(answers[t.key]) >= t.min && wordCount(answers[t.key]) <= t.max,
+                      'bg-emerald-500':
+                        wordCount(answers[t.key]) >= t.min &&
+                        wordCount(answers[t.key]) <= t.max,
                       'bg-amber-400': wordCount(answers[t.key]) > t.max,
                     }"
-                    :style="{ width: Math.min(100, (wordCount(answers[t.key]) / t.max) * 100) + '%' }"
+                    :style="{
+                      width:
+                        Math.min(
+                          100,
+                          (wordCount(answers[t.key]) / t.max) * 100,
+                        ) + '%',
+                    }"
                   />
                 </div>
               </div>
             </div>
 
-            <div class="mt-auto flex gap-2 rounded-2xl border border-accent-200 bg-accent-50 p-3 dark:border-accent-500/25 dark:bg-accent-500/10">
-              <i class="pi pi-info-circle mt-0.5 shrink-0 text-xs text-accent-700 dark:text-accent-300" />
+            <div
+              class="mt-auto flex gap-2 rounded-2xl border border-accent-200 bg-accent-50 p-3 dark:border-accent-500/25 dark:bg-accent-500/10"
+            >
+              <i
+                class="pi pi-info-circle mt-0.5 shrink-0 text-xs text-accent-700 dark:text-accent-300"
+              />
               <p class="text-[0.65rem] leading-snug text-ink">
-                Laisser une tâche vide entraîne automatiquement une note éliminatoire de 0/20.
+                Laisser une tâche vide entraîne automatiquement une note
+                éliminatoire de 0/20.
               </p>
             </div>
           </aside>
@@ -663,12 +952,16 @@
       v-else-if="!loading"
       class="flex min-h-[60vh] flex-col items-center justify-center gap-3 px-4 text-center"
     >
-      <span class="grid size-16 place-items-center rounded-leaf bg-card-2 text-faint">
+      <span
+        class="grid size-16 place-items-center rounded-leaf bg-card-2 text-faint"
+      >
         <i class="pi pi-exclamation-circle text-3xl" />
       </span>
-      <p class="font-heading text-lg font-bold text-ink">Aucun sujet disponible pour cette combinaison.</p>
+      <p class="font-heading text-lg font-bold text-ink">
+        Aucun sujet disponible pour cette combinaison.
+      </p>
       <NuxtLink
-        :to="`/simulateur/expression-ecrite/${sessionId}`"
+        :to="backLink"
         class="inline-flex items-center gap-2 rounded-xl border border-line bg-card px-4 py-2.5 text-sm font-semibold text-ink transition-colors hover:border-primary/40 hover:text-primary"
       >
         <i class="pi pi-arrow-left text-xs" />
@@ -702,6 +995,13 @@ const simulating = ref(false);
 const submitting = ref(false);
 const activeTask = ref(0);
 const { open: openBuyCredits } = useBuyCreditsDialog();
+
+const { load: loadProgress, markDone } = useEEProgress();
+
+const backLink = `/simulateur/expression-ecrite?session=${sessionId}`;
+const displayTitle = computed(() =>
+  (combo.value?.title ?? "").replace(/^Combinaison/i, "Sujet"),
+);
 
 const specialChars = [
   "é",
@@ -847,6 +1147,7 @@ function isTaskDone(key: "task1" | "task2" | "task3") {
 }
 
 onMounted(async () => {
+  loadProgress();
   await sub.fetchMySubscriptions();
   try {
     const [sessionsRes, comboRes] = await Promise.all([
@@ -910,6 +1211,8 @@ async function submitAll() {
       task3_word_max: combo.value.task3_word_max,
     });
     combinedCorrection.value = res.data ?? res;
+    const score = combinedCorrection.value?.global_assessment?.overall_score;
+    if (typeof score === "number") markDone(comboId, score);
     await sub.fetchMySubscriptions();
     if (timerInterval) clearInterval(timerInterval);
   } catch (err: any) {
@@ -941,8 +1244,7 @@ function insertChar(ch: string) {
 
 useHead({
   title: computed(
-    () =>
-      `${combo.value?.title ?? "Simulateur"} - Expression Écrite | Lumina TCF`,
+    () => `${displayTitle.value || "Simulateur"} - Expression Écrite | OCanada`,
   ),
 });
 </script>

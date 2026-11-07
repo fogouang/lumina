@@ -1,19 +1,30 @@
 <template>
-  <div class="overflow-hidden rounded-card border border-line bg-card shadow-soft">
+  <div
+    class="overflow-hidden rounded-card border border-line bg-card shadow-soft"
+  >
     <!-- En-tête -->
-    <div class="flex flex-col gap-3 border-b border-line px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+    <div
+      class="flex flex-col gap-3 border-b border-line px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
+    >
       <div class="flex items-center gap-3">
-        <span class="brand-gradient grid size-10 shrink-0 place-items-center rounded-leaf font-heading text-sm font-bold text-white shadow-brand">
+        <span
+          class="brand-gradient grid size-10 shrink-0 place-items-center rounded-leaf font-heading text-sm font-bold text-white shadow-brand"
+        >
           {{ number }}
         </span>
         <div>
-          <p v-if="typeLabel" class="text-[0.65rem] font-semibold uppercase tracking-wider text-faint">
+          <p
+            v-if="typeLabel"
+            class="text-[0.65rem] font-semibold uppercase tracking-wider text-faint"
+          >
             {{ typeLabel }}
           </p>
           <p class="font-heading text-sm font-bold text-ink">{{ label }}</p>
         </div>
       </div>
-      <span class="inline-flex w-fit items-center gap-1.5 rounded-full bg-accent-100 px-3 py-1 text-xs font-semibold text-accent-800 dark:bg-accent-950 dark:text-accent-300">
+      <span
+        class="inline-flex w-fit items-center gap-1.5 rounded-full bg-accent-100 px-3 py-1 text-xs font-semibold text-accent-800 dark:bg-accent-950 dark:text-accent-300"
+      >
         <i class="pi pi-align-left text-[0.65rem]" />
         {{ wordMin }} à {{ wordMax }} mots
       </span>
@@ -35,7 +46,9 @@
         :aria-expanded="showCorrection"
         @click="showCorrection = !showCorrection"
       >
-        <span class="flex items-center gap-2 text-sm font-semibold text-primary">
+        <span
+          class="flex items-center gap-2 text-sm font-semibold text-primary"
+        >
           <i class="pi pi-eye text-xs" />
           {{ showCorrection ? "Masquer" : "Voir" }} la proposition de correction
         </span>
@@ -52,7 +65,9 @@
         leave-to-class="opacity-0 -translate-y-1"
       >
         <div v-if="showCorrection" class="px-5 pb-5">
-          <p class="whitespace-pre-wrap rounded-2xl border border-green-200 bg-green-50 p-4 text-sm leading-relaxed text-ink dark:border-green-900 dark:bg-green-950">
+          <p
+            class="whitespace-pre-wrap rounded-2xl border border-green-200 bg-green-50 p-4 text-sm leading-relaxed text-ink dark:border-green-900 dark:bg-green-950"
+          >
             {{ correction }}
           </p>
         </div>
@@ -72,6 +87,6 @@ defineProps<{
   wordMin: number;
   wordMax: number;
   description: string;
-  correction?: string;
+  correction?: string | null;
 }>();
 </script>
