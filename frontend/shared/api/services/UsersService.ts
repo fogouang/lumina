@@ -6,7 +6,6 @@ import type { app__shared__schemas__responses__SuccessResponse } from '../models
 import type { SuccessResponse_dict_ } from '../models/SuccessResponse_dict_';
 import type { SuccessResponse_list_UserListResponse__ } from '../models/SuccessResponse_list_UserListResponse__';
 import type { UserCreate } from '../models/UserCreate';
-import type { UserResponse } from '../models/UserResponse';
 import type { UserUpdate } from '../models/UserUpdate';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import { OpenAPI } from '../core/OpenAPI';
